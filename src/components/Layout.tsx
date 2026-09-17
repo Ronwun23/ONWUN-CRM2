@@ -12,18 +12,18 @@ const NAV_ITEMS = [
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-surface-page text-ink-primary">
-      <aside className="flex w-60 shrink-0 flex-col border-r border-black/[0.06] bg-white">
-        <div className="flex items-center gap-2.5 px-5 py-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-semibold text-white">
-            O
+      <aside className="flex w-60 shrink-0 flex-col bg-black">
+        <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
+            o
           </div>
           <div>
-            <p className="text-sm font-semibold leading-tight text-ink-primary">Onwun</p>
-            <p className="text-xs leading-tight text-ink-muted">CRM</p>
+            <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
+            <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">CRM</p>
           </div>
         </div>
 
-        <nav className="flex flex-col gap-0.5 px-3 py-2">
+        <nav className="flex flex-col gap-0.5 px-3 py-3">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -31,9 +31,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               className={({ isActive }) =>
                 clsx(
                   'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-ink-secondary hover:bg-surface-sunken hover:text-ink-primary'
+                  isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
                 )
               }
             >
@@ -43,7 +41,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           ))}
         </nav>
 
-        <div className="mt-auto px-5 py-4 text-xs text-ink-muted">
+        <div className="mt-auto px-5 py-4 text-xs text-white/30">
           <p>Onwun CRM · v0.1</p>
         </div>
       </aside>

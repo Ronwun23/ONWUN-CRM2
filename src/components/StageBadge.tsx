@@ -7,7 +7,7 @@ const STAGE_STYLES: Record<Stage, string> = {
   contacted: 'bg-brand-50 text-brand-700',
   qualified: 'bg-[#eaf7f1] text-[#0d7d57]',
   proposal: 'bg-[#fdf1de] text-[#96660a]',
-  negotiation: 'bg-[#f1eefb] text-[#4a3aa7]',
+  negotiation: 'bg-brand-100 text-brand-800',
   won: 'bg-[#e8f7e8] text-[#0d6b0d]',
   lost: 'bg-[#fbecec] text-[#a92e2d]',
 }

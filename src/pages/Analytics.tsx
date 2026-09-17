@@ -20,13 +20,14 @@ import type { Source } from '@/types'
 import { monthlyTrend, ownerBreakdown, sourceBreakdown, stageBreakdown, summary } from '@/lib/analytics'
 import { formatCurrency, formatFullCurrency } from '@/lib/format'
 
-// Fixed hue per stage (ordinal ramp, light -> dark = new -> negotiation) so color reads as progress.
+// Fixed hue per stage (brand-violet ordinal ramp, light -> dark = new -> negotiation),
+// validated with the dataviz skill's --ordinal check against a white chart surface.
 const STAGE_RAMP: Record<string, string> = {
-  new: '#86b6ef',
-  contacted: '#6da7ec',
-  qualified: '#5598e7',
-  proposal: '#3987e5',
-  negotiation: '#2a78d6',
+  new: '#a9a3fa',
+  contacted: '#9189f8',
+  qualified: '#7970f7',
+  proposal: '#6258e2',
+  negotiation: '#5149bb',
 }
 
 // Fixed hue per source (entity-based, independent of sort order).
@@ -182,9 +183,9 @@ export default function AnalyticsPage() {
                 type="monotone"
                 dataKey="newLeads"
                 name="New leads"
-                stroke="#2a78d6"
+                stroke="#5b53d4"
                 strokeWidth={2}
-                dot={{ r: 3, fill: '#2a78d6', strokeWidth: 0 }}
+                dot={{ r: 3, fill: '#5b53d4', strokeWidth: 0 }}
                 activeDot={{ r: 5 }}
               />
             </LineChart>

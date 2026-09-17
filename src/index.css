@@ -9,8 +9,9 @@ body,
 }
 
 body {
-  background-color: #f9f9f7;
-  color: #0b0b0b;
+  background-color: #e3e5e2;
+  color: #000000;
+  font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
