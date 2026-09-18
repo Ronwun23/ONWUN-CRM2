@@ -33,6 +33,7 @@ interface AppContextValue {
   addUpdate: (clientId: string, update: UpdateEntry) => void
   addDocument: (clientId: string, doc: ClientDocument) => void
   updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
+  removeDocument: (clientId: string, docId: string) => void
   addLibraryItem: (clientId: string, item: LibraryItem) => void
   addBrandAsset: (clientId: string, asset: BrandAsset) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string, note: string) => void
@@ -143,6 +144,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const removeDocument = useCallback(
+    (clientId: string, docId: string) => {
+      updateClient(clientId, (c) => ({ ...c, documents: c.documents.filter((d) => d.id !== docId) }))
+    },
+    [updateClient]
+  )
+
   const addLibraryItem = useCallback(
     (clientId: string, item: LibraryItem) => {
       updateClient(clientId, (c) => ({ ...c, library: [item, ...c.library] }))
@@ -200,6 +208,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addUpdate,
       addDocument,
       updateDocument,
+      removeDocument,
       addLibraryItem,
       addBrandAsset,
       saveWorkshopAnswer,
@@ -217,6 +226,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addUpdate,
       addDocument,
       updateDocument,
+      removeDocument,
       addLibraryItem,
       addBrandAsset,
       saveWorkshopAnswer,

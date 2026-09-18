@@ -6,6 +6,7 @@ import ClientDashboard from '@/pages/client/Dashboard'
 import ClientUpdates from '@/pages/client/Updates'
 import ClientTasks from '@/pages/client/Tasks'
 import ClientDocuments from '@/pages/client/Documents'
+import DocumentDetail from '@/pages/client/DocumentDetail'
 import ClientLibrary from '@/pages/client/Library'
 import ClientDiscovery from '@/pages/client/Discovery'
 import ClientBrandHub from '@/pages/client/BrandHub'
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="updates" element={<ClientUpdates />} />
           <Route path="tasks" element={<ClientTasks />} />
           <Route path="documents" element={<ClientDocuments />} />
+          <Route path="documents/:docId" element={<DocumentDetail />} />
           <Route path="library" element={<ClientLibrary />} />
           <Route path="discovery" element={<ClientDiscovery />} />
           <Route path="brand-hub" element={<ClientBrandHub />} />
