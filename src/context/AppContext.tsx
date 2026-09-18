@@ -6,11 +6,15 @@ import type {
   ClientDocument,
   ClientTask,
   LibraryItem,
+  StrategyDraft,
+  StrategyStatus,
   UpdateEntry,
+  WorkshopScreen,
 } from '@/types'
 import { CLIENTS } from '@/data/clients'
+import { synthesizeStrategy } from '@/lib/strategySynthesis'
 
-const STORAGE_KEY = 'onwun-studio-clients-v1'
+const STORAGE_KEY = 'onwun-studio-clients-v2'
 
 function loadInitialClients(): Client[] {
   try {
@@ -34,9 +38,14 @@ interface AppContextValue {
   addDocument: (clientId: string, doc: ClientDocument) => void
   addLibraryItem: (clientId: string, item: LibraryItem) => void
   addBrandAsset: (clientId: string, asset: BrandAsset) => void
-  saveWorkshopAnswer: (clientId: string, questionId: string, answer: string, note: string) => void
-  setWorkshopPosition: (clientId: string, sectionIndex: number, questionIndex: number) => void
+  saveWorkshopAnswer: (clientId: string, questionId: string, answer: string) => void
+  setWorkshopPosition: (clientId: string, phaseIndex: number, screen: WorkshopScreen, questionIndex: number) => void
   startWorkshop: (clientId: string) => void
+  completeWorkshop: (clientId: string) => void
+  saveTranscript: (clientId: string, transcript: string) => void
+  generateStrategy: (clientId: string) => void
+  updateStrategy: (clientId: string, updater: (s: StrategyDraft) => StrategyDraft) => void
+  setStrategyStatus: (clientId: string, status: StrategyStatus) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -147,13 +156,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const saveWorkshopAnswer = useCallback(
-    (clientId: string, questionId: string, answer: string, note: string) => {
+    (clientId: string, questionId: string, answer: string) => {
       updateClient(clientId, (c) => ({
         ...c,
         workshop: {
           ...c.workshop,
-          started: true,
-          answers: { ...c.workshop.answers, [questionId]: { answer, note } },
+          answers: { ...c.workshop.answers, [questionId]: answer },
         },
       }))
     },
@@ -161,10 +169,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const setWorkshopPosition = useCallback(
-    (clientId: string, sectionIndex: number, questionIndex: number) => {
+    (clientId: string, phaseIndex: number, screen: WorkshopScreen, questionIndex: number) => {
       updateClient(clientId, (c) => ({
         ...c,
-        workshop: { ...c.workshop, currentSectionIndex: sectionIndex, currentQuestionIndex: questionIndex },
+        workshop: {
+          ...c.workshop,
+          currentPhaseIndex: phaseIndex,
+          currentScreen: screen,
+          currentQuestionIndex: questionIndex,
+        },
       }))
     },
     [updateClient]
@@ -172,7 +185,68 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const startWorkshop = useCallback(
     (clientId: string) => {
-      updateClient(clientId, (c) => ({ ...c, workshop: { ...c.workshop, started: true } }))
+      updateClient(clientId, (c) => ({
+        ...c,
+        workshop: {
+          ...c.workshop,
+          started: true,
+          completed: false,
+          currentPhaseIndex: 0,
+          currentScreen: 'intro',
+          currentQuestionIndex: 0,
+        },
+      }))
+    },
+    [updateClient]
+  )
+
+  const completeWorkshop = useCallback(
+    (clientId: string) => {
+      updateClient(clientId, (c) => ({ ...c, workshop: { ...c.workshop, completed: true } }))
+    },
+    [updateClient]
+  )
+
+  const saveTranscript = useCallback(
+    (clientId: string, transcript: string) => {
+      updateClient(clientId, (c) => ({ ...c, workshop: { ...c.workshop, transcript } }))
+    },
+    [updateClient]
+  )
+
+  const generateStrategy = useCallback(
+    (clientId: string) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        workshop: { ...c.workshop, strategy: synthesizeStrategy(c.workshop.answers, c.workshop.transcript) },
+      }))
+    },
+    [updateClient]
+  )
+
+  const updateStrategy = useCallback(
+    (clientId: string, updater: (s: StrategyDraft) => StrategyDraft) => {
+      updateClient(clientId, (c) => {
+        if (!c.workshop.strategy) return c
+        const next = updater(c.workshop.strategy)
+        return {
+          ...c,
+          workshop: {
+            ...c.workshop,
+            strategy: { ...next, status: next.status === 'ai_draft' ? 'agency_reviewed' : next.status },
+          },
+        }
+      })
+    },
+    [updateClient]
+  )
+
+  const setStrategyStatus = useCallback(
+    (clientId: string, status: StrategyStatus) => {
+      updateClient(clientId, (c) => {
+        if (!c.workshop.strategy) return c
+        return { ...c, workshop: { ...c.workshop, strategy: { ...c.workshop.strategy, status } } }
+      })
     },
     [updateClient]
   )
@@ -193,6 +267,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveWorkshopAnswer,
       setWorkshopPosition,
       startWorkshop,
+      completeWorkshop,
+      saveTranscript,
+      generateStrategy,
+      updateStrategy,
+      setStrategyStatus,
     }),
     [
       clients,
@@ -209,6 +288,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveWorkshopAnswer,
       setWorkshopPosition,
       startWorkshop,
+      completeWorkshop,
+      saveTranscript,
+      generateStrategy,
+      updateStrategy,
+      setStrategyStatus,
     ]
   )
 

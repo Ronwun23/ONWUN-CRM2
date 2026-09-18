@@ -7,8 +7,12 @@ import ClientUpdates from '@/pages/client/Updates'
 import ClientTasks from '@/pages/client/Tasks'
 import ClientDocuments from '@/pages/client/Documents'
 import ClientLibrary from '@/pages/client/Library'
-import ClientDiscovery from '@/pages/client/Discovery'
 import ClientBrandHub from '@/pages/client/BrandHub'
+import DiscoveryLayout from '@/pages/client/discovery/DiscoveryLayout'
+import DiscoveryDashboard from '@/pages/client/discovery/DiscoveryDashboard'
+import DiscoveryAnswers from '@/pages/client/discovery/DiscoveryAnswers'
+import DiscoveryStrategy from '@/pages/client/discovery/DiscoveryStrategy'
+import DiscoverySession from '@/pages/client/discovery/DiscoverySession'
 
 export default function App() {
   return (
@@ -22,7 +26,12 @@ export default function App() {
           <Route path="tasks" element={<ClientTasks />} />
           <Route path="documents" element={<ClientDocuments />} />
           <Route path="library" element={<ClientLibrary />} />
-          <Route path="discovery" element={<ClientDiscovery />} />
+          <Route path="discovery" element={<DiscoveryLayout />}>
+            <Route index element={<DiscoveryDashboard />} />
+            <Route path="answers" element={<DiscoveryAnswers />} />
+            <Route path="strategy" element={<DiscoveryStrategy />} />
+          </Route>
+          <Route path="discovery/session" element={<DiscoverySession />} />
           <Route path="brand-hub" element={<ClientBrandHub />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

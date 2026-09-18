@@ -12,7 +12,8 @@ import type {
 } from '@/types'
 import { PHASES } from '@/types'
 import { TEAM, CURRENT_USER } from './team'
-import { WORKSHOP_SECTIONS } from './workshopTemplate'
+import { WORKSHOP_PHASES } from './workshopTemplate'
+import { synthesizeStrategy } from '@/lib/strategySynthesis'
 
 const TODAY = new Date('2026-09-18T09:00:00Z')
 
@@ -55,7 +56,16 @@ function buildPhases(currentPhaseIndex: number, stepsDoneInCurrentPhase: number,
 }
 
 function emptyWorkshop(): WorkshopState {
-  return { started: false, currentSectionIndex: 0, currentQuestionIndex: 0, answers: {} }
+  return {
+    started: false,
+    completed: false,
+    currentPhaseIndex: 0,
+    currentScreen: 'intro',
+    currentQuestionIndex: 0,
+    answers: {},
+    transcript: '',
+    strategy: null,
+  }
 }
 
 const NEW_CLIENT_COLORS = ['#6a60f6', '#eb6834', '#1baf7a', '#e87ba4', '#eda100', '#4a3aa7']
@@ -112,47 +122,83 @@ export function createBlankClient(input: {
   }
 }
 
-function fullWorkshop(): WorkshopState {
-  const answers: WorkshopState['answers'] = {}
-  const sample: Record<string, [string, string]> = {
-    'q-current-state': [
-      "Ten-year-old boutique plant/homeware retailer, well loved locally but the branding hasn't moved since day one.",
-      'Strong founder story — lean into it in messaging.',
-    ],
-    'q-working-well': ['Loyal repeat customers, great in-store experience, strong word of mouth.', ''],
-    'q-not-working': ['Logo feels dated, no consistent visual system across packaging and social.', 'Priority fix #1.'],
-    'q-3-year-vision': ['Two more physical locations plus a proper online store.', 'Brand needs to scale beyond one shopfront.'],
-    'q-success-looks-like': ['A brand that feels premium enough to open a second location with confidence.', ''],
-    'q-launch-moment': ['Targeting spring for the first new location opening.', 'Hard external deadline — flag in timeline.'],
-    'q-ideal-client': ['Design-conscious 30s-40s homeowners who treat plants as decor, not just hobby.', ''],
-    'q-audience-cares-about': ['Curation and taste — they want to be told what looks good, not overwhelmed with choice.', ''],
-    'q-competitors': ['A few larger national chains, mostly discount-positioned.', 'Gap in the market at the premium end — good opening.'],
-    'q-differentiation': ['Curation, story, and a point of view — not just inventory.', ''],
-    'q-brand-as-person': ['A well-travelled friend with great taste who always knows the right recommendation.', ''],
-    'q-admired-brands': ['Aesop, Kinfolk aesthetic, a couple of independent florists on Instagram.', 'Reference these in moodboard.'],
-    'q-visual-attraction': ['Warm neutrals, natural textures, lots of negative space.', ''],
-    'q-visual-avoid': ['Anything too corporate or too twee/cottagecore.', ''],
-  }
-  for (const section of WORKSHOP_SECTIONS) {
-    for (const q of section.questions) {
-      const [answer, note] = sample[q.id] ?? ['', '']
-      answers[q.id] = { answer, note }
-    }
-  }
-  return { started: true, currentSectionIndex: WORKSHOP_SECTIONS.length - 1, currentQuestionIndex: 1, answers }
+const BLOOM_SAMPLE_ANSWERS: Record<string, string> = {
+  'p1-q1': 'Bloom Ventures',
+  'p1-q2':
+    "James spent years alongside early-stage companies with real momentum — companies with product-market fit, capable teams that were already winning. What he saw, time and again, was the single thing that compounded their velocity: operators who had done it before, embedded in the work alongside them.",
+  'p1-q3':
+    "Capital and advice are table stakes. What's rare — and what actually catalyses growth — is proven operators sitting on the same side of the table, treating the company's success as their own.",
+  'p1-q4': "\"Bloom\" — growth that compounds quietly, season after season, rather than a single loud moment.",
+  'p2-q1': 'Founders of early-stage companies with product-market fit, and the operators who back them.',
+  'p2-q2': 'A venture-style partner, run by operators who have won, bringing capital and execution as a single offering.',
+  'p2-q3': "We don't just advise — we get embedded in the work, driving distribution and product alongside the team.",
+  'p2-q4': "Build what people want. Stand alongside the people building it. The outcome follows.",
+  'p3-q1': 'Replace the passive cheque-and-board-seat model with operators who actually get in the work — so founders stop losing momentum waiting on advice that never ships.',
+  'p3-q2': 'A portfolio of companies that credit Bloom operators as core to their breakout growth, not just their fundraise.',
+  'p3-q3': 'Operators who have won, on the same side of the table as the founder.',
+  'p3-q4': 'A brand where "Create great company" is the whole story — capital and execution as a single offering.',
+  'p4-q1': 'Relentless, Human, Fearless, Strategic',
+  'p4-q2': 'Passive, transactional, or absent once the cheque clears.',
+  'p4-q3': 'Founders who talk like operators, not just capital allocators.',
+  'p4-q4': 'Prepared, decisive, certain — but curious and grounded first.',
+  'p5-q1': 'Early-stage founders with product-market fit and a capable team already winning.',
+  'p5-q2': "They have momentum but not enough execution muscle — capital alone won't close that gap.",
+  'p5-q3': 'Operators who have actually done it before, not just advisors who talk about it.',
+  'p5-q4': "Because we sit on the same side of the table and treat their company's success as our own.",
+  'p6-q1': 'Traditional VC funds, angel syndicates',
+  'p6-q2': 'Deploy capital efficiently and bring a strong network.',
+  'p6-q3': "Most funds stop at the cheque and a board seat — there's room to be embedded operators, not just capital.",
+  'p6-q4': "We bring capital and hands-on execution as one offering, not two separate relationships.",
+  'p7-q1': 'Confident, direct, and grounded in operator experience.',
+  'p7-q2': 'Corporate, hedge-y, or like a pitch deck.',
+  'p7-q3': 'Backed by people who have actually done it.',
+  'p7-q4': 'Operators-turned-writers who speak plainly about what actually worked.',
+  'p8-q1': 'A visual identity and voice that matches how embedded and hands-on the team actually is.',
+  'p8-q2': 'Founders instantly understanding Bloom is different from a traditional fund.',
+  'p8-q3': 'The default name founders mention when asked who actually helped them grow.',
+  'p8-q4': '',
 }
 
-function partialWorkshop(throughSection: number, throughQuestion: number): WorkshopState {
+function fullWorkshop(strategyStatus: 'ai_draft' | 'approved' = 'ai_draft'): WorkshopState {
   const answers: WorkshopState['answers'] = {}
-  for (let s = 0; s <= throughSection; s++) {
-    const section = WORKSHOP_SECTIONS[s]
-    const qLimit = s < throughSection ? section.questions.length : throughQuestion + 1
-    for (let q = 0; q < qLimit; q++) {
-      const question = section.questions[q]
-      answers[question.id] = { answer: 'Notes captured live with the client during the call.', note: '' }
+  for (const phase of WORKSHOP_PHASES) {
+    for (const q of phase.questions) {
+      answers[q.id] = BLOOM_SAMPLE_ANSWERS[q.id] ?? ''
     }
   }
-  return { started: true, currentSectionIndex: throughSection, currentQuestionIndex: throughQuestion, answers }
+  const strategy = synthesizeStrategy(answers, '')
+  return {
+    started: true,
+    completed: true,
+    currentPhaseIndex: WORKSHOP_PHASES.length - 1,
+    currentScreen: 'question',
+    currentQuestionIndex: 3,
+    answers,
+    transcript: '',
+    strategy: { ...strategy, status: strategyStatus },
+  }
+}
+
+function partialWorkshop(throughPhase: number, throughQuestion: number): WorkshopState {
+  const answers: WorkshopState['answers'] = {}
+  for (let p = 0; p <= throughPhase; p++) {
+    const phase = WORKSHOP_PHASES[p]
+    const qLimit = p < throughPhase ? phase.questions.length : throughQuestion + 1
+    for (let q = 0; q < qLimit; q++) {
+      const question = phase.questions[q]
+      answers[question.id] = 'Notes captured live with the client during the call.'
+    }
+  }
+  return {
+    started: true,
+    completed: false,
+    currentPhaseIndex: throughPhase,
+    currentScreen: 'question',
+    currentQuestionIndex: throughQuestion,
+    answers,
+    transcript: '',
+    strategy: null,
+  }
 }
 
 function docs(entries: [string, ClientDocument['type'], ClientDocument['status'], string | undefined, number][]): ClientDocument[] {
@@ -223,7 +269,7 @@ export const CLIENTS: Client[] = [
     startDate: daysFrom(-160),
     dueDate: daysFrom(-16),
     phases: buildPhases(4, 0, -160),
-    workshop: fullWorkshop(),
+    workshop: fullWorkshop('approved'),
     documents: docs([
       ['Proposal', 'proposal', 'signed', 'Figma embed', -158],
       ['Contract', 'contract', 'signed', 'Signed by all parties', -155],

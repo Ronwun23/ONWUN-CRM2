@@ -35,6 +35,11 @@ export default function Layout({ children }: { children: ReactNode }) {
   const clientId = clientMatch?.params.clientId
   const client = clientId ? getClient(clientId) : undefined
   const [showAddClient, setShowAddClient] = useState(false)
+  const isImmersiveSession = Boolean(useMatch('/clients/:clientId/discovery/session'))
+
+  if (isImmersiveSession) {
+    return <div className="h-screen w-full overflow-y-auto bg-surface-page text-ink-primary">{children}</div>
+  }
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-surface-page text-ink-primary">
