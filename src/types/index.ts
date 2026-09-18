@@ -39,6 +39,7 @@ export interface ClientDocument {
   type: DocumentType
   status: DocumentStatus
   meta?: string
+  url?: string
   updatedAt: string
 }
 

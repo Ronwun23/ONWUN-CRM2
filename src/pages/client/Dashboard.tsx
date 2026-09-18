@@ -5,6 +5,7 @@ import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
 import Card from '@/components/Card'
 import Pill from '@/components/Pill'
+import { Steps } from '@/components/Steps'
 import { ClientAvatar, MemberAvatar, memberName } from '@/components/Avatar'
 import TimelineStrip from '@/components/TimelineStrip'
 import { CLIENT_STATUS_LABEL, CLIENT_STATUS_TONE } from '@/lib/labels'
@@ -20,6 +21,10 @@ export default function ClientDashboard() {
 
   const phase = client.phases.find((p) => p.key === selectedPhase)!
   const progress = overallProgress(client)
+  // activeStep = index of the first phase that isn't fully done, or PHASES.length
+  // if every phase is done (so the stepper shows all steps as completed).
+  const firstOpenPhaseIndex = PHASES.findIndex((key) => phaseStatus(client.phases.find((p) => p.key === key)!) !== 'done')
+  const activeStep = firstOpenPhaseIndex === -1 ? PHASES.length : firstOpenPhaseIndex
 
   const handleAddStep = () => {
     if (!newStepTitle.trim()) return
@@ -39,6 +44,17 @@ export default function ClientDashboard() {
         </div>
         <Pill tone={CLIENT_STATUS_TONE[client.status]}>{CLIENT_STATUS_LABEL[client.status]}</Pill>
       </div>
+
+      <Card>
+        <Steps activeStep={activeStep} aria-label="Project phase">
+          {PHASES.map((key, i) => (
+            <Steps.Item key={key} index={i} label={PHASE_LABELS[key]}>
+              <Steps.Indicator />
+              {i < PHASES.length - 1 && <Steps.Separator />}
+            </Steps.Item>
+          ))}
+        </Steps>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
         <Card title="The process" padded={false}>
