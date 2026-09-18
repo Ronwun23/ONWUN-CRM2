@@ -58,6 +58,60 @@ function emptyWorkshop(): WorkshopState {
   return { started: false, currentSectionIndex: 0, currentQuestionIndex: 0, answers: {} }
 }
 
+const NEW_CLIENT_COLORS = ['#6a60f6', '#eb6834', '#1baf7a', '#e87ba4', '#eda100', '#4a3aa7']
+
+export function initialsFromName(name: string): string {
+  return name
+    .split(' ')
+    .map((part) => part.match(/[a-z0-9]/i)?.[0] ?? '')
+    .filter(Boolean)
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+}
+
+export function blankPhases(): ProjectPhase[] {
+  return PHASES.map((key) => ({
+    key,
+    steps: STEP_TEMPLATES[key].map((title) => {
+      stepCounter += 1
+      return { id: `step-${stepCounter}`, title, done: false }
+    }),
+  }))
+}
+
+export function createBlankClient(input: {
+  name: string
+  projectName: string
+  owner: string
+  dueDate: string
+}): Client {
+  const id = input.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '') + `-${Date.now().toString(36)}`
+
+  return {
+    id,
+    name: input.name,
+    projectName: input.projectName,
+    initials: initialsFromName(input.name),
+    color: NEW_CLIENT_COLORS[Math.floor(Math.random() * NEW_CLIENT_COLORS.length)],
+    status: 'active',
+    owner: input.owner,
+    startDate: new Date().toISOString(),
+    dueDate: input.dueDate,
+    phases: blankPhases(),
+    documents: [],
+    tasks: [],
+    updates: [],
+    library: [],
+    brandHub: [],
+    events: [],
+    workshop: emptyWorkshop(),
+  }
+}
+
 function fullWorkshop(): WorkshopState {
   const answers: WorkshopState['answers'] = {}
   const sample: Record<string, [string, string]> = {

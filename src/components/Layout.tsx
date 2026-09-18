@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 import { Link, NavLink, useMatch } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -7,6 +8,7 @@ import {
   FileText,
   LayoutDashboard,
   Megaphone,
+  Plus,
   Sparkles,
   Palette,
 } from 'lucide-react'
@@ -14,6 +16,8 @@ import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { CURRENT_USER } from '@/data/team'
 import { ClientAvatar } from '@/components/Avatar'
+import Drawer from '@/components/Drawer'
+import AddClientForm from '@/components/AddClientForm'
 
 const CLIENT_NAV_ITEMS = [
   { to: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,10 +30,11 @@ const CLIENT_NAV_ITEMS = [
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {
-  const { getClient } = useApp()
+  const { clients, getClient } = useApp()
   const clientMatch = useMatch('/clients/:clientId/*')
   const clientId = clientMatch?.params.clientId
   const client = clientId ? getClient(clientId) : undefined
+  const [showAddClient, setShowAddClient] = useState(false)
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-surface-page text-ink-primary">
@@ -81,21 +86,64 @@ export default function Layout({ children }: { children: ReactNode }) {
             </nav>
           </>
         ) : (
-          <nav className="flex flex-col gap-0.5 px-3 py-3">
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) =>
-                clsx(
-                  'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
-                )
-              }
-            >
-              <LayoutDashboard size={17} strokeWidth={2} />
-              Home
-            </NavLink>
-          </nav>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <nav className="flex flex-col gap-0.5 px-3 pt-3">
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  clsx(
+                    'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                  )
+                }
+              >
+                <LayoutDashboard size={17} strokeWidth={2} />
+                Home
+              </NavLink>
+            </nav>
+
+            <div className="mt-4 flex items-center justify-between px-5">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-white/40">
+                Clients · {clients.length}
+              </p>
+              <button
+                onClick={() => setShowAddClient(true)}
+                className="flex h-5 w-5 items-center justify-center rounded-md text-white/50 hover:bg-white/[0.06] hover:text-white"
+                aria-label="Add client"
+                title="Add client"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+
+            <nav className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
+              {clients.map((c) => (
+                <NavLink
+                  key={c.id}
+                  to={`/clients/${c.id}/dashboard`}
+                  className={({ isActive }) =>
+                    clsx(
+                      'flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors',
+                      isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                    )
+                  }
+                >
+                  <ClientAvatar initials={c.initials} color={c.color} size={22} />
+                  <span className="truncate">{c.name}</span>
+                </NavLink>
+              ))}
+              <button
+                onClick={() => setShowAddClient(true)}
+                className="mt-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-white/40 hover:bg-white/[0.06] hover:text-white"
+              >
+                <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-lg border border-dashed border-white/25">
+                  <Plus size={12} />
+                </span>
+                Add client
+              </button>
+            </nav>
+          </div>
         )}
 
         <div className="mt-auto flex items-center gap-2.5 border-t border-white/10 px-5 py-4">
@@ -115,6 +163,10 @@ export default function Layout({ children }: { children: ReactNode }) {
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[1400px] px-8 py-7">{children}</div>
       </main>
+
+      <Drawer open={showAddClient} onClose={() => setShowAddClient(false)} title="Add a client">
+        <AddClientForm onDone={() => setShowAddClient(false)} />
+      </Drawer>
     </div>
   )
 }

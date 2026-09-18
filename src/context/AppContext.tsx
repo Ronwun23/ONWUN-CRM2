@@ -25,6 +25,7 @@ function loadInitialClients(): Client[] {
 interface AppContextValue {
   clients: Client[]
   getClient: (id: string) => Client | undefined
+  addClient: (client: Client) => void
   toggleStep: (clientId: string, phaseKey: string, stepId: string) => void
   addStep: (clientId: string, phaseKey: string, title: string) => void
   toggleTask: (clientId: string, taskId: string) => void
@@ -56,6 +57,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const getClient = useCallback((id: string) => clients.find((c) => c.id === id), [clients])
+
+  const addClient = useCallback((client: Client) => {
+    setClients((prev) => [client, ...prev])
+  }, [])
 
   const toggleStep = useCallback(
     (clientId: string, phaseKey: string, stepId: string) => {
@@ -176,6 +181,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       clients,
       getClient,
+      addClient,
       toggleStep,
       addStep,
       toggleTask,
@@ -191,6 +197,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       clients,
       getClient,
+      addClient,
       toggleStep,
       addStep,
       toggleTask,
