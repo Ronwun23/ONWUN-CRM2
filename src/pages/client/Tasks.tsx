@@ -1,0 +1,136 @@
+import { useState } from 'react'
+import { Check, Plus } from 'lucide-react'
+import clsx from 'clsx'
+import { useClientOutlet } from '@/lib/useClient'
+import { useApp } from '@/context/AppContext'
+import { TEAM } from '@/data/team'
+import Card from '@/components/Card'
+import Drawer from '@/components/Drawer'
+import { MemberAvatar, memberName } from '@/components/Avatar'
+import { formatDueDate } from '@/lib/format'
+
+export default function ClientTasks() {
+  const client = useClientOutlet()
+  const { toggleTask, addTask } = useApp()
+  const [showAdd, setShowAdd] = useState(false)
+  const [title, setTitle] = useState('')
+  const [dueDate, setDueDate] = useState('')
+  const [assignee, setAssignee] = useState(TEAM[0].id)
+
+  const open = client.tasks.filter((t) => !t.done).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+  const done = client.tasks.filter((t) => t.done)
+
+  const handleAdd = () => {
+    if (!title.trim() || !dueDate) return
+    addTask(client.id, {
+      id: `task-${Date.now()}`,
+      title: title.trim(),
+      done: false,
+      dueDate: new Date(dueDate).toISOString(),
+      assignee,
+    })
+    setTitle('')
+    setDueDate('')
+    setShowAdd(false)
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-ink-primary">Tasks</h1>
+        <button
+          onClick={() => setShowAdd(true)}
+          className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+        >
+          <Plus size={16} />
+          Add task
+        </button>
+      </div>
+
+      <Card title="Open" padded={false}>
+        <ul className="flex flex-col divide-y divide-black/[0.05] px-4">
+          {open.length === 0 && <p className="py-4 text-sm text-ink-muted">Nothing open — nice work.</p>}
+          {open.map((task) => {
+            const due = formatDueDate(task.dueDate)
+            return (
+              <li key={task.id} className="flex items-center gap-3 py-3">
+                <button
+                  onClick={() => toggleTask(client.id, task.id)}
+                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-black/20 hover:border-brand-500"
+                  aria-label="Complete task"
+                />
+                <span className="flex-1 text-sm text-ink-primary">{task.title}</span>
+                <span className={clsx('text-xs font-medium', due.overdue ? 'text-status-critical' : 'text-ink-muted')}>
+                  {due.label}
+                </span>
+                <MemberAvatar memberId={task.assignee} size={22} />
+              </li>
+            )
+          })}
+        </ul>
+      </Card>
+
+      {done.length > 0 && (
+        <Card title="Done" padded={false}>
+          <ul className="flex flex-col divide-y divide-black/[0.05] px-4">
+            {done.map((task) => (
+              <li key={task.id} className="flex items-center gap-3 py-3">
+                <button
+                  onClick={() => toggleTask(client.id, task.id)}
+                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-brand-500 bg-brand-500 text-white"
+                  aria-label="Reopen task"
+                >
+                  <Check size={11} strokeWidth={3} />
+                </button>
+                <span className="flex-1 text-sm text-ink-muted line-through">{task.title}</span>
+                <MemberAvatar memberId={task.assignee} size={22} />
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <Drawer open={showAdd} onClose={() => setShowAdd(false)} title="Add a task">
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Task</label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Due date</label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Assignee</label>
+            <select
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              {TEAM.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {memberName(m.id)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={handleAdd}
+            className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
+          >
+            Add task
+          </button>
+        </div>
+      </Drawer>
+    </div>
+  )
+}
