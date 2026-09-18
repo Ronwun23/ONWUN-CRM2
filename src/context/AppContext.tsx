@@ -32,6 +32,7 @@ interface AppContextValue {
   addTask: (clientId: string, task: ClientTask) => void
   addUpdate: (clientId: string, update: UpdateEntry) => void
   addDocument: (clientId: string, doc: ClientDocument) => void
+  updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
   addLibraryItem: (clientId: string, item: LibraryItem) => void
   addBrandAsset: (clientId: string, asset: BrandAsset) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string, note: string) => void
@@ -132,6 +133,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const updateDocument = useCallback(
+    (clientId: string, docId: string, patch: Partial<ClientDocument>) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        documents: c.documents.map((d) => (d.id === docId ? { ...d, ...patch, updatedAt: new Date().toISOString() } : d)),
+      }))
+    },
+    [updateClient]
+  )
+
   const addLibraryItem = useCallback(
     (clientId: string, item: LibraryItem) => {
       updateClient(clientId, (c) => ({ ...c, library: [item, ...c.library] }))
@@ -188,6 +199,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addTask,
       addUpdate,
       addDocument,
+      updateDocument,
       addLibraryItem,
       addBrandAsset,
       saveWorkshopAnswer,
@@ -204,6 +216,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addTask,
       addUpdate,
       addDocument,
+      updateDocument,
       addLibraryItem,
       addBrandAsset,
       saveWorkshopAnswer,
