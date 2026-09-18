@@ -1,22 +1,33 @@
-# Onwun CRM
+# Onwun Studio
 
-A lead and pipeline management app for Onwun, built with React, TypeScript, and Vite.
+A client and project management app for Onwun, built for the studio's actual
+day-to-day workflow — discovery through delivery — not a generic sales CRM.
 
 ## Features
 
-- **Leads** — searchable, filterable, sortable table of every lead with a detail
-  drawer for contact info, deal value, activity history, and inline notes.
-- **Pipeline** — a drag-and-drop kanban board across all deal stages (New,
-  Contacted, Qualified, Proposal, Negotiation, Won, Lost), with per-column deal
-  totals and live open-pipeline value.
-- **Analytics** — team-wide dashboard covering pipeline funnel by stage, win/loss
-  breakdown, lead source mix, new-lead trend, and rep performance (won value and
-  win rate by owner).
+- **Home** — total clients, active projects, what's waiting on you, and unpaid
+  invoices at a glance, plus today's tasks and upcoming events across every
+  client, and a client list showing phase progress at a glance.
+- **Client dashboard** — the project broken into four phases (Discovery,
+  Strategy, Design, Delivery), each with its own checklist of steps, plus a
+  weekly timeline of upcoming tasks and events for that client.
+- **Discovery & Strategy workshop** — a step-by-step questionnaire to run live
+  with a client: one question at a time, grouped into sections, with a field
+  for the client's answer and a separate private note field, and a progress
+  tracker showing which question you're on.
+- **Documents** — proposal, contract, invoices, brand strategy, presentations,
+  and guidelines, each with a status (with the client, signed, paid, etc.).
+- **Tasks** and **Updates** — per-client, so nothing about a project lives
+  outside its own space.
+- **Library** — supporting research, recordings, and reference material.
+- **Brand hub** — the final delivered brand assets, once a project is signed
+  off.
 
-The app ships with realistic mock data (68 leads across 5 reps, 7 sources, and
-7 stages) so it's immediately explorable. Data lives in the browser's
-`localStorage`, so edits (moving a lead's stage, adding a note, adding a new
-lead) persist across reloads on the same device.
+The app ships with 6 mock clients at different stages of the process — including
+one (Bloom Ventures) fully completed end-to-end with a filled-in workshop,
+signed documents, and delivered brand assets — so it's immediately explorable.
+Data lives in the browser's `localStorage`, so any edits you make persist
+across reloads on the same device.
 
 ## Getting started
 
@@ -38,25 +49,26 @@ npm run preview
 
 - React 18 + TypeScript + Vite
 - Tailwind CSS
-- Recharts (analytics charts)
-- @dnd-kit (pipeline drag-and-drop)
 - React Router
 
 ## Project structure
 
 ```
 src/
-  components/   Shared UI: layout, drawers, cards, badges, charts
-  context/      CrmContext — the single source of truth for lead data
-  data/         Mock leads and sales-rep seed data
-  lib/          Formatting helpers and analytics aggregation
-  pages/        Leads, Pipeline, Analytics
-  types/        Shared TypeScript types
+  components/       Shared UI: layout, cards, badges, drawers, timeline
+  context/          AppContext — the single source of truth for client data
+  data/             Mock clients, team members, and the workshop template
+  lib/              Formatting, phase-progress, and label helpers
+  pages/
+    Home.tsx        The studio-wide overview
+    client/         Per-client pages (Dashboard, Updates, Tasks, Documents,
+                     Library, Discovery & Strategy, Brand hub)
+  types/            Shared TypeScript types
 ```
 
 ## Notes on data
 
-All data is currently mock data generated deterministically at build time and
-stored client-side. When this app is ready to be hosted for real business use,
-the `CrmContext` data layer (`src/context/CrmContext.tsx`) is the place to swap
+All data is currently mock data, generated deterministically and stored
+client-side. When this app is ready to be hosted for real business use, the
+`AppContext` data layer (`src/context/AppContext.tsx`) is the place to swap
 `localStorage` for a real backend/API without touching the UI.

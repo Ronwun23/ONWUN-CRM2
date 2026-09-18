@@ -1,33 +1,90 @@
 import type { ReactNode } from 'react'
-import { NavLink } from 'react-router-dom'
-import { BarChart3, KanbanSquare, Users2 } from 'lucide-react'
+import { Link, NavLink, useMatch } from 'react-router-dom'
+import {
+  ArrowLeft,
+  BookOpen,
+  CheckSquare,
+  FileText,
+  LayoutDashboard,
+  Megaphone,
+  Sparkles,
+  Palette,
+} from 'lucide-react'
 import clsx from 'clsx'
+import { useApp } from '@/context/AppContext'
+import { CURRENT_USER } from '@/data/team'
+import { ClientAvatar } from '@/components/Avatar'
 
-const NAV_ITEMS = [
-  { to: '/leads', label: 'Leads', icon: Users2 },
-  { to: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
-  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
+const CLIENT_NAV_ITEMS = [
+  { to: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: 'updates', label: 'Updates', icon: Megaphone },
+  { to: 'tasks', label: 'Tasks', icon: CheckSquare },
+  { to: 'documents', label: 'Documents', icon: FileText },
+  { to: 'library', label: 'Library', icon: BookOpen },
+  { to: 'discovery', label: 'Discovery & Strategy', icon: Sparkles },
+  { to: 'brand-hub', label: 'Brand hub', icon: Palette },
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {
+  const { getClient } = useApp()
+  const clientMatch = useMatch('/clients/:clientId/*')
+  const clientId = clientMatch?.params.clientId
+  const client = clientId ? getClient(clientId) : undefined
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-surface-page text-ink-primary">
       <aside className="flex w-60 shrink-0 flex-col bg-black">
-        <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
+        <Link to="/" className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
             o
           </div>
           <div>
             <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
-            <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">CRM</p>
+            <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
           </div>
-        </div>
+        </Link>
 
-        <nav className="flex flex-col gap-0.5 px-3 py-3">
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+        {client ? (
+          <>
+            <div className="px-3 pt-3">
+              <Link
+                to="/"
+                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-white/50 hover:bg-white/[0.06] hover:text-white"
+              >
+                <ArrowLeft size={14} />
+                All clients
+              </Link>
+            </div>
+            <div className="flex items-center gap-2.5 px-5 py-4">
+              <ClientAvatar initials={client.initials} color={client.color} size={32} />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold leading-tight text-white">{client.name}</p>
+                <p className="truncate text-xs leading-tight text-white/40">{client.projectName}</p>
+              </div>
+            </div>
+            <nav className="flex flex-col gap-0.5 px-3 py-1">
+              {CLIENT_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={`/clients/${client.id}/${to}`}
+                  className={({ isActive }) =>
+                    clsx(
+                      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                    )
+                  }
+                >
+                  <Icon size={16} strokeWidth={2} />
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+          </>
+        ) : (
+          <nav className="flex flex-col gap-0.5 px-3 py-3">
             <NavLink
-              key={to}
-              to={to}
+              to="/"
+              end
               className={({ isActive }) =>
                 clsx(
                   'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -35,14 +92,23 @@ export default function Layout({ children }: { children: ReactNode }) {
                 )
               }
             >
-              <Icon size={17} strokeWidth={2} />
-              {label}
+              <LayoutDashboard size={17} strokeWidth={2} />
+              Home
             </NavLink>
-          ))}
-        </nav>
+          </nav>
+        )}
 
-        <div className="mt-auto px-5 py-4 text-xs text-white/30">
-          <p>Onwun CRM · v0.1</p>
+        <div className="mt-auto flex items-center gap-2.5 border-t border-white/10 px-5 py-4">
+          <div
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+            style={{ backgroundColor: CURRENT_USER.color }}
+          >
+            {CURRENT_USER.initials}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-xs font-medium leading-tight text-white">{CURRENT_USER.name}</p>
+            <p className="truncate text-[11px] leading-tight text-white/40">{CURRENT_USER.email}</p>
+          </div>
         </div>
       </aside>
 
