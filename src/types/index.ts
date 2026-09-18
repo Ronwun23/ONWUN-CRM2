@@ -39,6 +39,7 @@ export interface ClientDocument {
   type: DocumentType
   status: DocumentStatus
   meta?: string
+  url?: string
   updatedAt: string
 }
 
@@ -82,25 +83,80 @@ export interface ClientEvent {
 export interface WorkshopQuestion {
   id: string
   text: string
-  helperText?: string
 }
 
-export interface WorkshopSection {
+export interface WorkshopPhase {
   id: string
   title: string
+  description: string
+  introHeading: string
+  introBody: string
   questions: WorkshopQuestion[]
 }
 
-export interface WorkshopAnswer {
-  answer: string
-  note: string
+export type WorkshopScreen = 'intro' | 'question'
+
+export type StrategyStatus = 'ai_draft' | 'agency_reviewed' | 'approved'
+
+export interface BrandValue {
+  name: string
+  description: string
+}
+
+export interface ToneOfVoiceItem {
+  tone: string
+  description: string
+  example: string
+}
+
+export interface CompetitorAnalysis {
+  name: string
+  whoTheyAre: string
+  whatTheyDo: string
+  positioning: string
+  strengths: string
+  observations: string
+}
+
+export interface AudiencePersona {
+  name: string
+  whoTheyAre: string
+  demographics: string
+  goals: string
+  challenges: string
+  painPoints: string
+  motivations: string
+  values: string
+  lookingFor: string
+  whyThisBrand: string
+}
+
+export interface StrategyDraft {
+  status: StrategyStatus
+  generatedAt: string
+  transcriptUsed: string
+  originStory: string
+  problem: string
+  solution: string
+  mission: string
+  vision: string
+  values: BrandValue[]
+  toneOfVoice: ToneOfVoiceItem[]
+  competitors: CompetitorAnalysis[]
+  ourPositioning: string
+  marketPositioning: string
+  audiencePersona: AudiencePersona
 }
 
 export interface WorkshopState {
   started: boolean
-  currentSectionIndex: number
+  completed: boolean
+  currentPhaseIndex: number
+  currentScreen: WorkshopScreen
   currentQuestionIndex: number
-  answers: Record<string, WorkshopAnswer>
+  answers: Record<string, string>
+  transcript: string
+  strategy: StrategyDraft | null
 }
 
 export interface Client {

@@ -19,8 +19,12 @@ export default function ClientLayout() {
 
   if (!client) return <Navigate to="/" replace />
 
-  const tabKey = location.pathname.split('/').filter(Boolean)[2] ?? 'dashboard'
+  const segments = location.pathname.split('/').filter(Boolean)
+  const tabKey = segments[2] ?? 'dashboard'
   const tabLabel = TAB_LABELS[tabKey] ?? 'Dashboard'
+  const isImmersiveSession = tabKey === 'discovery' && segments[3] === 'session'
+
+  if (isImmersiveSession) return <Outlet context={client} />
 
   return (
     <div>
