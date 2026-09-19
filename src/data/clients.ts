@@ -90,6 +90,23 @@ export function blankPhases(): ProjectPhase[] {
   }))
 }
 
+// Every client — new or existing — starts a project with the same document
+// checklist, matching the full set every other client project runs through.
+// They begin as drafts and get filled in as the engagement progresses.
+export function blankDocuments(): ClientDocument[] {
+  const now = new Date().toISOString()
+  return [
+    { id: nextId('doc'), title: 'Proposal', type: 'proposal', status: 'draft', updatedAt: now },
+    { id: nextId('doc'), title: 'Contract', type: 'contract', status: 'draft', updatedAt: now },
+    { id: nextId('doc'), title: 'Invoices', type: 'invoice', status: 'draft', updatedAt: now },
+    { id: nextId('doc'), title: 'Brand Strategy', type: 'strategy', status: 'draft', updatedAt: now },
+    { id: nextId('doc'), title: 'Speed Run Presentation 1', type: 'presentation', status: 'draft', updatedAt: now },
+    { id: nextId('doc'), title: 'Speed Run Presentation 2', type: 'presentation', status: 'draft', updatedAt: now },
+    { id: nextId('doc'), title: 'Final Brand Presentation', type: 'presentation', status: 'draft', updatedAt: now },
+    { id: nextId('doc'), title: 'Figma Brand Guidelines', type: 'guidelines', status: 'draft', updatedAt: now },
+  ]
+}
+
 export function createBlankClient(input: {
   name: string
   projectName: string
@@ -112,7 +129,7 @@ export function createBlankClient(input: {
     startDate: new Date().toISOString(),
     dueDate: input.dueDate,
     phases: blankPhases(),
-    documents: [],
+    documents: blankDocuments(),
     tasks: [],
     updates: [],
     library: [],
