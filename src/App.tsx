@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from '@/components/Layout'
+import { ViewModeProvider } from '@/context/ViewModeContext'
 import HomePage from '@/pages/Home'
 import ClientLayout from '@/pages/client/ClientLayout'
 import ClientDashboard from '@/pages/client/Dashboard'
@@ -17,27 +18,29 @@ import DiscoverySession from '@/pages/client/discovery/DiscoverySession'
 
 export default function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/clients/:clientId" element={<ClientLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<ClientDashboard />} />
-          <Route path="updates" element={<ClientUpdates />} />
-          <Route path="tasks" element={<ClientTasks />} />
-          <Route path="documents" element={<ClientDocuments />} />
-          <Route path="documents/:docId" element={<DocumentDetail />} />
-          <Route path="library" element={<ClientLibrary />} />
-          <Route path="discovery" element={<DiscoveryLayout />}>
-            <Route index element={<DiscoveryDashboard />} />
-            <Route path="answers" element={<DiscoveryAnswers />} />
-            <Route path="strategy" element={<DiscoveryStrategy />} />
+    <ViewModeProvider>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/clients/:clientId" element={<ClientLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<ClientDashboard />} />
+            <Route path="updates" element={<ClientUpdates />} />
+            <Route path="tasks" element={<ClientTasks />} />
+            <Route path="documents" element={<ClientDocuments />} />
+            <Route path="documents/:docId" element={<DocumentDetail />} />
+            <Route path="library" element={<ClientLibrary />} />
+            <Route path="discovery" element={<DiscoveryLayout />}>
+              <Route index element={<DiscoveryDashboard />} />
+              <Route path="answers" element={<DiscoveryAnswers />} />
+              <Route path="strategy" element={<DiscoveryStrategy />} />
+            </Route>
+            <Route path="discovery/session" element={<DiscoverySession />} />
+            <Route path="brand-hub" element={<ClientBrandHub />} />
           </Route>
-          <Route path="discovery/session" element={<DiscoverySession />} />
-          <Route path="brand-hub" element={<ClientBrandHub />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Layout>
+    </ViewModeProvider>
   )
 }

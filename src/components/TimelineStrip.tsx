@@ -3,6 +3,7 @@ import type { KeyboardEvent } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import type { Client } from '@/types'
 import { useApp } from '@/context/AppContext'
+import { useViewMode } from '@/context/ViewModeContext'
 
 const DAY_MS = 86400000
 
@@ -18,6 +19,7 @@ function sameDay(a: Date, b: Date): boolean {
 
 export default function TimelineStrip({ client }: { client: Client }) {
   const { addTask } = useApp()
+  const { isClientView } = useViewMode()
   // The timeline always begins on the client's creation/start date — never earlier — and
   // scrolls forward from there in rolling 7-day windows, for every client, old or new.
   const projectStart = useMemo(() => startOfDay(new Date(client.startDate)), [client.startDate])
@@ -126,28 +128,29 @@ export default function TimelineStrip({ client }: { client: Client }) {
                 ))}
               </div>
 
-              {isAdding ? (
-                <input
-                  ref={inputRef}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, day)}
-                  onBlur={() => commitAdd(day)}
-                  placeholder="What needs doing…"
-                  className="mt-1.5 w-full rounded-md border border-brand-500 bg-white px-1.5 py-1 text-[11px] focus:outline-none"
-                  autoComplete="off"
-                  data-1p-ignore
-                  data-lpignore="true"
-                />
-              ) : (
-                <button
-                  onClick={() => startAdding(dayKey)}
-                  className="mt-1.5 flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-ink-muted opacity-0 transition-opacity hover:bg-white hover:text-ink-secondary group-hover:opacity-100 focus:opacity-100"
-                >
-                  <Plus size={11} />
-                  Add
-                </button>
-              )}
+              {!isClientView &&
+                (isAdding ? (
+                  <input
+                    ref={inputRef}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, day)}
+                    onBlur={() => commitAdd(day)}
+                    placeholder="What needs doing…"
+                    className="mt-1.5 w-full rounded-md border border-brand-500 bg-white px-1.5 py-1 text-[11px] focus:outline-none"
+                    autoComplete="off"
+                    data-1p-ignore
+                    data-lpignore="true"
+                  />
+                ) : (
+                  <button
+                    onClick={() => startAdding(dayKey)}
+                    className="mt-1.5 flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-ink-muted opacity-0 transition-opacity hover:bg-white hover:text-ink-secondary group-hover:opacity-100 focus:opacity-100"
+                  >
+                    <Plus size={11} />
+                    Add
+                  </button>
+                ))}
             </div>
           )
         })}
