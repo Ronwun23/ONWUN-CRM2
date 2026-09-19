@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   BookOpen,
   CheckSquare,
+  ChevronDown,
   FileText,
   LayoutDashboard,
   Megaphone,
@@ -17,6 +18,7 @@ import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { CURRENT_USER } from '@/data/team'
 import { ClientAvatar } from '@/components/Avatar'
+import ClientAvatarStack from '@/components/ClientAvatarStack'
 import Drawer from '@/components/Drawer'
 import AddClientForm from '@/components/AddClientForm'
 
@@ -36,6 +38,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const clientId = clientMatch?.params.clientId
   const client = clientId ? getClient(clientId) : undefined
   const [showAddClient, setShowAddClient] = useState(false)
+  const [clientListExpanded, setClientListExpanded] = useState(false)
   const isImmersiveSession = Boolean(useMatch('/clients/:clientId/discovery/session'))
 
   const handleRemoveClient = (e: MouseEvent, name: string, id: string) => {
@@ -118,9 +121,15 @@ export default function Layout({ children }: { children: ReactNode }) {
             </nav>
 
             <div className="mt-4 flex items-center justify-between px-5">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-white/40">
+              <button
+                onClick={() => setClientListExpanded((v) => !v)}
+                aria-expanded={clientListExpanded}
+                aria-label={clientListExpanded ? 'Collapse client list' : 'Expand client list'}
+                className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-white/40 hover:text-white/70"
+              >
                 Clients · {clients.length}
-              </p>
+                <ChevronDown size={12} className={clsx('transition-transform', clientListExpanded && 'rotate-180')} />
+              </button>
               <button
                 onClick={() => setShowAddClient(true)}
                 className="flex h-5 w-5 items-center justify-center rounded-md text-white/50 hover:bg-white/[0.06] hover:text-white"
@@ -131,41 +140,51 @@ export default function Layout({ children }: { children: ReactNode }) {
               </button>
             </div>
 
-            <nav className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
-              {clients.map((c) => (
-                <div key={c.id} className="group relative">
-                  <NavLink
-                    to={`/clients/${c.id}/dashboard`}
-                    className={({ isActive }) =>
-                      clsx(
-                        'flex items-center gap-2.5 rounded-lg py-2 pl-2.5 pr-8 text-sm font-medium transition-colors',
-                        isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
-                      )
-                    }
-                  >
-                    <ClientAvatar initials={c.initials} color={c.color} size={22} />
-                    <span className="truncate">{c.name}</span>
-                  </NavLink>
-                  <button
-                    onClick={(e) => handleRemoveClient(e, c.name, c.id)}
-                    className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-white/0 opacity-0 transition-opacity hover:bg-white/10 hover:text-white group-hover:text-white/50 group-hover:opacity-100 group-focus-within:opacity-100"
-                    aria-label={`Remove ${c.name}`}
-                    title={`Remove ${c.name}`}
-                  >
-                    <X size={13} />
-                  </button>
-                </div>
-              ))}
+            {clientListExpanded ? (
+              <nav className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
+                {clients.map((c) => (
+                  <div key={c.id} className="group relative">
+                    <NavLink
+                      to={`/clients/${c.id}/dashboard`}
+                      className={({ isActive }) =>
+                        clsx(
+                          'flex items-center gap-2.5 rounded-lg py-2 pl-2.5 pr-8 text-sm font-medium transition-colors',
+                          isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                        )
+                      }
+                    >
+                      <ClientAvatar initials={c.initials} color={c.color} size={22} />
+                      <span className="truncate">{c.name}</span>
+                    </NavLink>
+                    <button
+                      onClick={(e) => handleRemoveClient(e, c.name, c.id)}
+                      className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-white/0 opacity-0 transition-opacity hover:bg-white/10 hover:text-white group-hover:text-white/50 group-hover:opacity-100 group-focus-within:opacity-100"
+                      aria-label={`Remove ${c.name}`}
+                      title={`Remove ${c.name}`}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => setShowAddClient(true)}
+                  className="mt-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-white/40 hover:bg-white/[0.06] hover:text-white"
+                >
+                  <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-lg border border-dashed border-white/25">
+                    <Plus size={12} />
+                  </span>
+                  Add client
+                </button>
+              </nav>
+            ) : (
               <button
-                onClick={() => setShowAddClient(true)}
-                className="mt-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-white/40 hover:bg-white/[0.06] hover:text-white"
+                onClick={() => setClientListExpanded(true)}
+                className="mt-3 flex flex-col items-center gap-2 px-3 py-1"
+                aria-label="Expand client list"
               >
-                <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-lg border border-dashed border-white/25">
-                  <Plus size={12} />
-                </span>
-                Add client
+                <ClientAvatarStack clients={clients} />
               </button>
-            </nav>
+            )}
           </div>
         )}
 
