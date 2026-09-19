@@ -5,7 +5,7 @@ import { useApp } from '@/context/AppContext'
 import { TEAM } from '@/data/team'
 import { createBlankClient } from '@/data/clients'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Select } from '@/components/ui/select'
+import { Combobox } from '@/components/ui/combobox'
 
 const inputClass =
   'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
@@ -16,17 +16,17 @@ export default function AddClientForm({ onDone }: { onDone: () => void }) {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [projectName, setProjectName] = useState('Rebrand')
-  const [owner, setOwner] = useState(TEAM[0].id)
+  const [owner, setOwner] = useState(TEAM[0].name)
   const [dueDate, setDueDate] = useState<string | undefined>(undefined)
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || !dueDate) return
+    if (!name.trim() || !owner.trim() || !dueDate) return
 
     const client = createBlankClient({
       name: name.trim(),
       projectName: projectName.trim() || 'Project',
-      owner,
+      owner: owner.trim(),
       dueDate,
     })
 
@@ -66,7 +66,12 @@ export default function AddClientForm({ onDone }: { onDone: () => void }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Owner</label>
-          <Select value={owner} onChange={setOwner} options={TEAM.map((m) => ({ value: m.id, label: m.name }))} />
+          <Combobox
+            value={owner}
+            onChange={setOwner}
+            suggestions={TEAM.map((m) => m.name)}
+            placeholder="Type a name…"
+          />
         </div>
         <div>
           <label className={labelClass}>Due date</label>

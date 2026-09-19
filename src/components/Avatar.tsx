@@ -1,8 +1,8 @@
-import { TEAM } from '@/data/team'
+import { resolveMember } from '@/data/team'
 
 export function MemberAvatar({ memberId, size = 24 }: { memberId: string; size?: number }) {
-  const member = TEAM.find((m) => m.id === memberId)
-  if (!member) return null
+  if (!memberId) return null
+  const member = resolveMember(memberId)
   return (
     <div
       className="flex shrink-0 items-center justify-center rounded-full font-semibold text-white"
@@ -15,7 +15,7 @@ export function MemberAvatar({ memberId, size = 24 }: { memberId: string; size?:
 }
 
 export function memberName(memberId: string): string {
-  return TEAM.find((m) => m.id === memberId)?.name ?? 'Unassigned'
+  return memberId ? resolveMember(memberId).name : 'Unassigned'
 }
 
 export function ClientAvatar({

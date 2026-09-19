@@ -14,6 +14,7 @@ import { PHASES } from '@/types'
 import { TEAM, CURRENT_USER } from './team'
 import { WORKSHOP_PHASES } from './workshopTemplate'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
+import { initialsFromName } from '@/lib/names'
 
 const TODAY = new Date('2026-09-18T09:00:00Z')
 
@@ -69,16 +70,6 @@ function emptyWorkshop(): WorkshopState {
 }
 
 const NEW_CLIENT_COLORS = ['#6a60f6', '#eb6834', '#1baf7a', '#e87ba4', '#eda100', '#4a3aa7']
-
-export function initialsFromName(name: string): string {
-  return name
-    .split(' ')
-    .map((part) => part.match(/[a-z0-9]/i)?.[0] ?? '')
-    .filter(Boolean)
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
 
 export function blankPhases(): ProjectPhase[] {
   return PHASES.map((key) => ({
