@@ -1,8 +1,7 @@
 import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import { Eye } from 'lucide-react'
-import type { Client } from '@/types'
 import { useApp } from '@/context/AppContext'
-import { ViewModeProvider, useViewMode } from '@/context/ViewModeContext'
+import { useViewMode } from '@/context/ViewModeContext'
 
 const TAB_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
@@ -14,8 +13,19 @@ const TAB_LABELS: Record<string, string> = {
   'brand-hub': 'Brand hub',
 }
 
-function ClientLayoutInner({ client, tabLabel, isImmersiveSession }: { client: Client; tabLabel: string; isImmersiveSession: boolean }) {
+export default function ClientLayout() {
+  const { clientId } = useParams<{ clientId: string }>()
+  const { getClient } = useApp()
   const { isClientView, setIsClientView } = useViewMode()
+  const location = useLocation()
+  const client = clientId ? getClient(clientId) : undefined
+
+  if (!client) return <Navigate to="/" replace />
+
+  const segments = location.pathname.split('/').filter(Boolean)
+  const tabKey = segments[2] ?? 'dashboard'
+  const tabLabel = TAB_LABELS[tabKey] ?? 'Dashboard'
+  const isImmersiveSession = tabKey === 'discovery' && segments[3] === 'session'
 
   if (isImmersiveSession) return <Outlet context={client} />
 
@@ -37,25 +47,5 @@ function ClientLayoutInner({ client, tabLabel, isImmersiveSession }: { client: C
       </p>
       <Outlet context={client} />
     </div>
-  )
-}
-
-export default function ClientLayout() {
-  const { clientId } = useParams<{ clientId: string }>()
-  const { getClient } = useApp()
-  const location = useLocation()
-  const client = clientId ? getClient(clientId) : undefined
-
-  if (!client) return <Navigate to="/" replace />
-
-  const segments = location.pathname.split('/').filter(Boolean)
-  const tabKey = segments[2] ?? 'dashboard'
-  const tabLabel = TAB_LABELS[tabKey] ?? 'Dashboard'
-  const isImmersiveSession = tabKey === 'discovery' && segments[3] === 'session'
-
-  return (
-    <ViewModeProvider key={clientId}>
-      <ClientLayoutInner client={client} tabLabel={tabLabel} isImmersiveSession={isImmersiveSession} />
-    </ViewModeProvider>
   )
 }

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
+import { useViewMode } from '@/context/ViewModeContext'
 import { CURRENT_USER } from '@/data/team'
 import { ClientAvatar } from '@/components/Avatar'
 import ClientAvatarStack from '@/components/ClientAvatarStack'
@@ -34,12 +35,16 @@ const CLIENT_NAV_ITEMS = [
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { clients, getClient, removeClient } = useApp()
+  const { isClientView } = useViewMode()
   const clientMatch = useMatch('/clients/:clientId/*')
   const clientId = clientMatch?.params.clientId
   const client = clientId ? getClient(clientId) : undefined
   const [showAddClient, setShowAddClient] = useState(false)
   const [clientListExpanded, setClientListExpanded] = useState(false)
   const isImmersiveSession = Boolean(useMatch('/clients/:clientId/discovery/session'))
+  // A client previewing their own portal only ever sees their own portal —
+  // no route back to the studio's full client list.
+  const lockedToClient = Boolean(client) && isClientView
 
   const handleRemoveClient = (e: MouseEvent, name: string, id: string) => {
     e.preventDefault()
@@ -56,27 +61,41 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-surface-page text-ink-primary">
       <aside className="flex w-60 shrink-0 flex-col bg-black">
-        <Link to="/" className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
-            o
+        {lockedToClient ? (
+          <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
+              o
+            </div>
+            <div>
+              <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
+              <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
-            <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
-          </div>
-        </Link>
+        ) : (
+          <Link to="/" className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
+              o
+            </div>
+            <div>
+              <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
+              <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
+            </div>
+          </Link>
+        )}
 
         {client ? (
           <>
-            <div className="px-3 pt-3">
-              <Link
-                to="/"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-white/50 hover:bg-white/[0.06] hover:text-white"
-              >
-                <ArrowLeft size={14} />
-                All clients
-              </Link>
-            </div>
+            {!lockedToClient && (
+              <div className="px-3 pt-3">
+                <Link
+                  to="/"
+                  className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-white/50 hover:bg-white/[0.06] hover:text-white"
+                >
+                  <ArrowLeft size={14} />
+                  All clients
+                </Link>
+              </div>
+            )}
             <div className="flex items-center gap-2.5 px-5 py-4">
               <ClientAvatar initials={client.initials} color={client.color} size={32} />
               <div className="min-w-0">
