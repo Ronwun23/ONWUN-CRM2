@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import { useState } from 'react'
 import { Link, NavLink, useMatch } from 'react-router-dom'
 import {
@@ -11,6 +11,7 @@ import {
   Plus,
   Sparkles,
   Palette,
+  X,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
@@ -30,12 +31,20 @@ const CLIENT_NAV_ITEMS = [
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {
-  const { clients, getClient } = useApp()
+  const { clients, getClient, removeClient } = useApp()
   const clientMatch = useMatch('/clients/:clientId/*')
   const clientId = clientMatch?.params.clientId
   const client = clientId ? getClient(clientId) : undefined
   const [showAddClient, setShowAddClient] = useState(false)
   const isImmersiveSession = Boolean(useMatch('/clients/:clientId/discovery/session'))
+
+  const handleRemoveClient = (e: MouseEvent, name: string, id: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (window.confirm(`Remove "${name}"? This deletes all their tasks, documents, and workshop answers — it can't be undone.`)) {
+      removeClient(id)
+    }
+  }
 
   if (isImmersiveSession) {
     return <div className="h-screen w-full overflow-y-auto bg-surface-page text-ink-primary">{children}</div>
@@ -124,19 +133,28 @@ export default function Layout({ children }: { children: ReactNode }) {
 
             <nav className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
               {clients.map((c) => (
-                <NavLink
-                  key={c.id}
-                  to={`/clients/${c.id}/dashboard`}
-                  className={({ isActive }) =>
-                    clsx(
-                      'flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors',
-                      isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
-                    )
-                  }
-                >
-                  <ClientAvatar initials={c.initials} color={c.color} size={22} />
-                  <span className="truncate">{c.name}</span>
-                </NavLink>
+                <div key={c.id} className="group relative">
+                  <NavLink
+                    to={`/clients/${c.id}/dashboard`}
+                    className={({ isActive }) =>
+                      clsx(
+                        'flex items-center gap-2.5 rounded-lg py-2 pl-2.5 pr-8 text-sm font-medium transition-colors',
+                        isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                      )
+                    }
+                  >
+                    <ClientAvatar initials={c.initials} color={c.color} size={22} />
+                    <span className="truncate">{c.name}</span>
+                  </NavLink>
+                  <button
+                    onClick={(e) => handleRemoveClient(e, c.name, c.id)}
+                    className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-white/0 opacity-0 transition-opacity hover:bg-white/10 hover:text-white group-hover:text-white/50 group-hover:opacity-100 group-focus-within:opacity-100"
+                    aria-label={`Remove ${c.name}`}
+                    title={`Remove ${c.name}`}
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
               ))}
               <button
                 onClick={() => setShowAddClient(true)}

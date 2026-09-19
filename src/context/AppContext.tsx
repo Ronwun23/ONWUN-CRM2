@@ -30,6 +30,7 @@ interface AppContextValue {
   clients: Client[]
   getClient: (id: string) => Client | undefined
   addClient: (client: Client) => void
+  removeClient: (clientId: string) => void
   toggleStep: (clientId: string, phaseKey: string, stepId: string) => void
   addStep: (clientId: string, phaseKey: string, title: string) => void
   toggleTask: (clientId: string, taskId: string) => void
@@ -71,6 +72,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addClient = useCallback((client: Client) => {
     setClients((prev) => [client, ...prev])
+  }, [])
+
+  const removeClient = useCallback((clientId: string) => {
+    setClients((prev) => prev.filter((c) => c.id !== clientId))
   }, [])
 
   const toggleStep = useCallback(
@@ -275,6 +280,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       clients,
       getClient,
       addClient,
+      removeClient,
       toggleStep,
       addStep,
       toggleTask,
@@ -298,6 +304,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       clients,
       getClient,
       addClient,
+      removeClient,
       toggleStep,
       addStep,
       toggleTask,
