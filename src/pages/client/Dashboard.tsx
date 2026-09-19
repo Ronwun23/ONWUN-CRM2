@@ -136,22 +136,24 @@ export default function ClientDashboard() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 flex items-center gap-2">
-                <input
-                  value={newStepTitle}
-                  onChange={(e) => setNewStepTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddStep()}
-                  placeholder="Add a step…"
-                  className="flex-1 rounded-lg border border-black/[0.10] px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                />
-                <button
-                  onClick={handleAddStep}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white hover:bg-brand-600"
-                  aria-label="Add step"
-                >
-                  <Plus size={15} />
-                </button>
-              </div>
+              {!isClientView && (
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    value={newStepTitle}
+                    onChange={(e) => setNewStepTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddStep()}
+                    placeholder="Add a step…"
+                    className="flex-1 rounded-lg border border-black/[0.10] px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  />
+                  <button
+                    onClick={handleAddStep}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white hover:bg-brand-600"
+                    aria-label="Add step"
+                  >
+                    <Plus size={15} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </Card>
