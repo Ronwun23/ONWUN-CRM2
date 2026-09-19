@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { DragEvent, FormEvent } from 'react'
-import { FileText, Upload } from 'lucide-react'
+import { FileText, Upload, X } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { Select } from '@/components/ui/select'
@@ -73,10 +73,16 @@ export default function DocumentForm({
     reader.readAsDataURL(file)
   }
 
-  const handleDrop = (e: DragEvent<HTMLLabelElement>) => {
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     setIsDraggingOver(false)
     handleFile(e.dataTransfer.files[0])
+  }
+
+  const handleRemovePdf = () => {
+    setPdfFileName('')
+    setUrl('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   return (
@@ -162,7 +168,11 @@ export default function DocumentForm({
       ) : (
         <div>
           <label className={labelClass}>PDF</label>
-          <label
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && fileInputRef.current?.click()}
             onDragOver={(e) => {
               e.preventDefault()
               setIsDraggingOver(true)
@@ -170,7 +180,7 @@ export default function DocumentForm({
             onDragLeave={() => setIsDraggingOver(false)}
             onDrop={handleDrop}
             className={clsx(
-              'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center transition-colors',
+              'relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center transition-colors',
               isDraggingOver ? 'border-brand-500 bg-brand-50' : 'border-black/20 bg-surface-sunken/40 hover:border-brand-500'
             )}
           >
@@ -183,6 +193,18 @@ export default function DocumentForm({
             />
             {pdfFileName ? (
               <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleRemovePdf()
+                  }}
+                  aria-label="Remove PDF"
+                  title="Remove PDF"
+                  className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-ink-muted hover:bg-white hover:text-status-critical"
+                >
+                  <X size={14} />
+                </button>
                 <FileText className="text-brand-600" size={20} />
                 <p className="max-w-full truncate text-sm font-medium text-ink-primary">{pdfFileName}</p>
                 <p className="text-xs text-ink-muted">Click to replace</p>
@@ -193,7 +215,7 @@ export default function DocumentForm({
                 <p className="text-sm text-ink-secondary">Drag and drop a PDF, or click to upload</p>
               </>
             )}
-          </label>
+          </div>
         </div>
       )}
 
