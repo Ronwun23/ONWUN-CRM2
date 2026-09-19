@@ -1,3 +1,5 @@
+import { toDisplayDate } from '@/lib/civilDate'
+
 export function formatCurrency(value: number): string {
   if (value >= 1000) {
     return `$${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`
@@ -13,12 +15,12 @@ export function formatFullCurrency(value: number): string {
 
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(
-    new Date(iso)
+    toDisplayDate(iso)
   )
 }
 
 export function formatRelativeDate(iso: string): string {
-  const then = new Date(iso).getTime()
+  const then = toDisplayDate(iso).getTime()
   const now = Date.now()
   const diffDays = Math.floor((now - then) / 86400000)
   if (diffDays <= 0) return 'Today'
@@ -30,7 +32,7 @@ export function formatRelativeDate(iso: string): string {
 }
 
 export function formatDueDate(iso: string): { label: string; overdue: boolean; today: boolean } {
-  const due = new Date(iso)
+  const due = toDisplayDate(iso)
   const now = new Date()
   const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate())
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
