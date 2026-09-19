@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useApp } from '@/context/AppContext'
+import { Select } from '@/components/ui/select'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
 import type { ClientDocument, DocumentStatus, DocumentType } from '@/types'
 
@@ -64,23 +65,19 @@ export default function DocumentForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Type</label>
-          <select value={type} onChange={(e) => setType(e.target.value as DocumentType)} className={inputClass}>
-            {TYPE_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {DOCUMENT_TYPE_LABEL[t]}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={type}
+            onChange={(v) => setType(v as DocumentType)}
+            options={TYPE_OPTIONS.map((t) => ({ value: t, label: DOCUMENT_TYPE_LABEL[t] }))}
+          />
         </div>
         <div>
           <label className={labelClass}>Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value as DocumentStatus)} className={inputClass}>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {DOCUMENT_STATUS_LABEL[s]}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={status}
+            onChange={(v) => setStatus(v as DocumentStatus)}
+            options={STATUS_OPTIONS.map((s) => ({ value: s, label: DOCUMENT_STATUS_LABEL[s] }))}
+          />
         </div>
       </div>
       <div>

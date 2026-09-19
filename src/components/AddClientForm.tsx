@@ -5,6 +5,7 @@ import { useApp } from '@/context/AppContext'
 import { TEAM } from '@/data/team'
 import { createBlankClient } from '@/data/clients'
 import { DatePicker } from '@/components/ui/date-picker'
+import { Select } from '@/components/ui/select'
 
 const inputClass =
   'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
@@ -65,13 +66,7 @@ export default function AddClientForm({ onDone }: { onDone: () => void }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Owner</label>
-          <select value={owner} onChange={(e) => setOwner(e.target.value)} className={inputClass}>
-            {TEAM.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </select>
+          <Select value={owner} onChange={setOwner} options={TEAM.map((m) => ({ value: m.id, label: m.name }))} />
         </div>
         <div>
           <label className={labelClass}>Due date</label>

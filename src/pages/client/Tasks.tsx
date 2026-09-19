@@ -8,6 +8,7 @@ import Card from '@/components/Card'
 import Drawer from '@/components/Drawer'
 import { MemberAvatar, memberName } from '@/components/Avatar'
 import { DatePicker } from '@/components/ui/date-picker'
+import { Select } from '@/components/ui/select'
 import { formatDueDate } from '@/lib/format'
 import { toDisplayDate } from '@/lib/civilDate'
 
@@ -113,17 +114,7 @@ export default function ClientTasks() {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Assignee</label>
-            <select
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-            >
-              {TEAM.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {memberName(m.id)}
-                </option>
-              ))}
-            </select>
+            <Select value={assignee} onChange={setAssignee} options={TEAM.map((m) => ({ value: m.id, label: memberName(m.id) }))} />
           </div>
           <button
             onClick={handleAdd}
