@@ -7,17 +7,21 @@ import { TEAM } from '@/data/team'
 import Card from '@/components/Card'
 import Drawer from '@/components/Drawer'
 import { MemberAvatar, memberName } from '@/components/Avatar'
+import { DatePicker } from '@/components/ui/date-picker'
 import { formatDueDate } from '@/lib/format'
+import { toDisplayDate } from '@/lib/civilDate'
 
 export default function ClientTasks() {
   const client = useClientOutlet()
   const { toggleTask, addTask } = useApp()
   const [showAdd, setShowAdd] = useState(false)
   const [title, setTitle] = useState('')
-  const [dueDate, setDueDate] = useState('')
+  const [dueDate, setDueDate] = useState<string | undefined>(undefined)
   const [assignee, setAssignee] = useState(TEAM[0].id)
 
-  const open = client.tasks.filter((t) => !t.done).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+  const open = client.tasks
+    .filter((t) => !t.done)
+    .sort((a, b) => toDisplayDate(a.dueDate).getTime() - toDisplayDate(b.dueDate).getTime())
   const done = client.tasks.filter((t) => t.done)
 
   const handleAdd = () => {
@@ -26,11 +30,11 @@ export default function ClientTasks() {
       id: `task-${Date.now()}`,
       title: title.trim(),
       done: false,
-      dueDate: new Date(dueDate).toISOString(),
+      dueDate,
       assignee,
     })
     setTitle('')
-    setDueDate('')
+    setDueDate(undefined)
     setShowAdd(false)
   }
 
@@ -102,12 +106,7 @@ export default function ClientTasks() {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Due date</label>
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-            />
+            <DatePicker value={dueDate} onChange={setDueDate} placeholder="Select date" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Assignee</label>

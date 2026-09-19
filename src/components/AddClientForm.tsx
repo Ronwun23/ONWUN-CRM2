@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '@/context/AppContext'
 import { TEAM } from '@/data/team'
 import { createBlankClient } from '@/data/clients'
+import { DatePicker } from '@/components/ui/date-picker'
 
 const inputClass =
   'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
@@ -15,7 +16,7 @@ export default function AddClientForm({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState('')
   const [projectName, setProjectName] = useState('Rebrand')
   const [owner, setOwner] = useState(TEAM[0].id)
-  const [dueDate, setDueDate] = useState('')
+  const [dueDate, setDueDate] = useState<string | undefined>(undefined)
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -25,7 +26,7 @@ export default function AddClientForm({ onDone }: { onDone: () => void }) {
       name: name.trim(),
       projectName: projectName.trim() || 'Project',
       owner,
-      dueDate: new Date(dueDate).toISOString(),
+      dueDate,
     })
 
     addClient(client)
@@ -56,13 +57,7 @@ export default function AddClientForm({ onDone }: { onDone: () => void }) {
         </div>
         <div>
           <label className={labelClass}>Due date</label>
-          <input
-            required
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className={inputClass}
-          />
+          <DatePicker value={dueDate} onChange={setDueDate} placeholder="Select date" />
         </div>
       </div>
       <button
