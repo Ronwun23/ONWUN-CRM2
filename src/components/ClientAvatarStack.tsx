@@ -2,12 +2,11 @@ import { ClientAvatar } from '@/components/Avatar'
 import type { Client } from '@/types'
 
 /**
- * A compact, vertically-overlapping avatar group (MUI AvatarGroup, but stacked
- * top-to-bottom instead of side-by-side). Stacking order is just the given
- * array order — deterministic, never re-shuffled on re-render. Each avatar
- * gets a ring matching the surrounding surface color so overlapping circles
- * stay visually separated, and any clients past `max` collapse into a single
- * "+N" overflow avatar.
+ * A compact, horizontally-overlapping avatar group (MUI AvatarGroup).
+ * Stacking order is just the given array order — deterministic, never
+ * re-shuffled on re-render. Each avatar gets a ring matching the surrounding
+ * surface color so overlapping circles stay visually separated, and any
+ * clients past `max` collapse into a single "+N" overflow avatar.
  */
 export default function ClientAvatarStack({
   clients,
@@ -25,12 +24,12 @@ export default function ClientAvatarStack({
   const overlap = Math.round(size * 0.4)
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-row items-center justify-center">
       {visible.map((c, i) => (
         <div
           key={c.id}
           className={`rounded-full ring-[3px] ${ringClassName}`}
-          style={{ marginTop: i === 0 ? 0 : -overlap, zIndex: visible.length - i }}
+          style={{ marginLeft: i === 0 ? 0 : -overlap, zIndex: visible.length - i }}
         >
           <ClientAvatar initials={c.initials} color={c.color} size={size} />
         </div>
@@ -38,7 +37,7 @@ export default function ClientAvatarStack({
       {overflow > 0 && (
         <div
           className={`flex shrink-0 items-center justify-center rounded-full bg-white/10 text-[11px] font-semibold text-white/70 ring-[3px] ${ringClassName}`}
-          style={{ width: size, height: size, marginTop: -overlap, zIndex: 0 }}
+          style={{ width: size, height: size, marginLeft: -overlap, zIndex: 0 }}
         >
           +{overflow}
         </div>
