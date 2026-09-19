@@ -51,7 +51,15 @@ export default function DocumentForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
         <label className={labelClass}>Title</label>
-        <input required value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
+        <input
+          required
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className={inputClass}
+          autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -83,6 +91,9 @@ export default function DocumentForm({
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://www.figma.com/file/…"
           className={inputClass}
+          autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
         />
         <p className="mt-1 text-xs text-ink-muted">
           Figma links preview automatically — set sharing to "anyone with the link can view" first.
@@ -95,6 +106,9 @@ export default function DocumentForm({
           onChange={(e) => setMeta(e.target.value)}
           placeholder="e.g. £4,200 paid in full"
           className={inputClass}
+          autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
         />
       </div>
       <button

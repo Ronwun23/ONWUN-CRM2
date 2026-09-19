@@ -127,6 +127,9 @@ export default function ClientDashboard() {
                   onKeyDown={(e) => e.key === 'Enter' && handleAddStep()}
                   placeholder="Add a step…"
                   className="flex-1 rounded-lg border border-black/[0.10] px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
                 />
                 <button
                   onClick={handleAddStep}

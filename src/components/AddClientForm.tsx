@@ -38,11 +38,29 @@ export default function AddClientForm({ onDone }: { onDone: () => void }) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
         <label className={labelClass}>Client name</label>
-        <input required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} autoFocus />
+        <input
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className={inputClass}
+          autoFocus
+          autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          name="new-client-name"
+        />
       </div>
       <div>
         <label className={labelClass}>Project</label>
-        <input value={projectName} onChange={(e) => setProjectName(e.target.value)} className={inputClass} />
+        <input
+          value={projectName}
+          onChange={(e) => setProjectName(e.target.value)}
+          className={inputClass}
+          autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          name="new-client-project"
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>

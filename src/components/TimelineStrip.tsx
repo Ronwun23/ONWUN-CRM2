@@ -135,6 +135,9 @@ export default function TimelineStrip({ client }: { client: Client }) {
                   onBlur={() => commitAdd(day)}
                   placeholder="What needs doing…"
                   className="mt-1.5 w-full rounded-md border border-brand-500 bg-white px-1.5 py-1 text-[11px] focus:outline-none"
+                  autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
                 />
               ) : (
                 <button
