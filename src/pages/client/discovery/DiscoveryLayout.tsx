@@ -1,10 +1,11 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import { useClientOutlet } from '@/lib/useClient'
+import { useViewMode } from '@/context/ViewModeContext'
 import { WORKSHOP_QUESTION_COUNT } from '@/data/workshopTemplate'
 import { answeredCount } from '@/lib/discoveryProgress'
 
-const TABS = [
+const ALL_TABS = [
   { to: '.', label: 'Workshop', end: true },
   { to: 'answers', label: 'Answers', end: false },
   { to: 'strategy', label: 'Strategy', end: false },
@@ -18,9 +19,18 @@ const STRATEGY_STATUS_LABEL: Record<string, string> = {
 
 export default function DiscoveryLayout() {
   const client = useClientOutlet()
+  const { isClientView } = useViewMode()
+  const location = useLocation()
   const { workshop } = client
   const answered = answeredCount(workshop)
-  const strategyLabel = workshop.strategy ? STRATEGY_STATUS_LABEL[workshop.strategy.status] : null
+  // Strategy — and the AI tooling that produces it — is agency-only; a client
+  // previewing their own portal never sees that tab or the document itself.
+  const strategyLabel = !isClientView && workshop.strategy ? STRATEGY_STATUS_LABEL[workshop.strategy.status] : null
+  const tabs = isClientView ? ALL_TABS.filter((t) => t.label !== 'Strategy') : ALL_TABS
+
+  if (isClientView && location.pathname.endsWith('/strategy')) {
+    return <Navigate to=".." replace />
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -39,7 +49,7 @@ export default function DiscoveryLayout() {
       </div>
 
       <nav className="flex items-center gap-1 border-b border-black/[0.08]">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <NavLink
             key={tab.label}
             to={tab.to}

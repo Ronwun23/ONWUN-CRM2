@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Check, Plus } from 'lucide-react'
+import { Check, Eye, Plus } from 'lucide-react'
 import clsx from 'clsx'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
+import { useViewMode } from '@/context/ViewModeContext'
 import Card from '@/components/Card'
 import Pill from '@/components/Pill'
 import { Steps } from '@/components/Steps'
@@ -16,6 +17,7 @@ import { PHASE_LABELS, PHASES } from '@/types'
 export default function ClientDashboard() {
   const client = useClientOutlet()
   const { toggleStep, addStep } = useApp()
+  const { isClientView, setIsClientView } = useViewMode()
   const [selectedPhase, setSelectedPhase] = useState(client.phases[0].key)
   const [newStepTitle, setNewStepTitle] = useState('')
 
@@ -42,7 +44,21 @@ export default function ClientDashboard() {
             <p className="text-sm text-ink-secondary">{client.projectName}</p>
           </div>
         </div>
-        <Pill tone={CLIENT_STATUS_TONE[client.status]}>{CLIENT_STATUS_LABEL[client.status]}</Pill>
+        <div className="flex items-center gap-2.5">
+          <Pill tone={CLIENT_STATUS_TONE[client.status]}>{CLIENT_STATUS_LABEL[client.status]}</Pill>
+          <button
+            onClick={() => setIsClientView(!isClientView)}
+            className={clsx(
+              'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+              isClientView
+                ? 'bg-brand-500 text-white hover:bg-brand-600'
+                : 'border border-black/[0.10] text-ink-secondary hover:bg-surface-sunken'
+            )}
+          >
+            <Eye size={13} />
+            {isClientView ? 'Exit client view' : 'View as client'}
+          </button>
+        </div>
       </div>
 
       <Card>
