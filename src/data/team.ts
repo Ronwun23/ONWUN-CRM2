@@ -42,5 +42,7 @@ export function teamMember(id: string): TeamMember | undefined {
 export function resolveMember(value: string): Pick<TeamMember, 'name' | 'initials' | 'color'> {
   const known = TEAM.find((m) => m.id === value || m.name === value)
   if (known) return known
+  const account = STUDIO_ACCOUNTS.find((a) => a.id === value || a.name === value)
+  if (account) return account
   return { name: value, initials: initialsFromName(value), color: colorFromName(value) }
 }
