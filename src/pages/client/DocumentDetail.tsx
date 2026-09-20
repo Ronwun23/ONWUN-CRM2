@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Link2, Pencil, Trash2 } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
@@ -6,9 +6,16 @@ import { useApp } from '@/context/AppContext'
 import Pill from '@/components/Pill'
 import Drawer from '@/components/Drawer'
 import DocumentForm from '@/components/DocumentForm'
+import DocumentComments from '@/components/DocumentComments'
+import ErrorBoundary from '@/components/ErrorBoundary'
+import FullscreenViewer from '@/components/FullscreenViewer'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_STATUS_TONE, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
 import { formatDate } from '@/lib/format'
 import { figmaEmbedSrc, isFigmaUrl, isPdfDataUrl } from '@/lib/embed'
+
+// pdfjs-dist is a large dependency — only fetch it when a document is
+// actually a PDF, not on every page load.
+const PdfPageViewer = lazy(() => import('@/components/PdfPageViewer'))
 
 export default function DocumentDetail() {
   const client = useClientOutlet()
@@ -79,22 +86,50 @@ export default function DocumentDetail() {
 
       {doc.url ? (
         isFigmaUrl(doc.url) ? (
-          <div className="overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
-            <iframe
-              key={doc.url}
-              src={figmaEmbedSrc(doc.url)}
-              title={doc.title}
-              className="aspect-video w-full"
-              allowFullScreen
-              loading="lazy"
-            />
-            <p className="border-t border-black/[0.06] px-4 py-2 text-xs text-ink-muted">
-              Needs "anyone with the link can view" set in Figma, or your client's own login instead.
-            </p>
+          <div className="flex flex-col gap-4 lg:flex-row">
+            <FullscreenViewer className="min-w-0 flex-1 rounded-xl shadow-card">
+              <iframe
+                key={doc.url}
+                src={figmaEmbedSrc(doc.url)}
+                title={doc.title}
+                className="aspect-video w-full"
+                loading="lazy"
+              />
+              <p className="border-t border-white/10 px-4 py-2 text-xs text-white/50">
+                Needs "anyone with the link can view" set in Figma, or your client's own login instead.
+              </p>
+            </FullscreenViewer>
+            <DocumentComments client={client} doc={doc} />
           </div>
         ) : isPdfDataUrl(doc.url) ? (
-          <div className="overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
-            <iframe key={doc.url} src={doc.url} title={doc.title} className="h-[70vh] w-full" />
+          <div className="flex flex-col gap-4 lg:flex-row">
+            <FullscreenViewer className="min-w-0 flex-1 rounded-xl shadow-card">
+              <ErrorBoundary
+                fallback={
+                  <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 rounded-xl bg-black text-center text-sm text-white/60">
+                    <p>Couldn't preview this PDF here.</p>
+                    <a
+                      href={doc.url}
+                      download={`${doc.title}.pdf`}
+                      className="rounded-lg bg-white px-3.5 py-2 text-sm font-semibold text-black hover:bg-white/90"
+                    >
+                      Download it instead
+                    </a>
+                  </div>
+                }
+              >
+                <Suspense
+                  fallback={
+                    <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-black text-sm text-white/50">
+                      Loading PDF viewer…
+                    </div>
+                  }
+                >
+                  <PdfPageViewer url={doc.url} />
+                </Suspense>
+              </ErrorBoundary>
+            </FullscreenViewer>
+            <DocumentComments client={client} doc={doc} />
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-black/[0.06] bg-white p-12 text-center shadow-card">

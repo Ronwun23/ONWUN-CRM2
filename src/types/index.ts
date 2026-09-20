@@ -33,6 +33,16 @@ export type DocumentType =
 
 export type DocumentStatus = 'with_client' | 'with_you' | 'signed' | 'paid' | 'unpaid' | 'draft'
 
+export type CommentAuthorType = 'agency' | 'client'
+
+export interface DocumentComment {
+  id: string
+  authorName: string
+  authorType: CommentAuthorType
+  text: string
+  createdAt: string
+}
+
 export interface ClientDocument {
   id: string
   title: string
@@ -41,6 +51,7 @@ export interface ClientDocument {
   meta?: string
   url?: string
   updatedAt: string
+  comments: DocumentComment[]
 }
 
 export interface ClientTask {

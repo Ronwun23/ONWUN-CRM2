@@ -5,6 +5,7 @@ import type {
   Client,
   ClientDocument,
   ClientTask,
+  DocumentComment,
   LibraryItem,
   StrategyDraft,
   StrategyStatus,
@@ -14,7 +15,7 @@ import type {
 import { CLIENTS } from '@/data/clients'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
 
-const STORAGE_KEY = 'onwun-studio-clients-v2'
+const STORAGE_KEY = 'onwun-studio-clients-v3'
 
 function loadInitialClients(): Client[] {
   try {
@@ -39,6 +40,7 @@ interface AppContextValue {
   addDocument: (clientId: string, doc: ClientDocument) => void
   updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
   removeDocument: (clientId: string, docId: string) => void
+  addDocumentComment: (clientId: string, docId: string, comment: DocumentComment) => void
   addLibraryItem: (clientId: string, item: LibraryItem) => void
   addBrandAsset: (clientId: string, asset: BrandAsset) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string) => void
@@ -161,6 +163,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const removeDocument = useCallback(
     (clientId: string, docId: string) => {
       updateClient(clientId, (c) => ({ ...c, documents: c.documents.filter((d) => d.id !== docId) }))
+    },
+    [updateClient]
+  )
+
+  const addDocumentComment = useCallback(
+    (clientId: string, docId: string, comment: DocumentComment) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        documents: c.documents.map((d) =>
+          d.id === docId ? { ...d, comments: [...(d.comments ?? []), comment] } : d
+        ),
+      }))
     },
     [updateClient]
   )
@@ -289,6 +303,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addDocument,
       updateDocument,
       removeDocument,
+      addDocumentComment,
       addLibraryItem,
       addBrandAsset,
       saveWorkshopAnswer,
@@ -313,6 +328,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addDocument,
       updateDocument,
       removeDocument,
+      addDocumentComment,
       addLibraryItem,
       addBrandAsset,
       saveWorkshopAnswer,
