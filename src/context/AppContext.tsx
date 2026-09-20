@@ -16,12 +16,8 @@ import type {
 import { CLIENTS } from '@/data/clients'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
 
-<<<<<<< HEAD
-const STORAGE_KEY = 'onwun-studio-clients-v2'
-const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
-=======
 const STORAGE_KEY = 'onwun-studio-clients-v3'
->>>>>>> 8092e7a3bfa2b474f9b97bae8a699c03c4cba250
+const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
 function loadInitialClients(): Client[] {
   try {
