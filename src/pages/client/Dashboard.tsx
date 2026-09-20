@@ -35,10 +35,10 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-7">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={44} />
+          <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={40} />
           <div>
             <h1 className="text-xl font-semibold text-ink-primary">{client.name}</h1>
             <p className="text-sm text-ink-secondary">{client.projectName}</p>
@@ -85,20 +85,20 @@ export default function ClientDashboard() {
                     key={key}
                     onClick={() => setSelectedPhase(key)}
                     className={clsx(
-                      'flex items-start gap-2.5 rounded-lg px-2.5 py-2.5 text-left transition-colors',
+                      'flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors',
                       selectedPhase === key ? 'bg-surface-sunken' : 'hover:bg-surface-sunken/60'
                     )}
                   >
                     <div className="flex flex-col items-center">
                       <span
                         className={clsx(
-                          'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white',
+                          'flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white',
                           status === 'done' ? 'bg-brand-500' : status === 'in_progress' ? 'bg-brand-300' : 'bg-surface-sunken border border-black/10'
                         )}
                       >
-                        {status === 'done' && <Check size={12} strokeWidth={3} />}
+                        {status === 'done' && <Check size={10} strokeWidth={3} />}
                       </span>
-                      {i < PHASES.length - 1 && <span className="mt-0.5 h-6 w-px bg-black/10" />}
+                      {i < PHASES.length - 1 && <span className="mt-0.5 h-5 w-px bg-black/10" />}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-ink-primary">{PHASE_LABELS[key]}</p>
@@ -118,12 +118,14 @@ export default function ClientDashboard() {
             <div className="flex-1 p-4">
               <ul className="flex flex-col divide-y divide-black/[0.05]">
                 {phase.steps.map((step) => (
-                  <li key={step.id} className="flex items-center gap-3 py-2.5">
+                  <li key={step.id} className="flex items-center gap-3 py-2">
                     <button
-                      onClick={() => toggleStep(client.id, phase.key, step.id)}
+                      onClick={() => !isClientView && toggleStep(client.id, phase.key, step.id)}
+                      disabled={isClientView}
                       className={clsx(
                         'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
-                        step.done ? 'border-brand-500 bg-brand-500 text-white' : 'border-black/20 hover:border-brand-500'
+                        step.done ? 'border-brand-500 bg-brand-500 text-white' : 'border-black/20',
+                        isClientView ? 'cursor-default' : 'hover:border-brand-500'
                       )}
                       aria-label="Toggle step"
                     >
@@ -162,7 +164,7 @@ export default function ClientDashboard() {
         </Card>
 
         <Card title="Project">
-          <dl className="flex flex-col gap-3.5 text-sm">
+          <dl className="flex flex-col gap-3 text-sm">
             <div>
               <dt className="text-xs text-ink-muted">Progress</dt>
               <dd className="mt-1 flex items-center gap-2">
@@ -189,7 +191,7 @@ export default function ClientDashboard() {
             <div>
               <dt className="text-xs text-ink-muted">Owner</dt>
               <dd className="mt-1.5 flex items-center gap-2">
-                <MemberAvatar memberId={client.owner} size={22} />
+                <MemberAvatar memberId={client.owner} size={20} />
                 <span className="text-ink-primary">{memberName(client.owner)}</span>
               </dd>
             </div>

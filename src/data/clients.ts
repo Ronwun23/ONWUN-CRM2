@@ -3,15 +3,14 @@ import type {
   Client,
   ClientDocument,
   ClientEvent,
-  ClientTask,
-  LibraryItem,
+  LibraryFolder,
   PhaseKey,
   ProjectPhase,
   UpdateEntry,
   WorkshopState,
 } from '@/types'
 import { PHASES } from '@/types'
-import { TEAM, CURRENT_USER } from './team'
+import { TEAM } from './team'
 import { WORKSHOP_PHASES } from './workshopTemplate'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
 import { initialsFromName } from '@/lib/names'
@@ -98,6 +97,17 @@ export function blankDocuments(): ClientDocument[] {
   ]
 }
 
+// Every client's library starts with the same standard folders for the
+// individual brand assets a client would want to grab on their own —
+// starting empty and filled in as final files are ready.
+export function blankLibraryFolders(): LibraryFolder[] {
+  return ['Logos', 'Typography', 'Colour', 'Guidelines'].map((name) => ({
+    id: nextId('folder'),
+    name,
+    files: [],
+  }))
+}
+
 export function createBlankClient(input: {
   name: string
   projectName: string
@@ -130,7 +140,7 @@ export function createBlankClient(input: {
     documents: blankDocuments(),
     tasks: [],
     updates: [],
-    library: [],
+    library: blankLibraryFolders(),
     brandHub: [],
     events: [],
     workshop: emptyWorkshop(),
@@ -228,16 +238,6 @@ function docs(entries: [string, ClientDocument['type'], ClientDocument['status']
   }))
 }
 
-function tasks(entries: [string, boolean, number, string][]): ClientTask[] {
-  return entries.map(([title, done, dueOffset, assignee]) => ({
-    id: nextId('task'),
-    title,
-    done,
-    dueDate: daysFrom(dueOffset),
-    assignee,
-  }))
-}
-
 function updates(entries: [string, number, string][]): UpdateEntry[] {
   return entries.map(([text, offset, author]) => ({
     id: nextId('update'),
@@ -247,14 +247,6 @@ function updates(entries: [string, number, string][]): UpdateEntry[] {
   }))
 }
 
-function library(entries: [string, string, number][]): LibraryItem[] {
-  return entries.map(([title, category, offset]) => ({
-    id: nextId('lib'),
-    title,
-    category,
-    updatedAt: daysFrom(offset),
-  }))
-}
 
 function brandHub(entries: [string, BrandAsset['type'], number][]): BrandAsset[] {
   return entries.map(([title, type, offset]) => ({
@@ -296,19 +288,13 @@ export const CLIENTS: Client[] = [
       ['Final Brand Presentation', 'presentation', 'signed', 'Figma', -20],
       ['Figma Brand Guidelines', 'guidelines', 'signed', 'Figma', -18],
     ]),
-    tasks: tasks([
-      ['Send final asset pack', true, -17, TEAM[0].id],
-      ['Schedule 30-day check-in call', false, 12, TEAM[0].id],
-    ]),
+    tasks: [],
     updates: updates([
       ['Final brand presentation delivered — client thrilled with the direction.', -18, 'Maya Chen'],
       ['Guidelines hub shared and walked through live.', -17, 'Maya Chen'],
       ['Project closed out. Invoice paid in full.', -16, 'Maya Chen'],
     ]),
-    library: library([
-      ['Discovery call recording', 'Recordings', -158],
-      ['Competitor audit deck', 'Research', -140],
-    ]),
+    library: blankLibraryFolders(),
     brandHub: brandHub([
       ['Primary logo (SVG + PNG)', 'logo', -18],
       ['Wordmark lockups', 'logo', -18],
@@ -335,16 +321,12 @@ export const CLIENTS: Client[] = [
       ['Contract', 'contract', 'signed', 'Signed by all parties', -16],
       ['Invoices', 'invoice', 'unpaid', 'First milestone due', -3],
     ]),
-    tasks: tasks([
-      ['Chase first milestone invoice', false, -1, CURRENT_USER.id],
-      ['Send competitor research summary', false, 2, TEAM[1].id],
-      ['Book strategy workshop call', false, 5, CURRENT_USER.id],
-    ]),
+    tasks: [],
     updates: updates([
       ['Kickoff call completed — strong alignment on direction.', -18, 'Diego Alvarez'],
       ['Questionnaire sent to client for async input.', -12, 'Diego Alvarez'],
     ]),
-    library: library([['Kickoff call recording', 'Recordings', -18]]),
+    library: blankLibraryFolders(),
     brandHub: [],
     events: events([
       ['Strategy workshop call', 5],
@@ -369,18 +351,12 @@ export const CLIENTS: Client[] = [
       ['Invoices', 'invoice', 'paid', 'Deposit paid in full', -44],
       ['Brand Strategy', 'strategy', 'with_you', 'Draft in progress', -2],
     ]),
-    tasks: tasks([
-      ['Finish brand strategy draft', false, 1, CURRENT_USER.id],
-      ['Review positioning options internally', false, 3, TEAM[2].id],
-    ]),
+    tasks: [],
     updates: updates([
       ['Discovery workshop completed with full leadership team.', -30, 'Priya Nair'],
       ['Positioning direction narrowed to two routes.', -8, 'Priya Nair'],
     ]),
-    library: library([
-      ['Discovery workshop notes', 'Research', -30],
-      ['Stakeholder interview summary', 'Research', -25],
-    ]),
+    library: blankLibraryFolders(),
     brandHub: [],
     events: events([['Strategy sign-off call', 6]]),
   },
@@ -403,15 +379,12 @@ export const CLIENTS: Client[] = [
       ['Brand Strategy', 'strategy', 'signed', 'Anchorpoint Labs Brand Strategy.pdf', -50],
       ['Logo Concepts', 'presentation', 'signed', 'Figma', -20],
     ]),
-    tasks: tasks([
-      ['Chase final milestone invoice', false, -2, CURRENT_USER.id],
-      ['Prep full identity presentation deck', false, 4, TEAM[3].id],
-    ]),
+    tasks: [],
     updates: updates([
       ['Logo direction approved — moving into full identity design.', -20, 'Jonah Rees'],
       ['Full identity design underway across all touchpoints.', -6, 'Jonah Rees'],
     ]),
-    library: library([['Logo concept exploration', 'Design files', -22]]),
+    library: blankLibraryFolders(),
     brandHub: [],
     events: events([['Full identity presentation', 4]]),
   },
@@ -434,14 +407,11 @@ export const CLIENTS: Client[] = [
       ['Brand Strategy', 'strategy', 'signed', 'Solstice Retail Brand Strategy.pdf', -70],
       ['Final Brand Presentation', 'presentation', 'with_client', 'Figma', -1],
     ]),
-    tasks: tasks([
-      ['Prep guidelines hub for handover', false, 2, TEAM[0].id],
-      ['Follow up on final presentation feedback', false, 0, CURRENT_USER.id],
-    ]),
+    tasks: [],
     updates: updates([
       ['Final brand presentation sent for review.', -1, 'Maya Chen'],
     ]),
-    library: library([['Retail signage mockups', 'Design files', -10]]),
+    library: blankLibraryFolders(),
     brandHub: [],
     events: events([['Final feedback call', 0]]),
   },
@@ -461,9 +431,9 @@ export const CLIENTS: Client[] = [
       ['Proposal', 'proposal', 'signed', 'Figma embed', -9],
       ['Contract', 'contract', 'with_client', 'Awaiting signature', -8],
     ]),
-    tasks: tasks([['Follow up on contract signature', false, -1, TEAM[1].id]]),
+    tasks: [],
     updates: updates([['Kickoff call held — project paused pending internal client budget approval.', -6, 'Diego Alvarez']]),
-    library: [],
+    library: blankLibraryFolders(),
     brandHub: [],
     events: [],
   },

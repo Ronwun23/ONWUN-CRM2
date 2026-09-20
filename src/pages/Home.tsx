@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, Briefcase, Calendar, CheckCircle2, Users } from 'lucide-react'
+import { AlertCircle, ArrowRight, Briefcase, Calendar, CheckCircle2, Trash2, Users } from 'lucide-react'
+import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { CURRENT_USER } from '@/data/team'
 import StatCard from '@/components/StatCard'
@@ -10,12 +11,29 @@ import PhaseTrack from '@/components/PhaseTrack'
 import { ClientAvatar, MemberAvatar } from '@/components/Avatar'
 import { CLIENT_STATUS_LABEL, CLIENT_STATUS_TONE } from '@/lib/labels'
 import { currentPhaseKey, overallProgress } from '@/lib/progress'
-import { formatDate, formatDueDate } from '@/lib/format'
+import { formatDate, formatDueDate, formatRelativeDate } from '@/lib/format'
+import { toDisplayDate, todayCivil } from '@/lib/civilDate'
 import { PHASE_LABELS } from '@/types'
 
+function formatEventDate(civilOrIso: string): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(toDisplayDate(civilOrIso))
+}
+
+function sameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+const ViewCalendarLink = ({ onClick }: { onClick: () => void }) => (
+  <button onClick={onClick} className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700">
+    View calendar
+    <ArrowRight size={12} />
+  </button>
+)
+
 export default function HomePage() {
-  const { clients, toggleTask } = useApp()
+  const { clients, studio, toggleTask, toggleStudioTask, removeUpdate } = useApp()
   const navigate = useNavigate()
+  const goToCalendar = () => navigate('/calendar')
 
   const stats = useMemo(() => {
     const activeProjects = clients.filter((c) => c.status === 'active').length
@@ -37,28 +55,53 @@ export default function HomePage() {
   }, [clients])
 
   const todaysTasks = useMemo(() => {
-    return clients
-      .flatMap((c) => c.tasks.filter((t) => !t.done).map((t) => ({ ...t, clientName: c.name, clientId: c.id })))
+    const clientTasks = clients.flatMap((c) =>
+      c.tasks.filter((t) => !t.done).map((t) => ({ ...t, clientName: c.name, clientId: c.id as string | null }))
+    )
+    // Studio-wide tasks (added from the top-level Tasks page) aren't tied to
+    // any client, but they're just as much "due today" as a client's are.
+    const studioTasks = studio.tasks
+      .filter((t) => !t.done)
+      .map((t) => ({ ...t, clientName: 'Studio', clientId: null as string | null }))
+    return [...clientTasks, ...studioTasks]
       .filter((t) => {
         const due = formatDueDate(t.dueDate)
         return due.overdue || due.today
       })
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-  }, [clients])
+      .sort((a, b) => toDisplayDate(a.dueDate).getTime() - toDisplayDate(b.dueDate).getTime())
+  }, [clients, studio.tasks])
+
+  // "The calendar" is the studio-wide Calendar page (studio.events) — these
+  // home cards mirror exactly what's on it, not a separate per-client list.
+  const todaysEvents = useMemo(() => {
+    const today = new Date()
+    return studio.events
+      .filter((e) => sameDay(toDisplayDate(e.date), today))
+      .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''))
+  }, [studio.events])
 
   const upcomingEvents = useMemo(() => {
-    const now = Date.now()
-    const horizon = now + 14 * 86400000
-    return clients
-      .flatMap((c) => c.events.map((e) => ({ ...e, clientName: c.name, clientId: c.id })))
-      .filter((e) => new Date(e.date).getTime() >= now - 86400000 && new Date(e.date).getTime() <= horizon)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  }, [clients])
+    const today = todayCivil()
+    const horizon = new Date()
+    horizon.setDate(horizon.getDate() + 14)
+    return studio.events
+      .filter((e) => e.date >= today && toDisplayDate(e.date).getTime() <= horizon.getTime())
+      .sort((a, b) => (a.date + (a.time ?? '')).localeCompare(b.date + (b.time ?? '')))
+  }, [studio.events])
 
   const sortedClients = useMemo(
     () => [...clients].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()),
     [clients]
   )
+
+  // Surfaced so the agency notices the moment a client posts something on
+  // their own portal, without having to check every client individually.
+  const recentClientUpdates = useMemo(() => {
+    return clients
+      .flatMap((c) => c.updates.filter((u) => u.authorType === 'client').map((u) => ({ ...u, client: c })))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 6)
+  }, [clients])
 
   return (
     <div className="flex flex-col gap-6">
@@ -87,59 +130,118 @@ export default function HomePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Today" subtitle="Due today or overdue, across every client">
-          {todaysTasks.length === 0 && <p className="py-4 text-sm text-ink-muted">Nothing due — you're clear.</p>}
-          <ul className="flex flex-col divide-y divide-black/[0.05]">
-            {todaysTasks.map((task) => {
-              const due = formatDueDate(task.dueDate)
-              return (
-                <li key={task.id} className="flex items-center gap-3 py-2.5">
-                  <button
-                    onClick={() => toggleTask(task.clientId, task.id)}
-                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-black/20 hover:border-brand-500"
-                    aria-label="Toggle task"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-ink-primary">{task.title}</p>
+        <Card title="Today" subtitle="Tasks and calendar events" action={<ViewCalendarLink onClick={goToCalendar} />}>
+          {todaysTasks.length === 0 && todaysEvents.length === 0 && (
+            <p className="py-4 text-sm text-ink-muted">Nothing due today.</p>
+          )}
+          {todaysTasks.length > 0 && (
+            <ul className="flex flex-col divide-y divide-black/[0.05]">
+              {todaysTasks.map((task) => {
+                const due = formatDueDate(task.dueDate)
+                return (
+                  <li key={task.id} className="flex items-center gap-3 py-2.5">
                     <button
-                      onClick={() => navigate(`/clients/${task.clientId}/tasks`)}
-                      className="text-xs text-ink-muted hover:text-brand-600 hover:underline"
-                    >
-                      {task.clientName}
-                    </button>
-                  </div>
-                  <span className={due.overdue ? 'text-xs font-medium text-status-critical' : 'text-xs text-ink-muted'}>
-                    {due.label}
-                  </span>
+                      onClick={() => (task.clientId ? toggleTask(task.clientId, task.id) : toggleStudioTask(task.id))}
+                      className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-black/20 hover:border-brand-500"
+                      aria-label="Toggle task"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-ink-primary">{task.title}</p>
+                      <button
+                        onClick={() => navigate(task.clientId ? `/clients/${task.clientId}/tasks` : '/tasks')}
+                        className="text-xs text-ink-muted hover:text-brand-600 hover:underline"
+                      >
+                        {task.clientName}
+                      </button>
+                    </div>
+                    <span className={due.overdue ? 'text-xs font-medium text-status-critical' : 'text-xs text-ink-muted'}>
+                      {due.label}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          {todaysEvents.length > 0 && (
+            <ul className={clsx('flex flex-col divide-y divide-black/[0.05]', todaysTasks.length > 0 && 'mt-1 border-t border-black/[0.05]')}>
+              {todaysEvents.map((event) => (
+                <li key={event.id}>
+                  <button
+                    onClick={goToCalendar}
+                    className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-surface-sunken/40"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-ink-secondary">
+                      <Calendar size={14} />
+                    </div>
+                    <p className="min-w-0 flex-1 truncate text-sm text-ink-primary">{event.title}</p>
+                    <span className="text-xs text-ink-muted">{event.time ?? 'All day'}</span>
+                  </button>
                 </li>
-              )
-            })}
-          </ul>
+              ))}
+            </ul>
+          )}
         </Card>
 
-        <Card title="Upcoming events" subtitle="Next 14 days">
+        <Card title="Upcoming events" subtitle="Next 14 days" action={<ViewCalendarLink onClick={goToCalendar} />}>
           {upcomingEvents.length === 0 && <p className="py-4 text-sm text-ink-muted">Nothing on the calendar yet.</p>}
           <ul className="flex flex-col divide-y divide-black/[0.05]">
             {upcomingEvents.map((event) => (
-              <li key={event.id} className="flex items-center gap-3 py-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-ink-secondary">
-                  <Calendar size={14} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-ink-primary">{event.title}</p>
-                  <button
-                    onClick={() => navigate(`/clients/${event.clientId}/dashboard`)}
-                    className="text-xs text-ink-muted hover:text-brand-600 hover:underline"
-                  >
-                    {event.clientName}
-                  </button>
-                </div>
-                <span className="text-xs text-ink-muted">{formatDate(event.date)}</span>
+              <li key={event.id}>
+                <button
+                  onClick={goToCalendar}
+                  className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-surface-sunken/40"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-ink-secondary">
+                    <Calendar size={14} />
+                  </div>
+                  <p className="min-w-0 flex-1 truncate text-sm text-ink-primary">{event.title}</p>
+                  <span className="text-xs text-ink-muted">{formatEventDate(event.date)}</span>
+                </button>
               </li>
             ))}
           </ul>
         </Card>
       </div>
+
+      {recentClientUpdates.length > 0 && (
+        <Card title="Client updates" subtitle="Recent activity posted by clients on their own portal">
+          <ul className="flex flex-col divide-y divide-black/[0.05]">
+            {recentClientUpdates.map((update) => (
+              <li key={update.id} className="flex items-start gap-2 py-2.5">
+                <button
+                  onClick={() => navigate(`/clients/${update.client.id}/updates`)}
+                  className="flex min-w-0 flex-1 items-start gap-3 text-left hover:bg-surface-sunken/40"
+                >
+                  <ClientAvatar
+                    initials={update.client.initials}
+                    color={update.client.color}
+                    avatarUrl={update.client.avatarUrl}
+                    size={28}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-ink-primary">{update.text}</p>
+                    <div className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
+                      <span className="font-medium text-ink-secondary">{update.client.name}</span>
+                      <Pill tone="brand">Client</Pill>
+                      <span>· {formatRelativeDate(update.date)}</span>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    if (!window.confirm('Delete this update?')) return
+                    removeUpdate(update.client.id, update.id)
+                  }}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-[#fbecec] hover:text-status-critical"
+                  aria-label="Delete update"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card title="Clients" subtitle={`${clients.length} total`} padded={false}>
         <table className="w-full text-left text-sm">

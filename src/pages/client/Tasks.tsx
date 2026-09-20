@@ -3,7 +3,8 @@ import { Check, Plus } from 'lucide-react'
 import clsx from 'clsx'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
-import { TEAM } from '@/data/team'
+import { useViewMode } from '@/context/ViewModeContext'
+import { STUDIO_ACCOUNTS } from '@/data/team'
 import Card from '@/components/Card'
 import Drawer from '@/components/Drawer'
 import { MemberAvatar, memberName } from '@/components/Avatar'
@@ -14,11 +15,12 @@ import { toDisplayDate } from '@/lib/civilDate'
 
 export default function ClientTasks() {
   const client = useClientOutlet()
-  const { toggleTask, addTask } = useApp()
+  const { toggleTask, addTask, activeAccount } = useApp()
+  const { isClientView } = useViewMode()
   const [showAdd, setShowAdd] = useState(false)
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState<string | undefined>(undefined)
-  const [assignee, setAssignee] = useState(TEAM[0].id)
+  const [assignee, setAssignee] = useState(activeAccount.id)
 
   const open = client.tasks
     .filter((t) => !t.done)
@@ -43,13 +45,15 @@ export default function ClientTasks() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink-primary">Tasks</h1>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-        >
-          <Plus size={16} />
-          Add task
-        </button>
+        {!isClientView && (
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+          >
+            <Plus size={16} />
+            Add task
+          </button>
+        )}
       </div>
 
       <Card title="Open" padded={false}>
@@ -114,7 +118,11 @@ export default function ClientTasks() {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Assignee</label>
-            <Select value={assignee} onChange={setAssignee} options={TEAM.map((m) => ({ value: m.id, label: memberName(m.id) }))} />
+            <Select
+              value={assignee}
+              onChange={setAssignee}
+              options={STUDIO_ACCOUNTS.map((a) => ({ value: a.id, label: memberName(a.id) }))}
+            />
           </div>
           <button
             onClick={handleAdd}

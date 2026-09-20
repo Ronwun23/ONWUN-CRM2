@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Check, Plus } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
-import { TEAM } from '@/data/team'
+import { STUDIO_ACCOUNTS } from '@/data/team'
 import Card from '@/components/Card'
 import Drawer from '@/components/Drawer'
 import { MemberAvatar, memberName } from '@/components/Avatar'
@@ -12,11 +12,11 @@ import { formatDueDate } from '@/lib/format'
 import { toDisplayDate } from '@/lib/civilDate'
 
 export default function StudioTasks() {
-  const { studio, toggleStudioTask, addStudioTask } = useApp()
+  const { studio, toggleStudioTask, addStudioTask, activeAccount } = useApp()
   const [showAdd, setShowAdd] = useState(false)
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState<string | undefined>(undefined)
-  const [assignee, setAssignee] = useState(TEAM[0].id)
+  const [assignee, setAssignee] = useState(activeAccount.id)
 
   const open = studio.tasks
     .filter((t) => !t.done)
@@ -118,7 +118,7 @@ export default function StudioTasks() {
             <Select
               value={assignee}
               onChange={setAssignee}
-              options={TEAM.map((m) => ({ value: m.id, label: memberName(m.id) }))}
+              options={STUDIO_ACCOUNTS.map((a) => ({ value: a.id, label: memberName(a.id) }))}
             />
           </div>
           <button

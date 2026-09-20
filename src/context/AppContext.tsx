@@ -7,7 +7,8 @@ import type {
   ClientEvent,
   ClientTask,
   DocumentComment,
-  LibraryItem,
+  LibraryFile,
+  LibraryFolder,
   StrategyDraft,
   StrategyStatus,
   UpdateEntry,
@@ -15,14 +16,17 @@ import type {
 } from '@/types'
 import { CLIENTS } from '@/data/clients'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
+import { normalizeClient } from '@/lib/normalizeClient'
+import { STUDIO_ACCOUNTS } from '@/data/team'
+import type { StudioAccount } from '@/data/team'
 
-const STORAGE_KEY = 'onwun-studio-clients-v3'
+const STORAGE_KEY = 'onwun-studio-clients-v4'
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
 function loadInitialClients(): Client[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as Client[]
+    if (raw) return (JSON.parse(raw) as Client[]).map(normalizeClient)
   } catch {
     // fall through to mock data
   }
@@ -33,6 +37,8 @@ interface StudioState {
   tasks: ClientTask[]
   updates: UpdateEntry[]
   events: ClientEvent[]
+  logoUrl?: string
+  activeAccountId?: string
 }
 
 function loadInitialStudio(): StudioState {
@@ -61,11 +67,15 @@ interface AppContextValue {
   toggleTask: (clientId: string, taskId: string) => void
   addTask: (clientId: string, task: ClientTask) => void
   addUpdate: (clientId: string, update: UpdateEntry) => void
+  removeUpdate: (clientId: string, updateId: string) => void
   addDocument: (clientId: string, doc: ClientDocument) => void
   updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
   removeDocument: (clientId: string, docId: string) => void
   addDocumentComment: (clientId: string, docId: string, comment: DocumentComment) => void
-  addLibraryItem: (clientId: string, item: LibraryItem) => void
+  addLibraryFolder: (clientId: string, folder: LibraryFolder) => void
+  removeLibraryFolder: (clientId: string, folderId: string) => void
+  addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => void
+  removeLibraryFile: (clientId: string, folderId: string, fileId: string) => void
   addBrandAsset: (clientId: string, asset: BrandAsset) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string) => void
   setWorkshopPosition: (clientId: string, phaseIndex: number, screen: WorkshopScreen, questionIndex: number) => void
@@ -79,8 +89,13 @@ interface AppContextValue {
   addStudioTask: (task: ClientTask) => void
   toggleStudioTask: (taskId: string) => void
   addStudioUpdate: (update: UpdateEntry) => void
+  removeStudioUpdate: (updateId: string) => void
   addStudioEvent: (event: ClientEvent) => void
   removeStudioEvent: (eventId: string) => void
+  setStudioLogo: (url: string | undefined) => void
+  updateStudioEventNotes: (eventId: string, notes: string) => void
+  activeAccount: StudioAccount
+  setActiveAccount: (accountId: string) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -120,12 +135,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setStudio((prev) => ({ ...prev, updates: [update, ...prev.updates] }))
   }, [])
 
+  const removeStudioUpdate = useCallback((updateId: string) => {
+    setStudio((prev) => ({ ...prev, updates: prev.updates.filter((u) => u.id !== updateId) }))
+  }, [])
+
   const addStudioEvent = useCallback((event: ClientEvent) => {
     setStudio((prev) => ({ ...prev, events: [...prev.events, event] }))
   }, [])
 
   const removeStudioEvent = useCallback((eventId: string) => {
     setStudio((prev) => ({ ...prev, events: prev.events.filter((e) => e.id !== eventId) }))
+  }, [])
+
+  const setStudioLogo = useCallback((url: string | undefined) => {
+    setStudio((prev) => ({ ...prev, logoUrl: url }))
+  }, [])
+
+  const updateStudioEventNotes = useCallback((eventId: string, notes: string) => {
+    setStudio((prev) => ({
+      ...prev,
+      events: prev.events.map((e) => (e.id === eventId ? { ...e, notes: notes || undefined } : e)),
+    }))
+  }, [])
+
+  const activeAccount =
+    STUDIO_ACCOUNTS.find((a) => a.id === studio.activeAccountId) ?? STUDIO_ACCOUNTS[STUDIO_ACCOUNTS.length - 1]
+
+  const setActiveAccount = useCallback((accountId: string) => {
+    setStudio((prev) => ({ ...prev, activeAccountId: accountId }))
   }, [])
 
   const updateClient = useCallback((clientId: string, patch: (c: Client) => Client) => {
@@ -212,6 +249,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const removeUpdate = useCallback(
+    (clientId: string, updateId: string) => {
+      updateClient(clientId, (c) => ({ ...c, updates: c.updates.filter((u) => u.id !== updateId) }))
+    },
+    [updateClient]
+  )
+
   const addDocument = useCallback(
     (clientId: string, doc: ClientDocument) => {
       updateClient(clientId, (c) => ({ ...c, documents: [doc, ...c.documents] }))
@@ -248,9 +292,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
-  const addLibraryItem = useCallback(
-    (clientId: string, item: LibraryItem) => {
-      updateClient(clientId, (c) => ({ ...c, library: [item, ...c.library] }))
+  const addLibraryFolder = useCallback(
+    (clientId: string, folder: LibraryFolder) => {
+      updateClient(clientId, (c) => ({ ...c, library: [...c.library, folder] }))
+    },
+    [updateClient]
+  )
+
+  const removeLibraryFolder = useCallback(
+    (clientId: string, folderId: string) => {
+      updateClient(clientId, (c) => ({ ...c, library: c.library.filter((f) => f.id !== folderId) }))
+    },
+    [updateClient]
+  )
+
+  const addLibraryFile = useCallback(
+    (clientId: string, folderId: string, file: LibraryFile) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        library: c.library.map((folder) =>
+          folder.id === folderId ? { ...folder, files: [file, ...folder.files] } : folder
+        ),
+      }))
+    },
+    [updateClient]
+  )
+
+  const removeLibraryFile = useCallback(
+    (clientId: string, folderId: string, fileId: string) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        library: c.library.map((folder) =>
+          folder.id === folderId ? { ...folder, files: folder.files.filter((f) => f.id !== fileId) } : folder
+        ),
+      }))
     },
     [updateClient]
   )
@@ -370,11 +445,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleTask,
       addTask,
       addUpdate,
+      removeUpdate,
       addDocument,
       updateDocument,
       removeDocument,
       addDocumentComment,
-      addLibraryItem,
+      addLibraryFolder,
+      removeLibraryFolder,
+      addLibraryFile,
+      removeLibraryFile,
       addBrandAsset,
       saveWorkshopAnswer,
       setWorkshopPosition,
@@ -388,8 +467,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioTask,
       toggleStudioTask,
       addStudioUpdate,
+      removeStudioUpdate,
       addStudioEvent,
       removeStudioEvent,
+      setStudioLogo,
+      updateStudioEventNotes,
+      activeAccount,
+      setActiveAccount,
     }),
     [
       clients,
@@ -402,11 +486,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleTask,
       addTask,
       addUpdate,
+      removeUpdate,
       addDocument,
       updateDocument,
       removeDocument,
       addDocumentComment,
-      addLibraryItem,
+      addLibraryFolder,
+      removeLibraryFolder,
+      addLibraryFile,
+      removeLibraryFile,
       addBrandAsset,
       saveWorkshopAnswer,
       setWorkshopPosition,
@@ -420,8 +508,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioTask,
       toggleStudioTask,
       addStudioUpdate,
+      removeStudioUpdate,
       addStudioEvent,
       removeStudioEvent,
+      setStudioLogo,
+      updateStudioEventNotes,
+      activeAccount,
+      setActiveAccount,
     ]
   )
 

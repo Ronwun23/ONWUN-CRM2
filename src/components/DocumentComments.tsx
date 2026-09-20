@@ -3,7 +3,6 @@ import type { KeyboardEvent } from 'react'
 import { Send } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useViewMode } from '@/context/ViewModeContext'
-import { CURRENT_USER } from '@/data/team'
 import type { Client, ClientDocument } from '@/types'
 
 function formatCommentTime(iso: string): string {
@@ -16,7 +15,7 @@ function formatCommentTime(iso: string): string {
 }
 
 export default function DocumentComments({ client, doc }: { client: Client; doc: ClientDocument }) {
-  const { addDocumentComment } = useApp()
+  const { addDocumentComment, activeAccount } = useApp()
   const { isClientView } = useViewMode()
   const [draft, setDraft] = useState('')
   // Defensive: documents created before comment threads existed (still
@@ -24,7 +23,7 @@ export default function DocumentComments({ client, doc }: { client: Client; doc:
   // a `comments` array at all.
   const comments = doc.comments ?? []
 
-  const authorName = isClientView ? client.name : CURRENT_USER.name
+  const authorName = isClientView ? client.name : activeAccount.name
   const otherPartyName = isClientView ? 'Onwun' : client.name
 
   const send = () => {

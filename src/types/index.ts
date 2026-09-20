@@ -67,13 +67,24 @@ export interface UpdateEntry {
   text: string
   date: string
   author: string
+  authorType?: 'agency' | 'client'
 }
 
-export interface LibraryItem {
+export type LibraryFileType = 'pdf' | 'png' | 'ttf' | 'link' | 'other'
+
+export interface LibraryFile {
   id: string
   title: string
-  category: string
+  fileType: LibraryFileType
+  fileName?: string
+  url?: string
   updatedAt: string
+}
+
+export interface LibraryFolder {
+  id: string
+  name: string
+  files: LibraryFile[]
 }
 
 export type BrandAssetType = 'logo' | 'color' | 'typography' | 'guideline' | 'other'
@@ -89,6 +100,8 @@ export interface ClientEvent {
   id: string
   title: string
   date: string
+  time?: string
+  notes?: string
 }
 
 export interface WorkshopQuestion {
@@ -187,7 +200,7 @@ export interface Client {
   documents: ClientDocument[]
   tasks: ClientTask[]
   updates: UpdateEntry[]
-  library: LibraryItem[]
+  library: LibraryFolder[]
   brandHub: BrandAsset[]
   events: ClientEvent[]
   workshop: WorkshopState
