@@ -105,6 +105,8 @@ export function createBlankClient(input: {
   dueDate: string
   color?: string
   avatarUrl?: string
+  email?: string
+  phone?: string
 }): Client {
   const id = input.name
     .toLowerCase()
@@ -118,6 +120,8 @@ export function createBlankClient(input: {
     initials: initialsFromName(input.name),
     color: input.color ?? NEW_CLIENT_COLORS[Math.floor(Math.random() * NEW_CLIENT_COLORS.length)],
     avatarUrl: input.avatarUrl,
+    email: input.email,
+    phone: input.phone,
     status: 'active',
     owner: input.owner,
     startDate: new Date().toISOString(),

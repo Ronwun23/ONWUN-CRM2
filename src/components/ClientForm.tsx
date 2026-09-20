@@ -3,7 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import { TEAM } from '@/data/team'
+import { TEAM, resolveMember } from '@/data/team'
 import { createBlankClient, NEW_CLIENT_COLORS } from '@/data/clients'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Combobox } from '@/components/ui/combobox'
@@ -22,8 +22,10 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
   const navigate = useNavigate()
   const [name, setName] = useState(existing?.name ?? '')
   const [projectName, setProjectName] = useState(existing?.projectName ?? 'Rebrand')
-  const [owner, setOwner] = useState(existing?.owner ?? TEAM[0].name)
+  const [owner, setOwner] = useState(existing ? resolveMember(existing.owner).name : TEAM[0].name)
   const [dueDate, setDueDate] = useState<string | undefined>(existing?.dueDate)
+  const [email, setEmail] = useState(existing?.email ?? '')
+  const [phone, setPhone] = useState(existing?.phone ?? '')
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(existing?.avatarUrl)
   const [color] = useState(
     () => existing?.color ?? NEW_CLIENT_COLORS[Math.floor(Math.random() * NEW_CLIENT_COLORS.length)]
@@ -54,6 +56,8 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
         owner: owner.trim(),
         dueDate,
         avatarUrl,
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
         initials: initialsFromName(name.trim()),
       })
       onDone()
@@ -67,6 +71,8 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
       dueDate,
       color,
       avatarUrl,
+      email: email.trim() || undefined,
+      phone: phone.trim() || undefined,
     })
     addClient(client)
     onDone()
@@ -149,6 +155,36 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
         <div>
           <label className={labelClass}>Due date</label>
           <DatePicker value={dueDate} onChange={setDueDate} placeholder="Select date" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="client@company.com"
+            className={inputClass}
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            name="client-email"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Phone</label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="(555) 123-4567"
+            className={inputClass}
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            name="client-phone"
+          />
         </div>
       </div>
       <button

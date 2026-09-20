@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Megaphone,
   Plus,
+  Settings,
   Sparkles,
   Palette,
   X,
@@ -31,6 +32,7 @@ const CLIENT_NAV_ITEMS = [
   { to: 'library', label: 'Library', icon: BookOpen },
   { to: 'discovery', label: 'Discovery & Strategy', icon: Sparkles },
   { to: 'brand-hub', label: 'Brand hub', icon: Palette },
+  { to: 'settings', label: 'Client settings', icon: Settings, studioOnly: true },
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -104,7 +106,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               </div>
             </div>
             <nav className="flex flex-col gap-0.5 px-3 py-1">
-              {CLIENT_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+              {CLIENT_NAV_ITEMS.filter((item) => !item.studioOnly || !isClientView).map(({ to, label, icon: Icon }) => (
                 <NavLink
                   key={to}
                   to={`/clients/${client.id}/${to}`}

@@ -1,13 +1,11 @@
 import { useState } from 'react'
-import { Check, Eye, Pencil, Plus } from 'lucide-react'
+import { Check, Eye, Plus } from 'lucide-react'
 import clsx from 'clsx'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
 import { useViewMode } from '@/context/ViewModeContext'
 import Card from '@/components/Card'
 import Pill from '@/components/Pill'
-import Drawer from '@/components/Drawer'
-import ClientForm from '@/components/ClientForm'
 import { Steps } from '@/components/Steps'
 import { ClientAvatar, MemberAvatar, memberName } from '@/components/Avatar'
 import TimelineStrip from '@/components/TimelineStrip'
@@ -22,7 +20,6 @@ export default function ClientDashboard() {
   const { isClientView, setIsClientView } = useViewMode()
   const [selectedPhase, setSelectedPhase] = useState(client.phases[0].key)
   const [newStepTitle, setNewStepTitle] = useState('')
-  const [showEdit, setShowEdit] = useState(false)
 
   const phase = client.phases.find((p) => p.key === selectedPhase)!
   const progress = overallProgress(client)
@@ -43,19 +40,7 @@ export default function ClientDashboard() {
         <div className="flex items-center gap-3">
           <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={44} />
           <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-xl font-semibold text-ink-primary">{client.name}</h1>
-              {!isClientView && (
-                <button
-                  onClick={() => setShowEdit(true)}
-                  className="flex h-6 w-6 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink-primary"
-                  aria-label="Edit client"
-                  title="Edit client"
-                >
-                  <Pencil size={13} />
-                </button>
-              )}
-            </div>
+            <h1 className="text-xl font-semibold text-ink-primary">{client.name}</h1>
             <p className="text-sm text-ink-secondary">{client.projectName}</p>
           </div>
         </div>
@@ -215,10 +200,6 @@ export default function ClientDashboard() {
       <Card title="Timeline">
         <TimelineStrip client={client} />
       </Card>
-
-      <Drawer open={showEdit} onClose={() => setShowEdit(false)} title="Edit client">
-        <ClientForm existing={client} onDone={() => setShowEdit(false)} />
-      </Drawer>
     </div>
   )
 }

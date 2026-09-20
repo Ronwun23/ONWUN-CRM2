@@ -33,7 +33,9 @@ interface AppContextValue {
   removeClient: (clientId: string) => void
   updateClientProfile: (
     clientId: string,
-    patch: Partial<Pick<Client, 'name' | 'projectName' | 'owner' | 'dueDate' | 'avatarUrl' | 'color' | 'initials'>>
+    patch: Partial<
+      Pick<Client, 'name' | 'projectName' | 'owner' | 'dueDate' | 'avatarUrl' | 'color' | 'initials' | 'email' | 'phone'>
+    >
   ) => void
   toggleStep: (clientId: string, phaseKey: string, stepId: string) => void
   addStep: (clientId: string, phaseKey: string, title: string) => void

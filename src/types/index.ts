@@ -166,6 +166,8 @@ export interface Client {
   initials: string
   color: string
   avatarUrl?: string
+  email?: string
+  phone?: string
   status: ClientStatus
   owner: string
   startDate: string
