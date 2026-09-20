@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Download, File as FileIcon, FileText, Image, Plus, Trash2, Type } from 'lucide-react'
+import { ArrowLeft, Download, ExternalLink, File as FileIcon, FileText, Image, Link2, Plus, Trash2, Type } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
@@ -14,6 +14,7 @@ const FILE_TYPE_ICON: Record<LibraryFileType, LucideIcon> = {
   pdf: FileText,
   png: Image,
   ttf: Type,
+  link: Link2,
   other: FileIcon,
 }
 
@@ -21,6 +22,7 @@ const FILE_TYPE_LABEL: Record<LibraryFileType, string> = {
   pdf: 'PDF',
   png: 'PNG',
   ttf: 'Font (TTF)',
+  link: 'Link',
   other: 'File',
 }
 
@@ -87,14 +89,26 @@ export default function ClientLibraryFolder() {
               <div className="mt-2 flex items-center justify-between">
                 <p className="text-xs text-ink-muted">Updated {formatDate(file.updatedAt)}</p>
                 {file.url && (
-                  <a
-                    href={file.url}
-                    download={file.fileName}
-                    className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"
-                  >
-                    Download
-                    <Download size={11} />
-                  </a>
+                  file.fileType === 'link' ? (
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"
+                    >
+                      Open link
+                      <ExternalLink size={11} />
+                    </a>
+                  ) : (
+                    <a
+                      href={file.url}
+                      download={file.fileName}
+                      className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"
+                    >
+                      Download
+                      <Download size={11} />
+                    </a>
+                  )
                 )}
               </div>
             </div>

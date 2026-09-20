@@ -69,13 +69,13 @@ export interface UpdateEntry {
   author: string
 }
 
-export type LibraryFileType = 'pdf' | 'png' | 'ttf' | 'other'
+export type LibraryFileType = 'pdf' | 'png' | 'ttf' | 'link' | 'other'
 
 export interface LibraryFile {
   id: string
   title: string
   fileType: LibraryFileType
-  fileName: string
+  fileName?: string
   url?: string
   updatedAt: string
 }

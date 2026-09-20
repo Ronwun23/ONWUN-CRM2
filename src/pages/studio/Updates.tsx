@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { Send } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import { CURRENT_USER } from '@/data/team'
 import Card from '@/components/Card'
 import { formatRelativeDate } from '@/lib/format'
 
 export default function StudioUpdates() {
-  const { studio, addStudioUpdate } = useApp()
+  const { studio, addStudioUpdate, activeAccount } = useApp()
   const [text, setText] = useState('')
 
   const handlePost = () => {
@@ -15,7 +14,7 @@ export default function StudioUpdates() {
       id: `studio-update-${Date.now()}`,
       text: text.trim(),
       date: new Date().toISOString(),
-      author: CURRENT_USER.name,
+      author: activeAccount.name,
     })
     setText('')
   }

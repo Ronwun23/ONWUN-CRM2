@@ -3,10 +3,10 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import { TEAM, resolveMember } from '@/data/team'
+import { STUDIO_ACCOUNTS, resolveMember } from '@/data/team'
 import { createBlankClient, NEW_CLIENT_COLORS } from '@/data/clients'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Combobox } from '@/components/ui/combobox'
+import { Select } from '@/components/ui/select'
 import { ClientAvatar } from '@/components/Avatar'
 import { initialsFromName } from '@/lib/names'
 import { fileToCompressedDataUrl } from '@/lib/image'
@@ -18,11 +18,11 @@ const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide tex
 
 /** Add a new client, or edit an existing one — same fields either way. */
 export default function ClientForm({ existing, onDone }: { existing?: Client; onDone: () => void }) {
-  const { addClient, updateClientProfile } = useApp()
+  const { addClient, updateClientProfile, activeAccount } = useApp()
   const navigate = useNavigate()
   const [name, setName] = useState(existing?.name ?? '')
   const [projectName, setProjectName] = useState(existing?.projectName ?? 'Rebrand')
-  const [owner, setOwner] = useState(existing ? resolveMember(existing.owner).name : TEAM[0].name)
+  const [owner, setOwner] = useState(existing ? resolveMember(existing.owner).name : activeAccount.name)
   const [dueDate, setDueDate] = useState<string | undefined>(existing?.dueDate)
   const [email, setEmail] = useState(existing?.email ?? '')
   const [phone, setPhone] = useState(existing?.phone ?? '')
@@ -145,11 +145,11 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Owner</label>
-          <Combobox
+          <Select
             value={owner}
             onChange={setOwner}
-            suggestions={TEAM.map((m) => m.name)}
-            placeholder="Type a name…"
+            options={STUDIO_ACCOUNTS.map((a) => ({ value: a.name, label: a.name }))}
+            placeholder="Select…"
           />
         </div>
         <div>

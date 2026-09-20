@@ -16,6 +16,9 @@ import type {
 } from '@/types'
 import { CLIENTS, blankLibraryFolders } from '@/data/clients'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
+import { normalizeClient } from '@/lib/normalizeClient'
+import { STUDIO_ACCOUNTS } from '@/data/team'
+import type { StudioAccount } from '@/data/team'
 
 const STORAGE_KEY = 'onwun-studio-clients-v3'
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
@@ -48,6 +51,7 @@ interface StudioState {
   updates: UpdateEntry[]
   events: ClientEvent[]
   logoUrl?: string
+  activeAccountId?: string
 }
 
 function loadInitialStudio(): StudioState {
@@ -101,6 +105,8 @@ interface AppContextValue {
   removeStudioEvent: (eventId: string) => void
   setStudioLogo: (url: string | undefined) => void
   updateStudioEventNotes: (eventId: string, notes: string) => void
+  activeAccount: StudioAccount
+  setActiveAccount: (accountId: string) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -157,6 +163,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...prev,
       events: prev.events.map((e) => (e.id === eventId ? { ...e, notes: notes || undefined } : e)),
     }))
+  }, [])
+
+  const activeAccount =
+    STUDIO_ACCOUNTS.find((a) => a.id === studio.activeAccountId) ?? STUDIO_ACCOUNTS[STUDIO_ACCOUNTS.length - 1]
+
+  const setActiveAccount = useCallback((accountId: string) => {
+    setStudio((prev) => ({ ...prev, activeAccountId: accountId }))
   }, [])
 
   const updateClient = useCallback((clientId: string, patch: (c: Client) => Client) => {
@@ -457,6 +470,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removeStudioEvent,
       setStudioLogo,
       updateStudioEventNotes,
+      activeAccount,
+      setActiveAccount,
     }),
     [
       clients,
@@ -494,6 +509,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removeStudioEvent,
       setStudioLogo,
       updateStudioEventNotes,
+      activeAccount,
+      setActiveAccount,
     ]
   )
 

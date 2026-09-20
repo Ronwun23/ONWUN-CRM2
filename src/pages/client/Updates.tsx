@@ -3,13 +3,12 @@ import { Send } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
 import { useViewMode } from '@/context/ViewModeContext'
-import { CURRENT_USER } from '@/data/team'
 import Card from '@/components/Card'
 import { formatRelativeDate } from '@/lib/format'
 
 export default function ClientUpdates() {
   const client = useClientOutlet()
-  const { addUpdate } = useApp()
+  const { addUpdate, activeAccount } = useApp()
   const { isClientView } = useViewMode()
   const [text, setText] = useState('')
 
@@ -19,7 +18,7 @@ export default function ClientUpdates() {
       id: `update-${Date.now()}`,
       text: text.trim(),
       date: new Date().toISOString(),
-      author: CURRENT_USER.name,
+      author: activeAccount.name,
     })
     setText('')
   }
