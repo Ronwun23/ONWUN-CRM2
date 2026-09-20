@@ -200,17 +200,32 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [clientListExpanded, setClientListExpanded] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [searchOpen, setSearchOpen] = useState(false)
+  // Whatever had focus the instant the palette was triggered (the sidebar
+  // button, or nothing in particular if opened via ⌘K from elsewhere) —
+  // captured here, before the palette mounts and its input steals focus,
+  // so it can be restored on dismissal.
+  const searchTriggerRef = useRef<HTMLElement | null>(null)
   const isImmersiveSession = Boolean(useMatch('/clients/:clientId/discovery/session'))
   // A client previewing their own portal only ever sees their own portal —
   // no route back to the studio's full client list.
   const lockedToClient = Boolean(client) && isClientView
+
+  const openSearch = () => {
+    searchTriggerRef.current = document.activeElement as HTMLElement | null
+    setSearchOpen(true)
+  }
+
+  const closeSearch = () => {
+    setSearchOpen(false)
+    searchTriggerRef.current?.focus()
+  }
 
   useEffect(() => {
     if (lockedToClient) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
-        setSearchOpen(true)
+        openSearch()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -290,7 +305,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         {!lockedToClient && (
           <div className="px-3 pt-3">
             <button
-              onClick={() => setSearchOpen(true)}
+              onClick={openSearch}
               className="flex w-full items-center gap-2.5 rounded-lg border border-white/10 px-3 py-2 text-left text-sm text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white/70"
             >
               <Search size={15} />
@@ -441,7 +456,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <ClientForm onDone={() => setShowAddClient(false)} />
       </Drawer>
 
-      <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchPalette open={searchOpen} onClose={closeSearch} />
     </div>
   )
 }
