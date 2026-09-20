@@ -10,6 +10,8 @@ import {
   FileText,
   LayoutDashboard,
   Megaphone,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Settings,
   Sparkles,
@@ -51,6 +53,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const client = clientId ? getClient(clientId) : undefined
   const [showAddClient, setShowAddClient] = useState(false)
   const [clientListExpanded, setClientListExpanded] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const isImmersiveSession = Boolean(useMatch('/clients/:clientId/discovery/session'))
   // A client previewing their own portal only ever sees their own portal —
   // no route back to the studio's full client list.
@@ -70,27 +73,64 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-surface-page text-ink-primary">
-      <aside className="flex w-60 shrink-0 flex-col bg-black">
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="fixed left-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-lg bg-black text-white/70 shadow-pop transition-colors hover:text-white"
+          aria-label="Expand sidebar"
+          title="Expand sidebar"
+        >
+          <PanelLeftOpen size={17} strokeWidth={1.5} />
+        </button>
+      )}
+
+      <aside
+        className={clsx(
+          'flex shrink-0 flex-col overflow-hidden bg-black transition-all duration-300 ease-in-out',
+          sidebarOpen ? 'w-60' : 'w-0'
+        )}
+      >
+        <div className="flex h-full w-60 flex-col">
         {lockedToClient ? (
-          <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
-              o
+          <div className="flex items-center justify-between gap-2.5 border-b border-white/10 px-5 py-5">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
+                o
+              </div>
+              <div>
+                <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
+                <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
-              <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
-            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white"
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose size={16} strokeWidth={1.5} />
+            </button>
           </div>
         ) : (
-          <Link to="/" className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
-              o
-            </div>
-            <div>
-              <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
-              <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
-            </div>
-          </Link>
+          <div className="flex items-center justify-between gap-2.5 border-b border-white/10 px-5 py-5">
+            <Link to="/" className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
+                o
+              </div>
+              <div>
+                <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
+                <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
+              </div>
+            </Link>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white"
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose size={16} strokeWidth={1.5} />
+            </button>
+          </div>
         )}
 
         {client ? (
@@ -232,10 +272,13 @@ export default function Layout({ children }: { children: ReactNode }) {
             <p className="truncate text-[11px] leading-tight text-white/40">{CURRENT_USER.email}</p>
           </div>
         </div>
+        </div>
       </aside>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1400px] px-8 py-7">{children}</div>
+        <div className={clsx('mx-auto max-w-[1400px]', sidebarOpen ? 'px-8 py-7' : 'pl-16 pr-8 pt-14 pb-7')}>
+          {children}
+        </div>
       </main>
 
       <Drawer open={showAddClient} onClose={() => setShowAddClient(false)} title="Add a client">
