@@ -16,6 +16,7 @@ import type {
 } from '@/types'
 import { CLIENTS } from '@/data/clients'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
+import { normalizeClient } from '@/lib/normalizeClient'
 
 const STORAGE_KEY = 'onwun-studio-clients-v3'
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
@@ -23,7 +24,7 @@ const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 function loadInitialClients(): Client[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as Client[]
+    if (raw) return (JSON.parse(raw) as Client[]).map(normalizeClient)
   } catch {
     // fall through to mock data
   }
