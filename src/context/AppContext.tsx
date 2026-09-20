@@ -20,7 +20,7 @@ import { normalizeClient } from '@/lib/normalizeClient'
 import { STUDIO_ACCOUNTS } from '@/data/team'
 import type { StudioAccount } from '@/data/team'
 
-const STORAGE_KEY = 'onwun-studio-clients-v3'
+const STORAGE_KEY = 'onwun-studio-clients-v4'
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
 function loadInitialClients(): Client[] {

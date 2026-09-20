@@ -3,7 +3,6 @@ import type {
   Client,
   ClientDocument,
   ClientEvent,
-  ClientTask,
   LibraryFolder,
   PhaseKey,
   ProjectPhase,
@@ -11,7 +10,7 @@ import type {
   WorkshopState,
 } from '@/types'
 import { PHASES } from '@/types'
-import { TEAM, CURRENT_USER } from './team'
+import { TEAM } from './team'
 import { WORKSHOP_PHASES } from './workshopTemplate'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
 import { initialsFromName } from '@/lib/names'
@@ -239,16 +238,6 @@ function docs(entries: [string, ClientDocument['type'], ClientDocument['status']
   }))
 }
 
-function tasks(entries: [string, boolean, number, string][]): ClientTask[] {
-  return entries.map(([title, done, dueOffset, assignee]) => ({
-    id: nextId('task'),
-    title,
-    done,
-    dueDate: daysFrom(dueOffset),
-    assignee,
-  }))
-}
-
 function updates(entries: [string, number, string][]): UpdateEntry[] {
   return entries.map(([text, offset, author]) => ({
     id: nextId('update'),
@@ -299,10 +288,7 @@ export const CLIENTS: Client[] = [
       ['Final Brand Presentation', 'presentation', 'signed', 'Figma', -20],
       ['Figma Brand Guidelines', 'guidelines', 'signed', 'Figma', -18],
     ]),
-    tasks: tasks([
-      ['Send final asset pack', true, -17, TEAM[0].id],
-      ['Schedule 30-day check-in call', false, 12, TEAM[0].id],
-    ]),
+    tasks: [],
     updates: updates([
       ['Final brand presentation delivered — client thrilled with the direction.', -18, 'Maya Chen'],
       ['Guidelines hub shared and walked through live.', -17, 'Maya Chen'],
@@ -335,11 +321,7 @@ export const CLIENTS: Client[] = [
       ['Contract', 'contract', 'signed', 'Signed by all parties', -16],
       ['Invoices', 'invoice', 'unpaid', 'First milestone due', -3],
     ]),
-    tasks: tasks([
-      ['Chase first milestone invoice', false, -1, CURRENT_USER.id],
-      ['Send competitor research summary', false, 2, TEAM[1].id],
-      ['Book strategy workshop call', false, 5, CURRENT_USER.id],
-    ]),
+    tasks: [],
     updates: updates([
       ['Kickoff call completed — strong alignment on direction.', -18, 'Diego Alvarez'],
       ['Questionnaire sent to client for async input.', -12, 'Diego Alvarez'],
@@ -369,10 +351,7 @@ export const CLIENTS: Client[] = [
       ['Invoices', 'invoice', 'paid', 'Deposit paid in full', -44],
       ['Brand Strategy', 'strategy', 'with_you', 'Draft in progress', -2],
     ]),
-    tasks: tasks([
-      ['Finish brand strategy draft', false, 1, CURRENT_USER.id],
-      ['Review positioning options internally', false, 3, TEAM[2].id],
-    ]),
+    tasks: [],
     updates: updates([
       ['Discovery workshop completed with full leadership team.', -30, 'Priya Nair'],
       ['Positioning direction narrowed to two routes.', -8, 'Priya Nair'],
@@ -400,10 +379,7 @@ export const CLIENTS: Client[] = [
       ['Brand Strategy', 'strategy', 'signed', 'Anchorpoint Labs Brand Strategy.pdf', -50],
       ['Logo Concepts', 'presentation', 'signed', 'Figma', -20],
     ]),
-    tasks: tasks([
-      ['Chase final milestone invoice', false, -2, CURRENT_USER.id],
-      ['Prep full identity presentation deck', false, 4, TEAM[3].id],
-    ]),
+    tasks: [],
     updates: updates([
       ['Logo direction approved — moving into full identity design.', -20, 'Jonah Rees'],
       ['Full identity design underway across all touchpoints.', -6, 'Jonah Rees'],
@@ -431,10 +407,7 @@ export const CLIENTS: Client[] = [
       ['Brand Strategy', 'strategy', 'signed', 'Solstice Retail Brand Strategy.pdf', -70],
       ['Final Brand Presentation', 'presentation', 'with_client', 'Figma', -1],
     ]),
-    tasks: tasks([
-      ['Prep guidelines hub for handover', false, 2, TEAM[0].id],
-      ['Follow up on final presentation feedback', false, 0, CURRENT_USER.id],
-    ]),
+    tasks: [],
     updates: updates([
       ['Final brand presentation sent for review.', -1, 'Maya Chen'],
     ]),
@@ -458,7 +431,7 @@ export const CLIENTS: Client[] = [
       ['Proposal', 'proposal', 'signed', 'Figma embed', -9],
       ['Contract', 'contract', 'with_client', 'Awaiting signature', -8],
     ]),
-    tasks: tasks([['Follow up on contract signature', false, -1, TEAM[1].id]]),
+    tasks: [],
     updates: updates([['Kickoff call held — project paused pending internal client budget approval.', -6, 'Diego Alvarez']]),
     library: blankLibraryFolders(),
     brandHub: [],
