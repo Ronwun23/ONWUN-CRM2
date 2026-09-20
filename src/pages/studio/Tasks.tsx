@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Check, Plus } from 'lucide-react'
 import clsx from 'clsx'
-import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
 import { TEAM } from '@/data/team'
 import Card from '@/components/Card'
@@ -12,23 +11,22 @@ import { Select } from '@/components/ui/select'
 import { formatDueDate } from '@/lib/format'
 import { toDisplayDate } from '@/lib/civilDate'
 
-export default function ClientTasks() {
-  const client = useClientOutlet()
-  const { toggleTask, addTask } = useApp()
+export default function StudioTasks() {
+  const { studio, toggleStudioTask, addStudioTask } = useApp()
   const [showAdd, setShowAdd] = useState(false)
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState<string | undefined>(undefined)
   const [assignee, setAssignee] = useState(TEAM[0].id)
 
-  const open = client.tasks
+  const open = studio.tasks
     .filter((t) => !t.done)
     .sort((a, b) => toDisplayDate(a.dueDate).getTime() - toDisplayDate(b.dueDate).getTime())
-  const done = client.tasks.filter((t) => t.done)
+  const done = studio.tasks.filter((t) => t.done)
 
   const handleAdd = () => {
     if (!title.trim() || !dueDate) return
-    addTask(client.id, {
-      id: `task-${Date.now()}`,
+    addStudioTask({
+      id: `studio-task-${Date.now()}`,
       title: title.trim(),
       done: false,
       dueDate,
@@ -42,7 +40,10 @@ export default function ClientTasks() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-ink-primary">Tasks</h1>
+        <div>
+          <h1 className="text-xl font-semibold text-ink-primary">Tasks</h1>
+          <p className="text-sm text-ink-secondary">Studio-wide work, not tied to a specific client</p>
+        </div>
         <button
           onClick={() => setShowAdd(true)}
           className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
@@ -60,7 +61,7 @@ export default function ClientTasks() {
             return (
               <li key={task.id} className="flex items-center gap-3 py-3">
                 <button
-                  onClick={() => toggleTask(client.id, task.id)}
+                  onClick={() => toggleStudioTask(task.id)}
                   className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-black/20 hover:border-brand-500"
                   aria-label="Complete task"
                 />
@@ -81,7 +82,7 @@ export default function ClientTasks() {
             {done.map((task) => (
               <li key={task.id} className="flex items-center gap-3 py-3">
                 <button
-                  onClick={() => toggleTask(client.id, task.id)}
+                  onClick={() => toggleStudioTask(task.id)}
                   className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-brand-500 bg-brand-500 text-white"
                   aria-label="Reopen task"
                 >
@@ -114,7 +115,11 @@ export default function ClientTasks() {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Assignee</label>
-            <Select value={assignee} onChange={setAssignee} options={TEAM.map((m) => ({ value: m.id, label: memberName(m.id) }))} />
+            <Select
+              value={assignee}
+              onChange={setAssignee}
+              options={TEAM.map((m) => ({ value: m.id, label: memberName(m.id) }))}
+            />
           </div>
           <button
             onClick={handleAdd}

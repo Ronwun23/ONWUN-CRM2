@@ -164,7 +164,7 @@ export default function HomePage() {
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <ClientAvatar initials={client.initials} color={client.color} size={32} />
+                      <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={32} />
                       <div>
                         <p className="font-medium text-ink-primary">{client.name}</p>
                         <p className="text-xs text-ink-muted">{client.projectName}</p>

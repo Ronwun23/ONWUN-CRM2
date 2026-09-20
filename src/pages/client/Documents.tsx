@@ -8,7 +8,7 @@ import Drawer from '@/components/Drawer'
 import DocumentForm from '@/components/DocumentForm'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_STATUS_TONE, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
 import { formatDate } from '@/lib/format'
-import { isFigmaUrl } from '@/lib/embed'
+import { isFigmaUrl, isPdfDataUrl } from '@/lib/embed'
 import type { DocumentType } from '@/types'
 
 const TYPE_ICON: Record<DocumentType, LucideIcon> = {
@@ -61,7 +61,7 @@ export default function ClientDocuments() {
                 <p className="text-xs text-ink-muted">Updated {formatDate(doc.updatedAt)}</p>
                 {doc.url ? (
                   <span className="flex items-center gap-1 text-xs font-medium text-brand-600">
-                    {isFigmaUrl(doc.url) ? 'Preview' : 'Linked'}
+                    {isFigmaUrl(doc.url) || isPdfDataUrl(doc.url) ? 'Preview' : 'Linked'}
                     <ExternalLink size={11} />
                   </span>
                 ) : (

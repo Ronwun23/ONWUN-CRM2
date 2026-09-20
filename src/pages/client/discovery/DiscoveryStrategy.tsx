@@ -69,6 +69,9 @@ function EditableInput({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         className="w-full rounded-lg border border-black/[0.10] bg-white px-3.5 py-2 text-sm font-medium text-ink-primary focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+        autoComplete="off"
+        data-1p-ignore
+        data-lpignore="true"
       />
     </div>
   )

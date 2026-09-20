@@ -4,7 +4,9 @@ import type {
   BrandAsset,
   Client,
   ClientDocument,
+  ClientEvent,
   ClientTask,
+  DocumentComment,
   LibraryItem,
   StrategyDraft,
   StrategyStatus,
@@ -14,7 +16,8 @@ import type {
 import { CLIENTS } from '@/data/clients'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
 
-const STORAGE_KEY = 'onwun-studio-clients-v2'
+const STORAGE_KEY = 'onwun-studio-clients-v3'
+const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
 function loadInitialClients(): Client[] {
   try {
@@ -26,10 +29,33 @@ function loadInitialClients(): Client[] {
   return CLIENTS
 }
 
+interface StudioState {
+  tasks: ClientTask[]
+  updates: UpdateEntry[]
+  events: ClientEvent[]
+}
+
+function loadInitialStudio(): StudioState {
+  try {
+    const raw = window.localStorage.getItem(STUDIO_STORAGE_KEY)
+    if (raw) return JSON.parse(raw) as StudioState
+  } catch {
+    // fall through to empty state
+  }
+  return { tasks: [], updates: [], events: [] }
+}
+
 interface AppContextValue {
   clients: Client[]
   getClient: (id: string) => Client | undefined
   addClient: (client: Client) => void
+  removeClient: (clientId: string) => void
+  updateClientProfile: (
+    clientId: string,
+    patch: Partial<
+      Pick<Client, 'name' | 'projectName' | 'owner' | 'dueDate' | 'avatarUrl' | 'color' | 'initials' | 'email' | 'phone'>
+    >
+  ) => void
   toggleStep: (clientId: string, phaseKey: string, stepId: string) => void
   addStep: (clientId: string, phaseKey: string, title: string) => void
   toggleTask: (clientId: string, taskId: string) => void
@@ -38,6 +64,7 @@ interface AppContextValue {
   addDocument: (clientId: string, doc: ClientDocument) => void
   updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
   removeDocument: (clientId: string, docId: string) => void
+  addDocumentComment: (clientId: string, docId: string, comment: DocumentComment) => void
   addLibraryItem: (clientId: string, item: LibraryItem) => void
   addBrandAsset: (clientId: string, asset: BrandAsset) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string) => void
@@ -48,12 +75,19 @@ interface AppContextValue {
   generateStrategy: (clientId: string) => void
   updateStrategy: (clientId: string, updater: (s: StrategyDraft) => StrategyDraft) => void
   setStrategyStatus: (clientId: string, status: StrategyStatus) => void
+  studio: StudioState
+  addStudioTask: (task: ClientTask) => void
+  toggleStudioTask: (taskId: string) => void
+  addStudioUpdate: (update: UpdateEntry) => void
+  addStudioEvent: (event: ClientEvent) => void
+  removeStudioEvent: (eventId: string) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [clients, setClients] = useState<Client[]>(loadInitialClients)
+  const [studio, setStudio] = useState<StudioState>(loadInitialStudio)
 
   useEffect(() => {
     try {
@@ -62,6 +96,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // ignore storage failures (private mode, quota, etc.)
     }
   }, [clients])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STUDIO_STORAGE_KEY, JSON.stringify(studio))
+    } catch {
+      // ignore storage failures (private mode, quota, etc.)
+    }
+  }, [studio])
+
+  const addStudioTask = useCallback((task: ClientTask) => {
+    setStudio((prev) => ({ ...prev, tasks: [task, ...prev.tasks] }))
+  }, [])
+
+  const toggleStudioTask = useCallback((taskId: string) => {
+    setStudio((prev) => ({
+      ...prev,
+      tasks: prev.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)),
+    }))
+  }, [])
+
+  const addStudioUpdate = useCallback((update: UpdateEntry) => {
+    setStudio((prev) => ({ ...prev, updates: [update, ...prev.updates] }))
+  }, [])
+
+  const addStudioEvent = useCallback((event: ClientEvent) => {
+    setStudio((prev) => ({ ...prev, events: [...prev.events, event] }))
+  }, [])
+
+  const removeStudioEvent = useCallback((eventId: string) => {
+    setStudio((prev) => ({ ...prev, events: prev.events.filter((e) => e.id !== eventId) }))
+  }, [])
 
   const updateClient = useCallback((clientId: string, patch: (c: Client) => Client) => {
     setClients((prev) => prev.map((c) => (c.id === clientId ? patch(c) : c)))
@@ -72,6 +137,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addClient = useCallback((client: Client) => {
     setClients((prev) => [client, ...prev])
   }, [])
+
+  const removeClient = useCallback((clientId: string) => {
+    setClients((prev) => prev.filter((c) => c.id !== clientId))
+  }, [])
+
+  const updateClientProfile = useCallback(
+    (clientId: string, patch: Parameters<AppContextValue['updateClientProfile']>[1]) => {
+      updateClient(clientId, (c) => ({ ...c, ...patch }))
+    },
+    [updateClient]
+  )
 
   const toggleStep = useCallback(
     (clientId: string, phaseKey: string, stepId: string) => {
@@ -156,6 +232,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const removeDocument = useCallback(
     (clientId: string, docId: string) => {
       updateClient(clientId, (c) => ({ ...c, documents: c.documents.filter((d) => d.id !== docId) }))
+    },
+    [updateClient]
+  )
+
+  const addDocumentComment = useCallback(
+    (clientId: string, docId: string, comment: DocumentComment) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        documents: c.documents.map((d) =>
+          d.id === docId ? { ...d, comments: [...(d.comments ?? []), comment] } : d
+        ),
+      }))
     },
     [updateClient]
   )
@@ -275,6 +363,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       clients,
       getClient,
       addClient,
+      removeClient,
+      updateClientProfile,
       toggleStep,
       addStep,
       toggleTask,
@@ -283,6 +373,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addDocument,
       updateDocument,
       removeDocument,
+      addDocumentComment,
       addLibraryItem,
       addBrandAsset,
       saveWorkshopAnswer,
@@ -293,11 +384,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       generateStrategy,
       updateStrategy,
       setStrategyStatus,
+      studio,
+      addStudioTask,
+      toggleStudioTask,
+      addStudioUpdate,
+      addStudioEvent,
+      removeStudioEvent,
     }),
     [
       clients,
       getClient,
       addClient,
+      removeClient,
+      updateClientProfile,
       toggleStep,
       addStep,
       toggleTask,
@@ -306,6 +405,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addDocument,
       updateDocument,
       removeDocument,
+      addDocumentComment,
       addLibraryItem,
       addBrandAsset,
       saveWorkshopAnswer,
@@ -316,6 +416,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       generateStrategy,
       updateStrategy,
       setStrategyStatus,
+      studio,
+      addStudioTask,
+      toggleStudioTask,
+      addStudioUpdate,
+      addStudioEvent,
+      removeStudioEvent,
     ]
   )
 

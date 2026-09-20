@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
 import Drawer from '@/components/Drawer'
+import { Select } from '@/components/ui/select'
 import { formatDate } from '@/lib/format'
 import type { BrandAssetType } from '@/types'
 
@@ -81,21 +82,18 @@ export default function ClientBrandHub() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
             />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Type</label>
-            <select
+            <Select
               value={type}
-              onChange={(e) => setType(e.target.value as BrandAssetType)}
-              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-            >
-              {TYPE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t[0].toUpperCase() + t.slice(1)}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setType(v as BrandAssetType)}
+              options={TYPE_OPTIONS.map((t) => ({ value: t, label: t[0].toUpperCase() + t.slice(1) }))}
+            />
           </div>
           <button
             type="submit"

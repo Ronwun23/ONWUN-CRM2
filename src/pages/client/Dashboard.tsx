@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Check, Plus } from 'lucide-react'
+import { Check, Eye, Plus } from 'lucide-react'
 import clsx from 'clsx'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
+import { useViewMode } from '@/context/ViewModeContext'
 import Card from '@/components/Card'
 import Pill from '@/components/Pill'
 import { Steps } from '@/components/Steps'
@@ -16,6 +17,7 @@ import { PHASE_LABELS, PHASES } from '@/types'
 export default function ClientDashboard() {
   const client = useClientOutlet()
   const { toggleStep, addStep } = useApp()
+  const { isClientView, setIsClientView } = useViewMode()
   const [selectedPhase, setSelectedPhase] = useState(client.phases[0].key)
   const [newStepTitle, setNewStepTitle] = useState('')
 
@@ -36,13 +38,27 @@ export default function ClientDashboard() {
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <ClientAvatar initials={client.initials} color={client.color} size={44} />
+          <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={44} />
           <div>
             <h1 className="text-xl font-semibold text-ink-primary">{client.name}</h1>
             <p className="text-sm text-ink-secondary">{client.projectName}</p>
           </div>
         </div>
-        <Pill tone={CLIENT_STATUS_TONE[client.status]}>{CLIENT_STATUS_LABEL[client.status]}</Pill>
+        <div className="flex items-center gap-2.5">
+          <Pill tone={CLIENT_STATUS_TONE[client.status]}>{CLIENT_STATUS_LABEL[client.status]}</Pill>
+          <button
+            onClick={() => setIsClientView(!isClientView)}
+            className={clsx(
+              'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+              isClientView
+                ? 'bg-brand-500 text-white hover:bg-brand-600'
+                : 'border border-black/[0.10] text-ink-secondary hover:bg-surface-sunken'
+            )}
+          >
+            <Eye size={13} />
+            {isClientView ? 'Exit client view' : 'View as client'}
+          </button>
+        </div>
       </div>
 
       <Card>
@@ -120,22 +136,27 @@ export default function ClientDashboard() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 flex items-center gap-2">
-                <input
-                  value={newStepTitle}
-                  onChange={(e) => setNewStepTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddStep()}
-                  placeholder="Add a step…"
-                  className="flex-1 rounded-lg border border-black/[0.10] px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                />
-                <button
-                  onClick={handleAddStep}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white hover:bg-brand-600"
-                  aria-label="Add step"
-                >
-                  <Plus size={15} />
-                </button>
-              </div>
+              {!isClientView && (
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    value={newStepTitle}
+                    onChange={(e) => setNewStepTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddStep()}
+                    placeholder="Add a step…"
+                    className="flex-1 rounded-lg border border-black/[0.10] px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    autoComplete="off"
+                    data-1p-ignore
+                    data-lpignore="true"
+                  />
+                  <button
+                    onClick={handleAddStep}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white hover:bg-brand-600"
+                    aria-label="Add step"
+                  >
+                    <Plus size={15} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </Card>

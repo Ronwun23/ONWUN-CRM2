@@ -14,6 +14,7 @@ import { PHASES } from '@/types'
 import { TEAM, CURRENT_USER } from './team'
 import { WORKSHOP_PHASES } from './workshopTemplate'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
+import { initialsFromName } from '@/lib/names'
 
 const TODAY = new Date('2026-09-18T09:00:00Z')
 
@@ -68,17 +69,7 @@ function emptyWorkshop(): WorkshopState {
   }
 }
 
-const NEW_CLIENT_COLORS = ['#6a60f6', '#eb6834', '#1baf7a', '#e87ba4', '#eda100', '#4a3aa7']
-
-export function initialsFromName(name: string): string {
-  return name
-    .split(' ')
-    .map((part) => part.match(/[a-z0-9]/i)?.[0] ?? '')
-    .filter(Boolean)
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
+export const NEW_CLIENT_COLORS = ['#6a60f6', '#eb6834', '#1baf7a', '#e87ba4', '#eda100', '#4a3aa7']
 
 export function blankPhases(): ProjectPhase[] {
   return PHASES.map((key) => ({
@@ -90,11 +81,32 @@ export function blankPhases(): ProjectPhase[] {
   }))
 }
 
+// Every client — new or existing — starts a project with the same document
+// checklist, matching the full set every other client project runs through.
+// They begin as drafts and get filled in as the engagement progresses.
+export function blankDocuments(): ClientDocument[] {
+  const now = new Date().toISOString()
+  return [
+    { id: nextId('doc'), title: 'Proposal', type: 'proposal', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Contract', type: 'contract', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Invoices', type: 'invoice', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Brand Strategy', type: 'strategy', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Speed Run Presentation 1', type: 'presentation', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Speed Run Presentation 2', type: 'presentation', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Final Brand Presentation', type: 'presentation', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Figma Brand Guidelines', type: 'guidelines', status: 'draft', updatedAt: now, comments: [] },
+  ]
+}
+
 export function createBlankClient(input: {
   name: string
   projectName: string
   owner: string
   dueDate: string
+  color?: string
+  avatarUrl?: string
+  email?: string
+  phone?: string
 }): Client {
   const id = input.name
     .toLowerCase()
@@ -106,13 +118,16 @@ export function createBlankClient(input: {
     name: input.name,
     projectName: input.projectName,
     initials: initialsFromName(input.name),
-    color: NEW_CLIENT_COLORS[Math.floor(Math.random() * NEW_CLIENT_COLORS.length)],
+    color: input.color ?? NEW_CLIENT_COLORS[Math.floor(Math.random() * NEW_CLIENT_COLORS.length)],
+    avatarUrl: input.avatarUrl,
+    email: input.email,
+    phone: input.phone,
     status: 'active',
     owner: input.owner,
     startDate: new Date().toISOString(),
     dueDate: input.dueDate,
     phases: blankPhases(),
-    documents: [],
+    documents: blankDocuments(),
     tasks: [],
     updates: [],
     library: [],
@@ -209,6 +224,7 @@ function docs(entries: [string, ClientDocument['type'], ClientDocument['status']
     status,
     meta,
     updatedAt: daysFrom(offset),
+    comments: [],
   }))
 }
 

@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
+import { useViewMode } from '@/context/ViewModeContext'
 import { WORKSHOP_PHASES } from '@/data/workshopTemplate'
 
 export default function DiscoveryAnswers() {
   const client = useClientOutlet()
   const { setWorkshopPosition, saveTranscript, generateStrategy } = useApp()
+  const { isClientView } = useViewMode()
   const navigate = useNavigate()
   const { workshop } = client
 
@@ -77,40 +79,42 @@ export default function DiscoveryAnswers() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-black/[0.06] bg-white px-6 py-6">
-        <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-brand-600" />
-          <p className="text-sm font-semibold text-ink-primary">Generate strategy draft</p>
+      {!isClientView && (
+        <div className="rounded-2xl border border-black/[0.06] bg-white px-6 py-6">
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-brand-600" />
+            <p className="text-sm font-semibold text-ink-primary">Generate strategy draft</p>
+          </div>
+          <p className="mt-1.5 max-w-lg text-sm text-ink-secondary">
+            Use the workshop answers and optional meeting notes to generate a first draft of the brand strategy.
+          </p>
+
+          <label className="mb-1.5 mt-4 block text-xs font-medium uppercase tracking-wide text-ink-muted">
+            Paste Google Meet transcript
+          </label>
+          <textarea
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            onBlur={() => saveTranscript(client.id, transcript)}
+            rows={6}
+            placeholder="Paste your meeting transcript here…"
+            className="w-full resize-none rounded-lg border border-black/[0.10] px-3.5 py-3 text-sm leading-relaxed focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+
+          {!workshop.completed && (
+            <p className="mt-3 text-xs text-ink-muted">Complete the workshop to generate a strategy draft.</p>
+          )}
+
+          <button
+            onClick={handleGenerate}
+            disabled={!workshop.completed}
+            className="mt-4 flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Generate strategy
+            <ArrowRight size={15} />
+          </button>
         </div>
-        <p className="mt-1.5 max-w-lg text-sm text-ink-secondary">
-          Use the workshop answers and optional meeting notes to generate a first draft of the brand strategy.
-        </p>
-
-        <label className="mb-1.5 mt-4 block text-xs font-medium uppercase tracking-wide text-ink-muted">
-          Paste Google Meet transcript
-        </label>
-        <textarea
-          value={transcript}
-          onChange={(e) => setTranscript(e.target.value)}
-          onBlur={() => saveTranscript(client.id, transcript)}
-          rows={6}
-          placeholder="Paste your meeting transcript here…"
-          className="w-full resize-none rounded-lg border border-black/[0.10] px-3.5 py-3 text-sm leading-relaxed focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-        />
-
-        {!workshop.completed && (
-          <p className="mt-3 text-xs text-ink-muted">Complete the workshop to generate a strategy draft.</p>
-        )}
-
-        <button
-          onClick={handleGenerate}
-          disabled={!workshop.completed}
-          className="mt-4 flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Generate strategy
-          <ArrowRight size={15} />
-        </button>
-      </div>
+      )}
     </div>
   )
 }

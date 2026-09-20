@@ -9,3 +9,7 @@ export function isFigmaUrl(url: string): boolean {
 export function figmaEmbedSrc(url: string): string {
   return `https://www.figma.com/embed?embed_host=onwun&url=${encodeURIComponent(url)}`
 }
+
+export function isPdfDataUrl(url: string): boolean {
+  return url.startsWith('data:application/pdf')
+}
