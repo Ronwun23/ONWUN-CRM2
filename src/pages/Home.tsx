@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, ArrowRight, Briefcase, Calendar, CheckCircle2, Users } from 'lucide-react'
+import { AlertCircle, ArrowRight, Briefcase, Calendar, CheckCircle2, Trash2, Users } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { CURRENT_USER } from '@/data/team'
@@ -11,7 +11,7 @@ import PhaseTrack from '@/components/PhaseTrack'
 import { ClientAvatar, MemberAvatar } from '@/components/Avatar'
 import { CLIENT_STATUS_LABEL, CLIENT_STATUS_TONE } from '@/lib/labels'
 import { currentPhaseKey, overallProgress } from '@/lib/progress'
-import { formatDate, formatDueDate } from '@/lib/format'
+import { formatDate, formatDueDate, formatRelativeDate } from '@/lib/format'
 import { toDisplayDate, todayCivil } from '@/lib/civilDate'
 import { PHASE_LABELS } from '@/types'
 
@@ -31,7 +31,7 @@ const ViewCalendarLink = ({ onClick }: { onClick: () => void }) => (
 )
 
 export default function HomePage() {
-  const { clients, studio, toggleTask, toggleStudioTask } = useApp()
+  const { clients, studio, toggleTask, toggleStudioTask, removeUpdate } = useApp()
   const navigate = useNavigate()
   const goToCalendar = () => navigate('/calendar')
 
@@ -93,6 +93,15 @@ export default function HomePage() {
     () => [...clients].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()),
     [clients]
   )
+
+  // Surfaced so the agency notices the moment a client posts something on
+  // their own portal, without having to check every client individually.
+  const recentClientUpdates = useMemo(() => {
+    return clients
+      .flatMap((c) => c.updates.filter((u) => u.authorType === 'client').map((u) => ({ ...u, client: c })))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 6)
+  }, [clients])
 
   return (
     <div className="flex flex-col gap-6">
@@ -193,6 +202,46 @@ export default function HomePage() {
           </ul>
         </Card>
       </div>
+
+      {recentClientUpdates.length > 0 && (
+        <Card title="Client updates" subtitle="Recent activity posted by clients on their own portal">
+          <ul className="flex flex-col divide-y divide-black/[0.05]">
+            {recentClientUpdates.map((update) => (
+              <li key={update.id} className="flex items-start gap-2 py-2.5">
+                <button
+                  onClick={() => navigate(`/clients/${update.client.id}/updates`)}
+                  className="flex min-w-0 flex-1 items-start gap-3 text-left hover:bg-surface-sunken/40"
+                >
+                  <ClientAvatar
+                    initials={update.client.initials}
+                    color={update.client.color}
+                    avatarUrl={update.client.avatarUrl}
+                    size={28}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-ink-primary">{update.text}</p>
+                    <div className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
+                      <span className="font-medium text-ink-secondary">{update.client.name}</span>
+                      <Pill tone="brand">Client</Pill>
+                      <span>· {formatRelativeDate(update.date)}</span>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    if (!window.confirm('Delete this update?')) return
+                    removeUpdate(update.client.id, update.id)
+                  }}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-[#fbecec] hover:text-status-critical"
+                  aria-label="Delete update"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card title="Clients" subtitle={`${clients.length} total`} padded={false}>
         <table className="w-full text-left text-sm">

@@ -67,6 +67,7 @@ interface AppContextValue {
   toggleTask: (clientId: string, taskId: string) => void
   addTask: (clientId: string, task: ClientTask) => void
   addUpdate: (clientId: string, update: UpdateEntry) => void
+  removeUpdate: (clientId: string, updateId: string) => void
   addDocument: (clientId: string, doc: ClientDocument) => void
   updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
   removeDocument: (clientId: string, docId: string) => void
@@ -88,6 +89,7 @@ interface AppContextValue {
   addStudioTask: (task: ClientTask) => void
   toggleStudioTask: (taskId: string) => void
   addStudioUpdate: (update: UpdateEntry) => void
+  removeStudioUpdate: (updateId: string) => void
   addStudioEvent: (event: ClientEvent) => void
   removeStudioEvent: (eventId: string) => void
   setStudioLogo: (url: string | undefined) => void
@@ -131,6 +133,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addStudioUpdate = useCallback((update: UpdateEntry) => {
     setStudio((prev) => ({ ...prev, updates: [update, ...prev.updates] }))
+  }, [])
+
+  const removeStudioUpdate = useCallback((updateId: string) => {
+    setStudio((prev) => ({ ...prev, updates: prev.updates.filter((u) => u.id !== updateId) }))
   }, [])
 
   const addStudioEvent = useCallback((event: ClientEvent) => {
@@ -239,6 +245,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addUpdate = useCallback(
     (clientId: string, update: UpdateEntry) => {
       updateClient(clientId, (c) => ({ ...c, updates: [update, ...c.updates] }))
+    },
+    [updateClient]
+  )
+
+  const removeUpdate = useCallback(
+    (clientId: string, updateId: string) => {
+      updateClient(clientId, (c) => ({ ...c, updates: c.updates.filter((u) => u.id !== updateId) }))
     },
     [updateClient]
   )
@@ -432,6 +445,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleTask,
       addTask,
       addUpdate,
+      removeUpdate,
       addDocument,
       updateDocument,
       removeDocument,
@@ -453,6 +467,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioTask,
       toggleStudioTask,
       addStudioUpdate,
+      removeStudioUpdate,
       addStudioEvent,
       removeStudioEvent,
       setStudioLogo,
@@ -471,6 +486,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleTask,
       addTask,
       addUpdate,
+      removeUpdate,
       addDocument,
       updateDocument,
       removeDocument,
@@ -492,6 +508,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioTask,
       toggleStudioTask,
       addStudioUpdate,
+      removeStudioUpdate,
       addStudioEvent,
       removeStudioEvent,
       setStudioLogo,
