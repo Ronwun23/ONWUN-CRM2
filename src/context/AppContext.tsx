@@ -7,7 +7,8 @@ import type {
   ClientEvent,
   ClientTask,
   DocumentComment,
-  LibraryItem,
+  LibraryFile,
+  LibraryFolder,
   StrategyDraft,
   StrategyStatus,
   UpdateEntry,
@@ -33,6 +34,7 @@ interface StudioState {
   tasks: ClientTask[]
   updates: UpdateEntry[]
   events: ClientEvent[]
+  logoUrl?: string
 }
 
 function loadInitialStudio(): StudioState {
@@ -65,7 +67,10 @@ interface AppContextValue {
   updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
   removeDocument: (clientId: string, docId: string) => void
   addDocumentComment: (clientId: string, docId: string, comment: DocumentComment) => void
-  addLibraryItem: (clientId: string, item: LibraryItem) => void
+  addLibraryFolder: (clientId: string, folder: LibraryFolder) => void
+  removeLibraryFolder: (clientId: string, folderId: string) => void
+  addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => void
+  removeLibraryFile: (clientId: string, folderId: string, fileId: string) => void
   addBrandAsset: (clientId: string, asset: BrandAsset) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string) => void
   setWorkshopPosition: (clientId: string, phaseIndex: number, screen: WorkshopScreen, questionIndex: number) => void
@@ -81,6 +86,7 @@ interface AppContextValue {
   addStudioUpdate: (update: UpdateEntry) => void
   addStudioEvent: (event: ClientEvent) => void
   removeStudioEvent: (eventId: string) => void
+  setStudioLogo: (url: string | undefined) => void
   updateStudioEventNotes: (eventId: string, notes: string) => void
 }
 
@@ -127,6 +133,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const removeStudioEvent = useCallback((eventId: string) => {
     setStudio((prev) => ({ ...prev, events: prev.events.filter((e) => e.id !== eventId) }))
+  }, [])
+
+  const setStudioLogo = useCallback((url: string | undefined) => {
+    setStudio((prev) => ({ ...prev, logoUrl: url }))
   }, [])
 
   const updateStudioEventNotes = useCallback((eventId: string, notes: string) => {
@@ -256,9 +266,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
-  const addLibraryItem = useCallback(
-    (clientId: string, item: LibraryItem) => {
-      updateClient(clientId, (c) => ({ ...c, library: [item, ...c.library] }))
+  const addLibraryFolder = useCallback(
+    (clientId: string, folder: LibraryFolder) => {
+      updateClient(clientId, (c) => ({ ...c, library: [...c.library, folder] }))
+    },
+    [updateClient]
+  )
+
+  const removeLibraryFolder = useCallback(
+    (clientId: string, folderId: string) => {
+      updateClient(clientId, (c) => ({ ...c, library: c.library.filter((f) => f.id !== folderId) }))
+    },
+    [updateClient]
+  )
+
+  const addLibraryFile = useCallback(
+    (clientId: string, folderId: string, file: LibraryFile) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        library: c.library.map((folder) =>
+          folder.id === folderId ? { ...folder, files: [file, ...folder.files] } : folder
+        ),
+      }))
+    },
+    [updateClient]
+  )
+
+  const removeLibraryFile = useCallback(
+    (clientId: string, folderId: string, fileId: string) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        library: c.library.map((folder) =>
+          folder.id === folderId ? { ...folder, files: folder.files.filter((f) => f.id !== fileId) } : folder
+        ),
+      }))
     },
     [updateClient]
   )
@@ -382,7 +423,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateDocument,
       removeDocument,
       addDocumentComment,
-      addLibraryItem,
+      addLibraryFolder,
+      removeLibraryFolder,
+      addLibraryFile,
+      removeLibraryFile,
       addBrandAsset,
       saveWorkshopAnswer,
       setWorkshopPosition,
@@ -398,6 +442,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioUpdate,
       addStudioEvent,
       removeStudioEvent,
+      setStudioLogo,
       updateStudioEventNotes,
     }),
     [
@@ -415,7 +460,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateDocument,
       removeDocument,
       addDocumentComment,
-      addLibraryItem,
+      addLibraryFolder,
+      removeLibraryFolder,
+      addLibraryFile,
+      removeLibraryFile,
       addBrandAsset,
       saveWorkshopAnswer,
       setWorkshopPosition,
@@ -431,6 +479,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioUpdate,
       addStudioEvent,
       removeStudioEvent,
+      setStudioLogo,
       updateStudioEventNotes,
     ]
   )

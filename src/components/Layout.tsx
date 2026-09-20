@@ -1,10 +1,11 @@
-import type { MouseEvent, ReactNode } from 'react'
-import { useState } from 'react'
+import type { ChangeEvent, MouseEvent, ReactNode } from 'react'
+import { useRef, useState } from 'react'
 import { Link, NavLink, useMatch } from 'react-router-dom'
 import {
   ArrowLeft,
   BookOpen,
   Calendar as CalendarIcon,
+  Camera,
   CheckSquare,
   ChevronDown,
   FileText,
@@ -26,6 +27,65 @@ import { ClientAvatar } from '@/components/Avatar'
 import ClientAvatarStack from '@/components/ClientAvatarStack'
 import Drawer from '@/components/Drawer'
 import ClientForm from '@/components/ClientForm'
+import { fileToLogoDataUrl } from '@/lib/image'
+
+/** The studio's own brand mark, top-left of the sidebar. Editable by the
+ * agency (click to upload, hover to reveal a remove button) — never by a
+ * client previewing their own portal. */
+function StudioLogo({ editable }: { editable: boolean }) {
+  const { studio, setStudioLogo } = useApp()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      setStudioLogo(await fileToLogoDataUrl(file))
+    } catch {
+      // Not worth a visible error in a 32px widget — just leave the mark as-is.
+    }
+  }
+
+  const mark = (
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
+      {studio.logoUrl ? <img src={studio.logoUrl} alt="" className="h-full w-full object-cover" /> : 'o'}
+    </div>
+  )
+
+  if (!editable) return mark
+
+  return (
+    <div className="group relative shrink-0">
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        aria-label={studio.logoUrl ? 'Change studio logo' : 'Add studio logo'}
+        title={studio.logoUrl ? 'Change studio logo' : 'Add studio logo'}
+      >
+        {mark}
+        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+          <Camera size={13} className="text-white" />
+        </div>
+      </button>
+      {studio.logoUrl && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            setStudioLogo(undefined)
+          }}
+          className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-black opacity-0 shadow transition-opacity group-hover:opacity-100"
+          aria-label="Remove studio logo"
+          title="Remove studio logo"
+        >
+          <X size={9} strokeWidth={3} />
+        </button>
+      )}
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+    </div>
+  )
+}
 
 const STUDIO_NAV_ITEMS = [
   { to: '/', label: 'Home', icon: LayoutDashboard, end: true },
@@ -94,9 +154,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         {lockedToClient ? (
           <div className="flex items-center justify-between gap-2.5 border-b border-white/10 px-5 py-5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
-                o
-              </div>
+              <StudioLogo editable={false} />
               <div>
                 <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
                 <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
@@ -113,15 +171,13 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2.5 border-b border-white/10 px-5 py-5">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold lowercase text-white">
-                o
-              </div>
-              <div>
+            <div className="flex items-center gap-2.5">
+              <StudioLogo editable={!isClientView} />
+              <Link to="/">
                 <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
                 <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
-              </div>
-            </Link>
+              </Link>
+            </div>
             <button
               onClick={() => setSidebarOpen(false)}
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white"
