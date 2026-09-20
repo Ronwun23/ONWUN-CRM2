@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Link2, Pencil, Trash2 } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
+import { useViewMode } from '@/context/ViewModeContext'
 import Pill from '@/components/Pill'
 import Drawer from '@/components/Drawer'
 import DocumentForm from '@/components/DocumentForm'
@@ -21,6 +22,7 @@ export default function DocumentDetail() {
   const client = useClientOutlet()
   const { docId } = useParams<{ docId: string }>()
   const { removeDocument } = useApp()
+  const { isClientView } = useViewMode()
   const navigate = useNavigate()
   const [showEdit, setShowEdit] = useState(false)
 
@@ -67,20 +69,24 @@ export default function DocumentDetail() {
               <ExternalLink size={13} />
             </a>
           )}
-          <button
-            onClick={() => setShowEdit(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] bg-white px-3 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
-          >
-            <Pencil size={13} />
-            Edit
-          </button>
-          <button
-            onClick={handleRemove}
-            className="flex items-center justify-center rounded-lg border border-black/[0.10] bg-white p-2 text-status-critical hover:bg-[#fbecec]"
-            aria-label="Remove document"
-          >
-            <Trash2 size={15} />
-          </button>
+          {!isClientView && (
+            <>
+              <button
+                onClick={() => setShowEdit(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] bg-white px-3 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
+              >
+                <Pencil size={13} />
+                Edit
+              </button>
+              <button
+                onClick={handleRemove}
+                className="flex items-center justify-center rounded-lg border border-black/[0.10] bg-white p-2 text-status-critical hover:bg-[#fbecec]"
+                aria-label="Remove document"
+              >
+                <Trash2 size={15} />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -152,12 +158,14 @@ export default function DocumentDetail() {
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-black/[0.12] bg-white/60 p-12 text-center">
           <Link2 className="text-ink-muted" size={20} />
           <p className="text-sm text-ink-secondary">No link on this document yet.</p>
-          <button
-            onClick={() => setShowEdit(true)}
-            className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-          >
-            Add a link
-          </button>
+          {!isClientView && (
+            <button
+              onClick={() => setShowEdit(true)}
+              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+            >
+              Add a link
+            </button>
+          )}
         </div>
       )}
 
