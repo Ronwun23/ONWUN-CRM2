@@ -4,6 +4,7 @@ import { Link, NavLink, useMatch } from 'react-router-dom'
 import {
   ArrowLeft,
   BookOpen,
+  Calendar as CalendarIcon,
   CheckSquare,
   ChevronDown,
   FileText,
@@ -23,6 +24,13 @@ import { ClientAvatar } from '@/components/Avatar'
 import ClientAvatarStack from '@/components/ClientAvatarStack'
 import Drawer from '@/components/Drawer'
 import ClientForm from '@/components/ClientForm'
+
+const STUDIO_NAV_ITEMS = [
+  { to: '/', label: 'Home', icon: LayoutDashboard, end: true },
+  { to: '/updates', label: 'Updates', icon: Megaphone, end: false },
+  { to: '/tasks', label: 'Tasks', icon: CheckSquare, end: false },
+  { to: '/calendar', label: 'Calendar', icon: CalendarIcon, end: false },
+]
 
 const CLIENT_NAV_ITEMS = [
   { to: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -126,19 +134,22 @@ export default function Layout({ children }: { children: ReactNode }) {
         ) : (
           <div className="flex min-h-0 flex-1 flex-col">
             <nav className="flex flex-col gap-0.5 px-3 pt-3">
-              <NavLink
-                to="/"
-                end
-                className={({ isActive }) =>
-                  clsx(
-                    'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
-                  )
-                }
-              >
-                <LayoutDashboard size={17} strokeWidth={2} />
-                Home
-              </NavLink>
+              {STUDIO_NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={({ isActive }) =>
+                    clsx(
+                      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                    )
+                  }
+                >
+                  <Icon size={17} strokeWidth={2} />
+                  {label}
+                </NavLink>
+              ))}
             </nav>
 
             <div className="mt-4 flex items-center justify-between px-5">

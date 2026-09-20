@@ -4,6 +4,7 @@ import type {
   BrandAsset,
   Client,
   ClientDocument,
+  ClientEvent,
   ClientTask,
   LibraryItem,
   StrategyDraft,
@@ -15,6 +16,7 @@ import { CLIENTS } from '@/data/clients'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
 
 const STORAGE_KEY = 'onwun-studio-clients-v2'
+const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
 function loadInitialClients(): Client[] {
   try {
@@ -24,6 +26,22 @@ function loadInitialClients(): Client[] {
     // fall through to mock data
   }
   return CLIENTS
+}
+
+interface StudioState {
+  tasks: ClientTask[]
+  updates: UpdateEntry[]
+  events: ClientEvent[]
+}
+
+function loadInitialStudio(): StudioState {
+  try {
+    const raw = window.localStorage.getItem(STUDIO_STORAGE_KEY)
+    if (raw) return JSON.parse(raw) as StudioState
+  } catch {
+    // fall through to empty state
+  }
+  return { tasks: [], updates: [], events: [] }
 }
 
 interface AppContextValue {
@@ -55,12 +73,19 @@ interface AppContextValue {
   generateStrategy: (clientId: string) => void
   updateStrategy: (clientId: string, updater: (s: StrategyDraft) => StrategyDraft) => void
   setStrategyStatus: (clientId: string, status: StrategyStatus) => void
+  studio: StudioState
+  addStudioTask: (task: ClientTask) => void
+  toggleStudioTask: (taskId: string) => void
+  addStudioUpdate: (update: UpdateEntry) => void
+  addStudioEvent: (event: ClientEvent) => void
+  removeStudioEvent: (eventId: string) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [clients, setClients] = useState<Client[]>(loadInitialClients)
+  const [studio, setStudio] = useState<StudioState>(loadInitialStudio)
 
   useEffect(() => {
     try {
@@ -69,6 +94,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // ignore storage failures (private mode, quota, etc.)
     }
   }, [clients])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STUDIO_STORAGE_KEY, JSON.stringify(studio))
+    } catch {
+      // ignore storage failures (private mode, quota, etc.)
+    }
+  }, [studio])
+
+  const addStudioTask = useCallback((task: ClientTask) => {
+    setStudio((prev) => ({ ...prev, tasks: [task, ...prev.tasks] }))
+  }, [])
+
+  const toggleStudioTask = useCallback((taskId: string) => {
+    setStudio((prev) => ({
+      ...prev,
+      tasks: prev.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)),
+    }))
+  }, [])
+
+  const addStudioUpdate = useCallback((update: UpdateEntry) => {
+    setStudio((prev) => ({ ...prev, updates: [update, ...prev.updates] }))
+  }, [])
+
+  const addStudioEvent = useCallback((event: ClientEvent) => {
+    setStudio((prev) => ({ ...prev, events: [...prev.events, event] }))
+  }, [])
+
+  const removeStudioEvent = useCallback((eventId: string) => {
+    setStudio((prev) => ({ ...prev, events: prev.events.filter((e) => e.id !== eventId) }))
+  }, [])
 
   const updateClient = useCallback((clientId: string, patch: (c: Client) => Client) => {
     setClients((prev) => prev.map((c) => (c.id === clientId ? patch(c) : c)))
@@ -313,6 +369,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       generateStrategy,
       updateStrategy,
       setStrategyStatus,
+      studio,
+      addStudioTask,
+      toggleStudioTask,
+      addStudioUpdate,
+      addStudioEvent,
+      removeStudioEvent,
     }),
     [
       clients,
@@ -338,6 +400,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       generateStrategy,
       updateStrategy,
       setStrategyStatus,
+      studio,
+      addStudioTask,
+      toggleStudioTask,
+      addStudioUpdate,
+      addStudioEvent,
+      removeStudioEvent,
     ]
   )
 
