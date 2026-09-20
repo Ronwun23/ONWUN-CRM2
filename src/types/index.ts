@@ -99,6 +99,8 @@ export interface ClientEvent {
   id: string
   title: string
   date: string
+  time?: string
+  notes?: string
 }
 
 export interface WorkshopQuestion {

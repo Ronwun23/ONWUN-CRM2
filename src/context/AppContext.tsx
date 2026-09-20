@@ -87,6 +87,7 @@ interface AppContextValue {
   addStudioEvent: (event: ClientEvent) => void
   removeStudioEvent: (eventId: string) => void
   setStudioLogo: (url: string | undefined) => void
+  updateStudioEventNotes: (eventId: string, notes: string) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -136,6 +137,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setStudioLogo = useCallback((url: string | undefined) => {
     setStudio((prev) => ({ ...prev, logoUrl: url }))
+  }, [])
+
+  const updateStudioEventNotes = useCallback((eventId: string, notes: string) => {
+    setStudio((prev) => ({
+      ...prev,
+      events: prev.events.map((e) => (e.id === eventId ? { ...e, notes: notes || undefined } : e)),
+    }))
   }, [])
 
   const updateClient = useCallback((clientId: string, patch: (c: Client) => Client) => {
@@ -435,6 +443,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioEvent,
       removeStudioEvent,
       setStudioLogo,
+      updateStudioEventNotes,
     }),
     [
       clients,
@@ -471,6 +480,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioEvent,
       removeStudioEvent,
       setStudioLogo,
+      updateStudioEventNotes,
     ]
   )
 
