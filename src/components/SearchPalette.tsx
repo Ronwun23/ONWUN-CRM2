@@ -1,107 +1,96 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Search } from 'lucide-react'
+import { Calendar, CheckSquare, FileText, LayoutDashboard, Megaphone } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { ClientAvatar } from '@/components/Avatar'
 import { DOCUMENT_TYPE_LABEL } from '@/lib/labels'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 
-/** Cmd/Ctrl+K style search — jumps straight to a client or a specific
- * document instead of making you click through the sidebar to find one. */
+const PAGES = [
+  { to: '/', label: 'Home', icon: LayoutDashboard },
+  { to: '/updates', label: 'Updates', icon: Megaphone },
+  { to: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { to: '/calendar', label: 'Calendar', icon: Calendar },
+]
+
+/** Cmd/Ctrl+K command palette — jump to a page, a client, or a specific
+ * document instead of clicking through the sidebar to find one. Built on
+ * cmdk (what shadcn/ui's Command component wraps), which supplies the
+ * arrow-key/Enter selection and live filtering.
+ *
+ * Focus restoration on dismissal is handled by the caller (via `onClose`),
+ * not here — by the time this component's own effects run, the command
+ * input's autoFocus has already stolen focus, so this is too late to
+ * capture what was focused *before* the palette opened. */
 export default function SearchPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { clients } = useApp()
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!open) return
-    setQuery('')
-    const id = requestAnimationFrame(() => inputRef.current?.focus())
-    return () => cancelAnimationFrame(id)
-  }, [open])
-
-  const { clientResults, docResults } = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return { clientResults: [], docResults: [] }
-
-    return {
-      clientResults: clients
-        .filter((c) => c.name.toLowerCase().includes(q) || c.projectName.toLowerCase().includes(q))
-        .slice(0, 6),
-      docResults: clients
-        .flatMap((c) => c.documents.map((doc) => ({ doc, client: c })))
-        .filter(({ doc }) => doc.title.toLowerCase().includes(q))
-        .slice(0, 6),
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
     }
-  }, [clients, query])
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose])
 
   if (!open) return null
-
-  const hasResults = clientResults.length > 0 || docResults.length > 0
 
   const go = (path: string) => {
     navigate(path)
     onClose()
   }
 
+  const documents = clients.flatMap((c) => c.documents.map((doc) => ({ doc, client: c })))
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[12vh]">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-lg overflow-hidden rounded-xl border border-black/[0.08] bg-white shadow-pop">
-        <div className="flex items-center gap-3 border-b border-black/[0.06] px-4">
-          <Search size={16} className="shrink-0 text-ink-muted" />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Escape' && onClose()}
-            placeholder="Search clients or documents…"
-            className="flex-1 bg-transparent py-3.5 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none"
-            autoComplete="off"
-            data-1p-ignore
-            data-lpignore="true"
-          />
-          <kbd className="hidden shrink-0 rounded-md border border-black/[0.08] px-1.5 py-0.5 text-[10px] font-medium text-ink-muted sm:inline-block">
-            ESC
-          </kbd>
-        </div>
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search the CRM"
+        className="relative w-full max-w-lg overflow-hidden rounded-xl border border-black/[0.08] bg-white shadow-pop"
+      >
+        <Command loop>
+          <CommandInput autoFocus placeholder="Search clients, documents, or pages…" />
+          <CommandList>
+            <CommandEmpty>No matches found.</CommandEmpty>
 
-        <div className="max-h-80 overflow-y-auto p-2">
-          {!query.trim() && (
-            <p className="px-3 py-6 text-center text-sm text-ink-muted">Type to search clients and documents…</p>
-          )}
+            <CommandGroup heading="Pages">
+              {PAGES.map(({ to, label, icon: Icon }) => (
+                <CommandItem key={to} value={label} onSelect={() => go(to)}>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-ink-secondary">
+                    <Icon size={14} />
+                  </div>
+                  <p className="text-sm font-medium text-ink-primary">{label}</p>
+                </CommandItem>
+              ))}
+            </CommandGroup>
 
-          {query.trim() && !hasResults && (
-            <p className="px-3 py-6 text-center text-sm text-ink-muted">No matches for &ldquo;{query}&rdquo;</p>
-          )}
-
-          {clientResults.length > 0 && (
-            <div className="mb-1">
-              <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Clients</p>
-              {clientResults.map((c) => (
-                <button
+            <CommandGroup heading="Clients">
+              {clients.map((c) => (
+                <CommandItem
                   key={c.id}
-                  onClick={() => go(`/clients/${c.id}/dashboard`)}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-surface-sunken"
+                  value={`${c.name} ${c.projectName}`}
+                  onSelect={() => go(`/clients/${c.id}/dashboard`)}
                 >
                   <ClientAvatar initials={c.initials} color={c.color} avatarUrl={c.avatarUrl} size={26} />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink-primary">{c.name}</p>
                     <p className="truncate text-xs text-ink-muted">{c.projectName}</p>
                   </div>
-                </button>
+                </CommandItem>
               ))}
-            </div>
-          )}
+            </CommandGroup>
 
-          {docResults.length > 0 && (
-            <div>
-              <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Documents</p>
-              {docResults.map(({ doc, client }) => (
-                <button
+            <CommandGroup heading="Documents">
+              {documents.map(({ doc, client }) => (
+                <CommandItem
                   key={doc.id}
-                  onClick={() => go(`/clients/${client.id}/documents/${doc.id}`)}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-surface-sunken"
+                  value={`${doc.title} ${client.name}`}
+                  onSelect={() => go(`/clients/${client.id}/documents/${doc.id}`)}
                 >
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-ink-secondary">
                     <FileText size={14} />
@@ -112,11 +101,11 @@ export default function SearchPalette({ open, onClose }: { open: boolean; onClos
                       {client.name} · {DOCUMENT_TYPE_LABEL[doc.type]}
                     </p>
                   </div>
-                </button>
+                </CommandItem>
               ))}
-            </div>
-          )}
-        </div>
+            </CommandGroup>
+          </CommandList>
+        </Command>
       </div>
     </div>
   )

@@ -60,7 +60,7 @@ function StepsItem({ index, label, children }: { index: number; label: string; c
           {rest}
           <span
             className={clsx(
-              'mt-2 whitespace-nowrap text-xs font-medium',
+              'mt-1.5 whitespace-nowrap text-xs font-medium',
               status === 'current' && 'text-ink-primary',
               status === 'completed' && 'text-ink-secondary',
               status === 'upcoming' && 'text-ink-muted'
@@ -80,13 +80,13 @@ function StepsIndicator() {
   return (
     <span
       className={clsx(
-        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors',
+        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors',
         status === 'completed' && 'bg-brand-500 text-white',
         status === 'current' && 'border-2 border-brand-500 bg-white text-brand-600',
         status === 'upcoming' && 'border border-black/10 bg-surface-sunken text-ink-muted'
       )}
     >
-      {status === 'completed' ? <Check size={15} strokeWidth={3} /> : index + 1}
+      {status === 'completed' ? <Check size={13} strokeWidth={3} /> : index + 1}
     </span>
   )
 }
@@ -96,7 +96,7 @@ function StepsSeparator() {
   return (
     <span
       aria-hidden="true"
-      className={clsx('mt-4 h-0.5 flex-1 shrink transition-colors', status === 'completed' ? 'bg-brand-500' : 'bg-black/10')}
+      className={clsx('mt-3.5 h-0.5 flex-1 shrink transition-colors', status === 'completed' ? 'bg-brand-500' : 'bg-black/10')}
     />
   )
 }
