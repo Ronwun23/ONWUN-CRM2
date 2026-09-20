@@ -12,6 +12,7 @@ import ClientTasks from '@/pages/client/Tasks'
 import ClientDocuments from '@/pages/client/Documents'
 import DocumentDetail from '@/pages/client/DocumentDetail'
 import ClientLibrary from '@/pages/client/Library'
+import ClientLibraryFolder from '@/pages/client/LibraryFolder'
 import ClientBrandHub from '@/pages/client/BrandHub'
 import ClientSettings from '@/pages/client/ClientSettings'
 import DiscoveryLayout from '@/pages/client/discovery/DiscoveryLayout'
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="documents" element={<ClientDocuments />} />
             <Route path="documents/:docId" element={<DocumentDetail />} />
             <Route path="library" element={<ClientLibrary />} />
+            <Route path="library/:folderId" element={<ClientLibraryFolder />} />
             <Route path="discovery" element={<DiscoveryLayout />}>
               <Route index element={<DiscoveryDashboard />} />
               <Route path="answers" element={<DiscoveryAnswers />} />
