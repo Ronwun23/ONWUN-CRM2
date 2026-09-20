@@ -81,6 +81,7 @@ interface AppContextValue {
   addStudioUpdate: (update: UpdateEntry) => void
   addStudioEvent: (event: ClientEvent) => void
   removeStudioEvent: (eventId: string) => void
+  updateStudioEventNotes: (eventId: string, notes: string) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -126,6 +127,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const removeStudioEvent = useCallback((eventId: string) => {
     setStudio((prev) => ({ ...prev, events: prev.events.filter((e) => e.id !== eventId) }))
+  }, [])
+
+  const updateStudioEventNotes = useCallback((eventId: string, notes: string) => {
+    setStudio((prev) => ({
+      ...prev,
+      events: prev.events.map((e) => (e.id === eventId ? { ...e, notes: notes || undefined } : e)),
+    }))
   }, [])
 
   const updateClient = useCallback((clientId: string, patch: (c: Client) => Client) => {
@@ -390,6 +398,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioUpdate,
       addStudioEvent,
       removeStudioEvent,
+      updateStudioEventNotes,
     }),
     [
       clients,
@@ -422,6 +431,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioUpdate,
       addStudioEvent,
       removeStudioEvent,
+      updateStudioEventNotes,
     ]
   )
 

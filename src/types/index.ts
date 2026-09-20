@@ -90,6 +90,7 @@ export interface ClientEvent {
   title: string
   date: string
   time?: string
+  notes?: string
 }
 
 export interface WorkshopQuestion {

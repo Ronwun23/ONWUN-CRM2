@@ -12,11 +12,13 @@ function formatEventTime(time: string): string {
 }
 
 export default function StudioCalendar() {
-  const { studio, addStudioEvent, removeStudioEvent } = useApp()
+  const { studio, addStudioEvent, removeStudioEvent, updateStudioEventNotes } = useApp()
   const [showAdd, setShowAdd] = useState(false)
   const [title, setTitle] = useState('')
   const [date, setDate] = useState<string | undefined>(undefined)
   const [time, setTime] = useState('')
+  const [notesEvent, setNotesEvent] = useState<CalendarEvent | null>(null)
+  const [notesText, setNotesText] = useState('')
 
   const calendarData = useMemo<CalendarData[]>(() => {
     const byDay = new Map<string, CalendarData>()
@@ -28,6 +30,7 @@ export default function StudioCalendar() {
         id: event.id,
         name: event.title,
         time: event.time ? formatEventTime(event.time) : undefined,
+        notes: event.notes,
       })
     }
     for (const entry of byDay.values()) {
@@ -41,11 +44,22 @@ export default function StudioCalendar() {
     setShowAdd(true)
   }
 
-  const handleSelectEvent = (event: CalendarEvent) => {
+  const handleRemoveEvent = (event: CalendarEvent) => {
     const when = event.time ? ` at ${event.time}` : ''
     if (window.confirm(`Remove "${event.name}"${when} from the calendar?`)) {
       removeStudioEvent(event.id)
     }
+  }
+
+  const handleOpenNotes = (event: CalendarEvent) => {
+    setNotesEvent(event)
+    setNotesText(event.notes ?? '')
+  }
+
+  const handleSaveNotes = () => {
+    if (!notesEvent) return
+    updateStudioEventNotes(notesEvent.id, notesText.trim())
+    setNotesEvent(null)
   }
 
   const handleAdd = () => {
@@ -65,7 +79,12 @@ export default function StudioCalendar() {
       </div>
 
       <div className="flex h-[75vh] min-h-[560px] flex-col overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
-        <FullScreenCalendar data={calendarData} onNewEvent={handleNewEvent} onSelectEvent={handleSelectEvent} />
+        <FullScreenCalendar
+          data={calendarData}
+          onNewEvent={handleNewEvent}
+          onRemoveEvent={handleRemoveEvent}
+          onOpenNotes={handleOpenNotes}
+        />
       </div>
 
       <Drawer open={showAdd} onClose={() => setShowAdd(false)} title="Add an event">
@@ -103,6 +122,28 @@ export default function StudioCalendar() {
             className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
           >
             Add event
+          </button>
+        </div>
+      </Drawer>
+
+      <Drawer open={!!notesEvent} onClose={() => setNotesEvent(null)} title={notesEvent ? `Notes — ${notesEvent.name}` : 'Notes'}>
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Notes</label>
+            <textarea
+              value={notesText}
+              onChange={(e) => setNotesText(e.target.value)}
+              placeholder="Add details, links, or anything the team should know…"
+              rows={6}
+              className="w-full resize-none rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              autoFocus
+            />
+          </div>
+          <button
+            onClick={handleSaveNotes}
+            className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
+          >
+            Save notes
           </button>
         </div>
       </Drawer>

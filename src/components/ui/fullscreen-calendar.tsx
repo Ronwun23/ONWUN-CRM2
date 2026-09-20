@@ -14,7 +14,7 @@ import {
   startOfToday,
   startOfWeek,
 } from 'date-fns'
-import { ChevronLeftIcon, ChevronRightIcon, PlusCircleIcon, SearchIcon } from 'lucide-react'
+import { ChevronLeftIcon, ChevronRightIcon, PlusCircleIcon, SearchIcon, StickyNoteIcon, XIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,7 @@ export interface CalendarEvent {
   id: string
   name: string
   time?: string
+  notes?: string
 }
 
 export interface CalendarData {
@@ -36,18 +37,23 @@ interface FullScreenCalendarProps {
   data: CalendarData[]
   /** Called with the day currently selected in the calendar when "New Event" is clicked. */
   onNewEvent?: (day: Date) => void
-  /** Called when an event card is clicked, so the caller can offer to remove it. */
-  onSelectEvent?: (event: CalendarEvent) => void
+  /** Called when the small "x" on an event card is clicked, to remove it. */
+  onRemoveEvent?: (event: CalendarEvent) => void
+  /** Called when an event card is double-clicked, to open/edit its notes. */
+  onOpenNotes?: (event: CalendarEvent) => void
 }
 
 const colStartClasses = ['', 'col-start-2', 'col-start-3', 'col-start-4', 'col-start-5', 'col-start-6', 'col-start-7']
 
-export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScreenCalendarProps) {
+export function FullScreenCalendar({ data, onNewEvent, onRemoveEvent, onOpenNotes }: FullScreenCalendarProps) {
   const today = startOfToday()
   const [selectedDay, setSelectedDay] = React.useState(today)
   const [currentMonth, setCurrentMonth] = React.useState(format(today, 'MMM-yyyy'))
   const firstDayCurrentMonth = parse(currentMonth, 'MMM-yyyy', new Date())
   const isDesktop = useMediaQuery('(min-width: 768px)')
+  // The event whose "remove" x is currently revealed — a click on an event
+  // card arms it, a second click elsewhere (or on the x) dismisses it.
+  const [armedEventId, setArmedEventId] = React.useState<string | null>(null)
 
   const days = eachDayOfInterval({
     start: startOfWeek(firstDayCurrentMonth),
@@ -153,7 +159,10 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
             {days.map((day, dayIdx) =>
               !isDesktop ? (
                 <button
-                  onClick={() => setSelectedDay(day)}
+                  onClick={() => {
+                    setSelectedDay(day)
+                    setArmedEventId(null)
+                  }}
                   key={dayIdx}
                   type="button"
                   className={cn(
@@ -194,7 +203,10 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
               ) : (
                 <div
                   key={dayIdx}
-                  onClick={() => setSelectedDay(day)}
+                  onClick={() => {
+                    setSelectedDay(day)
+                    setArmedEventId(null)
+                  }}
                   className={cn(
                     dayIdx === 0 && colStartClasses[getDay(day)],
                     !isEqual(day, selectedDay) &&
@@ -233,18 +245,43 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
                       .map((day) => (
                         <div key={day.day.toString()} className="space-y-1.5">
                           {day.events.slice(0, 1).map((event) => (
-                            <button
-                              key={event.id}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onSelectEvent?.(event)
-                              }}
-                              className="flex w-full flex-col items-start gap-1 rounded-lg border border-black/[0.08] bg-surface-sunken/60 p-2 text-left text-xs leading-tight hover:bg-surface-sunken"
-                            >
-                              <p className="font-medium leading-none text-ink-primary">{event.name}</p>
-                              {event.time && <p className="leading-none text-ink-muted">{event.time}</p>}
-                            </button>
+                            <div key={event.id} className="relative">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setArmedEventId((current) => (current === event.id ? null : event.id))
+                                }}
+                                onDoubleClick={(e) => {
+                                  e.stopPropagation()
+                                  setArmedEventId(null)
+                                  onOpenNotes?.(event)
+                                }}
+                                className="flex w-full flex-col items-start gap-1 rounded-lg border border-black/[0.08] bg-surface-sunken/60 p-2 text-left text-xs leading-tight hover:bg-surface-sunken"
+                              >
+                                <div className="flex w-full items-center gap-1">
+                                  <p className="flex-1 truncate font-medium leading-none text-ink-primary">{event.name}</p>
+                                  {event.notes && (
+                                    <StickyNoteIcon size={11} className="shrink-0 text-ink-muted" aria-label="Has notes" />
+                                  )}
+                                </div>
+                                {event.time && <p className="leading-none text-ink-muted">{event.time}</p>}
+                              </button>
+                              {armedEventId === event.id && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setArmedEventId(null)
+                                    onRemoveEvent?.(event)
+                                  }}
+                                  className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-status-critical text-white shadow-sm hover:bg-status-critical/90"
+                                  aria-label={`Remove ${event.name}`}
+                                >
+                                  <XIcon size={10} strokeWidth={3} />
+                                </button>
+                              )}
+                            </div>
                           ))}
                           {day.events.length > 1 && (
                             <div className="text-xs text-ink-muted">+ {day.events.length - 1} more</div>
@@ -260,7 +297,10 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
           <div className="isolate grid w-full grid-cols-7 grid-rows-5 border-x border-black/[0.08] lg:hidden">
             {days.map((day, dayIdx) => (
               <button
-                onClick={() => setSelectedDay(day)}
+                onClick={() => {
+                  setSelectedDay(day)
+                  setArmedEventId(null)
+                }}
                 key={dayIdx}
                 type="button"
                 className={cn(
