@@ -1,5 +1,5 @@
 import type { ChangeEvent, MouseEvent, ReactNode } from 'react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useMatch } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -14,6 +14,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
+  Search,
   Settings,
   Sparkles,
   Palette,
@@ -27,6 +28,7 @@ import { ClientAvatar } from '@/components/Avatar'
 import ClientAvatarStack from '@/components/ClientAvatarStack'
 import Drawer from '@/components/Drawer'
 import ClientForm from '@/components/ClientForm'
+import SearchPalette from '@/components/SearchPalette'
 import { fileToLogoDataUrl } from '@/lib/image'
 
 /** The studio's own brand mark, top-left of the sidebar. Editable by the
@@ -114,10 +116,23 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [showAddClient, setShowAddClient] = useState(false)
   const [clientListExpanded, setClientListExpanded] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [searchOpen, setSearchOpen] = useState(false)
   const isImmersiveSession = Boolean(useMatch('/clients/:clientId/discovery/session'))
   // A client previewing their own portal only ever sees their own portal —
   // no route back to the studio's full client list.
   const lockedToClient = Boolean(client) && isClientView
+
+  useEffect(() => {
+    if (lockedToClient) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lockedToClient])
 
   const handleRemoveClient = (e: MouseEvent, name: string, id: string) => {
     e.preventDefault()
@@ -185,6 +200,19 @@ export default function Layout({ children }: { children: ReactNode }) {
               title="Collapse sidebar"
             >
               <PanelLeftClose size={16} strokeWidth={1.5} />
+            </button>
+          </div>
+        )}
+
+        {!lockedToClient && (
+          <div className="px-3 pt-3">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex w-full items-center gap-2.5 rounded-lg border border-white/10 px-3 py-2 text-left text-sm text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white/70"
+            >
+              <Search size={15} />
+              <span className="flex-1">Search</span>
+              <kbd className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/30">⌘K</kbd>
             </button>
           </div>
         )}
@@ -340,6 +368,8 @@ export default function Layout({ children }: { children: ReactNode }) {
       <Drawer open={showAddClient} onClose={() => setShowAddClient(false)} title="Add a client">
         <ClientForm onDone={() => setShowAddClient(false)} />
       </Drawer>
+
+      <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   )
 }
