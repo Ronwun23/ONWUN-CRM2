@@ -98,7 +98,7 @@ export default function TimelineStrip({ client }: { client: Client }) {
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1.5">
         {days.map((day) => {
           const dayKey = day.toISOString()
           const dayItems = items.filter((item) => sameDay(item.date, day))
@@ -107,12 +107,12 @@ export default function TimelineStrip({ client }: { client: Client }) {
           return (
             <div
               key={dayKey}
-              className="group flex min-h-[90px] flex-col rounded-lg border border-black/[0.05] bg-surface-sunken/40 p-2"
+              className="group flex min-h-[64px] flex-col rounded-lg border border-black/[0.05] bg-surface-sunken/40 p-1.5"
             >
               <p className={isToday ? 'text-xs font-semibold text-brand-600' : 'text-xs font-medium text-ink-muted'}>
                 {day.toLocaleDateString('en-US', { weekday: 'short' })} {day.getDate()}
               </p>
-              <div className="mt-1.5 flex flex-col gap-1">
+              <div className="mt-1 flex flex-col gap-1">
                 {dayItems.map((item) => (
                   <div
                     key={item.id}
@@ -137,7 +137,7 @@ export default function TimelineStrip({ client }: { client: Client }) {
                     onKeyDown={(e) => handleKeyDown(e, day)}
                     onBlur={() => commitAdd(day)}
                     placeholder="What needs doing…"
-                    className="mt-1.5 w-full rounded-md border border-brand-500 bg-white px-1.5 py-1 text-[11px] focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-brand-500 bg-white px-1.5 py-1 text-[11px] focus:outline-none"
                     autoComplete="off"
                     data-1p-ignore
                     data-lpignore="true"
@@ -145,7 +145,7 @@ export default function TimelineStrip({ client }: { client: Client }) {
                 ) : (
                   <button
                     onClick={() => startAdding(dayKey)}
-                    className="mt-1.5 flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-ink-muted opacity-0 transition-opacity hover:bg-white hover:text-ink-secondary group-hover:opacity-100 focus:opacity-100"
+                    className="mt-1 flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-ink-muted opacity-0 transition-opacity hover:bg-white hover:text-ink-secondary group-hover:opacity-100 focus:opacity-100"
                   >
                     <Plus size={11} />
                     Add
