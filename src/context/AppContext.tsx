@@ -14,7 +14,7 @@ import type {
   UpdateEntry,
   WorkshopScreen,
 } from '@/types'
-import { CLIENTS, blankLibraryFolders } from '@/data/clients'
+import { CLIENTS } from '@/data/clients'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
 import { normalizeClient } from '@/lib/normalizeClient'
 import { STUDIO_ACCOUNTS } from '@/data/team'
@@ -22,19 +22,6 @@ import type { StudioAccount } from '@/data/team'
 
 const STORAGE_KEY = 'onwun-studio-clients-v4'
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
-
-function isLibraryFolder(value: unknown): value is LibraryFolder {
-  return Boolean(value) && typeof value === 'object' && Array.isArray((value as LibraryFolder).files)
-}
-
-// Browsers with data saved before the Library folders feature shipped still
-// have the old flat library shape in localStorage — normalize it on load so
-// the app can't crash rendering a client whose library predates this field,
-// without discarding anything else that client has saved locally.
-function normalizeClient(client: Client): Client {
-  if (Array.isArray(client.library) && client.library.every(isLibraryFolder)) return client
-  return { ...client, library: blankLibraryFolders() }
-}
 
 function loadInitialClients(): Client[] {
   try {
