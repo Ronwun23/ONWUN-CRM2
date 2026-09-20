@@ -31,6 +31,10 @@ interface AppContextValue {
   getClient: (id: string) => Client | undefined
   addClient: (client: Client) => void
   removeClient: (clientId: string) => void
+  updateClientProfile: (
+    clientId: string,
+    patch: Partial<Pick<Client, 'name' | 'projectName' | 'owner' | 'dueDate' | 'avatarUrl' | 'color' | 'initials'>>
+  ) => void
   toggleStep: (clientId: string, phaseKey: string, stepId: string) => void
   addStep: (clientId: string, phaseKey: string, title: string) => void
   toggleTask: (clientId: string, taskId: string) => void
@@ -77,6 +81,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const removeClient = useCallback((clientId: string) => {
     setClients((prev) => prev.filter((c) => c.id !== clientId))
   }, [])
+
+  const updateClientProfile = useCallback(
+    (clientId: string, patch: Parameters<AppContextValue['updateClientProfile']>[1]) => {
+      updateClient(clientId, (c) => ({ ...c, ...patch }))
+    },
+    [updateClient]
+  )
 
   const toggleStep = useCallback(
     (clientId: string, phaseKey: string, stepId: string) => {
@@ -281,6 +292,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getClient,
       addClient,
       removeClient,
+      updateClientProfile,
       toggleStep,
       addStep,
       toggleTask,
@@ -305,6 +317,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getClient,
       addClient,
       removeClient,
+      updateClientProfile,
       toggleStep,
       addStep,
       toggleTask,

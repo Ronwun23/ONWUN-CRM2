@@ -165,6 +165,7 @@ export interface Client {
   projectName: string
   initials: string
   color: string
+  avatarUrl?: string
   status: ClientStatus
   owner: string
   startDate: string

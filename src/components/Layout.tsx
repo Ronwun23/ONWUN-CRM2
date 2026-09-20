@@ -21,7 +21,7 @@ import { CURRENT_USER } from '@/data/team'
 import { ClientAvatar } from '@/components/Avatar'
 import ClientAvatarStack from '@/components/ClientAvatarStack'
 import Drawer from '@/components/Drawer'
-import AddClientForm from '@/components/AddClientForm'
+import ClientForm from '@/components/ClientForm'
 
 const CLIENT_NAV_ITEMS = [
   { to: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -97,7 +97,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               </div>
             )}
             <div className="flex items-center gap-2.5 px-5 py-4">
-              <ClientAvatar initials={client.initials} color={client.color} size={32} />
+              <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={32} />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold leading-tight text-white">{client.name}</p>
                 <p className="truncate text-xs leading-tight text-white/40">{client.projectName}</p>
@@ -172,7 +172,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                         )
                       }
                     >
-                      <ClientAvatar initials={c.initials} color={c.color} size={22} />
+                      <ClientAvatar initials={c.initials} color={c.color} avatarUrl={c.avatarUrl} size={22} />
                       <span className="truncate">{c.name}</span>
                     </NavLink>
                     <button
@@ -226,7 +226,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       </main>
 
       <Drawer open={showAddClient} onClose={() => setShowAddClient(false)} title="Add a client">
-        <AddClientForm onDone={() => setShowAddClient(false)} />
+        <ClientForm onDone={() => setShowAddClient(false)} />
       </Drawer>
     </div>
   )

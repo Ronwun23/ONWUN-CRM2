@@ -31,7 +31,7 @@ export default function ClientAvatarStack({
           className={`rounded-full ring-[3px] ${ringClassName}`}
           style={{ marginLeft: i === 0 ? 0 : -overlap, zIndex: visible.length - i }}
         >
-          <ClientAvatar initials={c.initials} color={c.color} size={size} />
+          <ClientAvatar initials={c.initials} color={c.color} avatarUrl={c.avatarUrl} size={size} />
         </div>
       ))}
       {overflow > 0 && (

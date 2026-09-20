@@ -21,12 +21,24 @@ export function memberName(memberId: string): string {
 export function ClientAvatar({
   initials,
   color,
+  avatarUrl,
   size = 36,
 }: {
   initials: string
   color: string
+  avatarUrl?: string
   size?: number
 }) {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt=""
+        className="shrink-0 rounded-xl object-cover"
+        style={{ width: size, height: size }}
+      />
+    )
+  }
   return (
     <div
       className="flex shrink-0 items-center justify-center rounded-xl font-bold text-white"

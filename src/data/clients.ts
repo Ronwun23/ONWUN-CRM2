@@ -69,7 +69,7 @@ function emptyWorkshop(): WorkshopState {
   }
 }
 
-const NEW_CLIENT_COLORS = ['#6a60f6', '#eb6834', '#1baf7a', '#e87ba4', '#eda100', '#4a3aa7']
+export const NEW_CLIENT_COLORS = ['#6a60f6', '#eb6834', '#1baf7a', '#e87ba4', '#eda100', '#4a3aa7']
 
 export function blankPhases(): ProjectPhase[] {
   return PHASES.map((key) => ({
@@ -103,6 +103,8 @@ export function createBlankClient(input: {
   projectName: string
   owner: string
   dueDate: string
+  color?: string
+  avatarUrl?: string
 }): Client {
   const id = input.name
     .toLowerCase()
@@ -114,7 +116,8 @@ export function createBlankClient(input: {
     name: input.name,
     projectName: input.projectName,
     initials: initialsFromName(input.name),
-    color: NEW_CLIENT_COLORS[Math.floor(Math.random() * NEW_CLIENT_COLORS.length)],
+    color: input.color ?? NEW_CLIENT_COLORS[Math.floor(Math.random() * NEW_CLIENT_COLORS.length)],
+    avatarUrl: input.avatarUrl,
     status: 'active',
     owner: input.owner,
     startDate: new Date().toISOString(),
