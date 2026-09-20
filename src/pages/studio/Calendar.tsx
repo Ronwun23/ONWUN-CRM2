@@ -5,6 +5,7 @@ import Drawer from '@/components/Drawer'
 import { FullScreenCalendar } from '@/components/ui/fullscreen-calendar'
 import type { CalendarData, CalendarEvent } from '@/components/ui/fullscreen-calendar'
 import { DatePicker } from '@/components/ui/date-picker'
+import { TimePicker } from '@/components/ui/time-picker'
 import { toDisplayDate, formatCivilDate } from '@/lib/civilDate'
 
 function formatEventTime(time: string): string {
@@ -109,12 +110,7 @@ export default function StudioCalendar() {
               <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">
                 Time <span className="normal-case text-ink-muted/70">(optional)</span>
               </label>
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
+              <TimePicker value={time} onChange={setTime} />
             </div>
           </div>
           <button
