@@ -120,10 +120,12 @@ export default function ClientDashboard() {
                 {phase.steps.map((step) => (
                   <li key={step.id} className="flex items-center gap-3 py-2.5">
                     <button
-                      onClick={() => toggleStep(client.id, phase.key, step.id)}
+                      onClick={() => !isClientView && toggleStep(client.id, phase.key, step.id)}
+                      disabled={isClientView}
                       className={clsx(
                         'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
-                        step.done ? 'border-brand-500 bg-brand-500 text-white' : 'border-black/20 hover:border-brand-500'
+                        step.done ? 'border-brand-500 bg-brand-500 text-white' : 'border-black/20',
+                        isClientView ? 'cursor-default' : 'hover:border-brand-500'
                       )}
                       aria-label="Toggle step"
                     >
