@@ -87,14 +87,14 @@ export function blankPhases(): ProjectPhase[] {
 export function blankDocuments(): ClientDocument[] {
   const now = new Date().toISOString()
   return [
-    { id: nextId('doc'), title: 'Proposal', type: 'proposal', status: 'draft', updatedAt: now },
-    { id: nextId('doc'), title: 'Contract', type: 'contract', status: 'draft', updatedAt: now },
-    { id: nextId('doc'), title: 'Invoices', type: 'invoice', status: 'draft', updatedAt: now },
-    { id: nextId('doc'), title: 'Brand Strategy', type: 'strategy', status: 'draft', updatedAt: now },
-    { id: nextId('doc'), title: 'Speed Run Presentation 1', type: 'presentation', status: 'draft', updatedAt: now },
-    { id: nextId('doc'), title: 'Speed Run Presentation 2', type: 'presentation', status: 'draft', updatedAt: now },
-    { id: nextId('doc'), title: 'Final Brand Presentation', type: 'presentation', status: 'draft', updatedAt: now },
-    { id: nextId('doc'), title: 'Figma Brand Guidelines', type: 'guidelines', status: 'draft', updatedAt: now },
+    { id: nextId('doc'), title: 'Proposal', type: 'proposal', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Contract', type: 'contract', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Invoices', type: 'invoice', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Brand Strategy', type: 'strategy', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Speed Run Presentation 1', type: 'presentation', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Speed Run Presentation 2', type: 'presentation', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Final Brand Presentation', type: 'presentation', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Figma Brand Guidelines', type: 'guidelines', status: 'draft', updatedAt: now, comments: [] },
   ]
 }
 
@@ -224,6 +224,7 @@ function docs(entries: [string, ClientDocument['type'], ClientDocument['status']
     status,
     meta,
     updatedAt: daysFrom(offset),
+    comments: [],
   }))
 }
 

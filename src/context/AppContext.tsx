@@ -6,6 +6,7 @@ import type {
   ClientDocument,
   ClientEvent,
   ClientTask,
+  DocumentComment,
   LibraryItem,
   StrategyDraft,
   StrategyStatus,
@@ -15,8 +16,12 @@ import type {
 import { CLIENTS } from '@/data/clients'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
 
+<<<<<<< HEAD
 const STORAGE_KEY = 'onwun-studio-clients-v2'
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
+=======
+const STORAGE_KEY = 'onwun-studio-clients-v3'
+>>>>>>> 8092e7a3bfa2b474f9b97bae8a699c03c4cba250
 
 function loadInitialClients(): Client[] {
   try {
@@ -63,6 +68,7 @@ interface AppContextValue {
   addDocument: (clientId: string, doc: ClientDocument) => void
   updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
   removeDocument: (clientId: string, docId: string) => void
+  addDocumentComment: (clientId: string, docId: string, comment: DocumentComment) => void
   addLibraryItem: (clientId: string, item: LibraryItem) => void
   addBrandAsset: (clientId: string, asset: BrandAsset) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string) => void
@@ -234,6 +240,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const addDocumentComment = useCallback(
+    (clientId: string, docId: string, comment: DocumentComment) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        documents: c.documents.map((d) =>
+          d.id === docId ? { ...d, comments: [...(d.comments ?? []), comment] } : d
+        ),
+      }))
+    },
+    [updateClient]
+  )
+
   const addLibraryItem = useCallback(
     (clientId: string, item: LibraryItem) => {
       updateClient(clientId, (c) => ({ ...c, library: [item, ...c.library] }))
@@ -359,6 +377,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addDocument,
       updateDocument,
       removeDocument,
+      addDocumentComment,
       addLibraryItem,
       addBrandAsset,
       saveWorkshopAnswer,
@@ -390,6 +409,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addDocument,
       updateDocument,
       removeDocument,
+      addDocumentComment,
       addLibraryItem,
       addBrandAsset,
       saveWorkshopAnswer,

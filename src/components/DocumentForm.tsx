@@ -54,7 +54,7 @@ export default function DocumentForm({
     if (existing) {
       updateDocument(clientId, existing.id, payload)
     } else {
-      addDocument(clientId, { id: `doc-${Date.now()}`, updatedAt: new Date().toISOString(), ...payload })
+      addDocument(clientId, { id: `doc-${Date.now()}`, updatedAt: new Date().toISOString(), comments: [], ...payload })
     }
     onDone()
   }
