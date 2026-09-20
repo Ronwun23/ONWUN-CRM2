@@ -8,7 +8,7 @@ import Drawer from '@/components/Drawer'
 import DocumentForm from '@/components/DocumentForm'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_STATUS_TONE, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
 import { formatDate } from '@/lib/format'
-import { figmaEmbedSrc, isFigmaUrl } from '@/lib/embed'
+import { figmaEmbedSrc, isFigmaUrl, isPdfDataUrl } from '@/lib/embed'
 
 export default function DocumentDetail() {
   const client = useClientOutlet()
@@ -53,9 +53,10 @@ export default function DocumentDetail() {
               href={doc.url}
               target="_blank"
               rel="noopener noreferrer"
+              download={isPdfDataUrl(doc.url) ? `${doc.title}.pdf` : undefined}
               className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] bg-white px-3 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
             >
-              {isFigmaUrl(doc.url) ? 'Open in Figma' : 'Open link'}
+              {isFigmaUrl(doc.url) ? 'Open in Figma' : isPdfDataUrl(doc.url) ? 'Download PDF' : 'Open link'}
               <ExternalLink size={13} />
             </a>
           )}
@@ -90,6 +91,10 @@ export default function DocumentDetail() {
             <p className="border-t border-black/[0.06] px-4 py-2 text-xs text-ink-muted">
               Needs "anyone with the link can view" set in Figma, or your client's own login instead.
             </p>
+          </div>
+        ) : isPdfDataUrl(doc.url) ? (
+          <div className="overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
+            <iframe key={doc.url} src={doc.url} title={doc.title} className="h-[70vh] w-full" />
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-black/[0.06] bg-white p-12 text-center shadow-card">
