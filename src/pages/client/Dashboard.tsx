@@ -38,7 +38,7 @@ export default function ClientDashboard() {
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <ClientAvatar initials={client.initials} color={client.color} size={44} />
+          <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={44} />
           <div>
             <h1 className="text-xl font-semibold text-ink-primary">{client.name}</h1>
             <p className="text-sm text-ink-secondary">{client.projectName}</p>
