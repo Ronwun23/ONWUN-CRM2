@@ -1,13 +1,15 @@
 import type { ChangeEvent, MouseEvent, ReactNode } from 'react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useMatch } from 'react-router-dom'
 import {
   ArrowLeft,
   BookOpen,
   Calendar as CalendarIcon,
   Camera,
+  Check,
   CheckSquare,
   ChevronDown,
+  ChevronsUpDown,
   FileText,
   LayoutDashboard,
   Megaphone,
@@ -22,12 +24,93 @@ import {
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { useViewMode } from '@/context/ViewModeContext'
-import { CURRENT_USER } from '@/data/team'
+import { STUDIO_ACCOUNTS } from '@/data/team'
 import { ClientAvatar } from '@/components/Avatar'
 import ClientAvatarStack from '@/components/ClientAvatarStack'
 import Drawer from '@/components/Drawer'
 import ClientForm from '@/components/ClientForm'
 import { fileToLogoDataUrl } from '@/lib/image'
+
+/** Bottom-left "who's managing this" switcher — lets Ro or Niall flip
+ * between themselves, since either one might be driving the studio account
+ * at any given time. Not shown/editable to a client previewing their portal. */
+function AccountSwitcher({ editable }: { editable: boolean }) {
+  const { activeAccount, setActiveAccount } = useApp()
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handleClickOutside = (e: globalThis.MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
+
+  const avatar = (
+    <div
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+      style={{ backgroundColor: activeAccount.color }}
+    >
+      {activeAccount.initials}
+    </div>
+  )
+
+  if (!editable) {
+    return (
+      <div className="mt-auto flex items-center gap-2.5 border-t border-white/10 px-5 py-4">
+        {avatar}
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium leading-tight text-white">{activeAccount.name}</p>
+          <p className="truncate text-[11px] leading-tight text-white/40">{activeAccount.email}</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div ref={rootRef} className="relative mt-auto border-t border-white/10 px-3 py-3">
+      {open && (
+        <div className="absolute bottom-full left-3 right-3 mb-1.5 overflow-hidden rounded-lg border border-white/10 bg-[#141414] shadow-pop">
+          {STUDIO_ACCOUNTS.map((account) => (
+            <button
+              key={account.id}
+              onClick={() => {
+                setActiveAccount(account.id)
+                setOpen(false)
+              }}
+              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left hover:bg-white/[0.06]"
+            >
+              <div
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                style={{ backgroundColor: account.color }}
+              >
+                {account.initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium leading-tight text-white">{account.name}</p>
+                <p className="truncate text-[11px] leading-tight text-white/40">{account.email}</p>
+              </div>
+              {account.id === activeAccount.id && <Check size={13} className="shrink-0 text-brand-400" />}
+            </button>
+          ))}
+        </div>
+      )}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-white/[0.06]"
+      >
+        {avatar}
+        <div className="min-w-0 flex-1 text-left">
+          <p className="truncate text-xs font-medium leading-tight text-white">{activeAccount.name}</p>
+          <p className="truncate text-[11px] leading-tight text-white/40">{activeAccount.email}</p>
+        </div>
+        <ChevronsUpDown size={13} className="shrink-0 text-white/40" />
+      </button>
+    </div>
+  )
+}
 
 /** The studio's own brand mark, top-left of the sidebar. Editable by the
  * agency (click to upload, hover to reveal a remove button) — never by a
@@ -316,18 +399,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
         )}
 
-        <div className="mt-auto flex items-center gap-2.5 border-t border-white/10 px-5 py-4">
-          <div
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
-            style={{ backgroundColor: CURRENT_USER.color }}
-          >
-            {CURRENT_USER.initials}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-xs font-medium leading-tight text-white">{CURRENT_USER.name}</p>
-            <p className="truncate text-[11px] leading-tight text-white/40">{CURRENT_USER.email}</p>
-          </div>
-        </div>
+        <AccountSwitcher editable={!isClientView} />
         </div>
       </aside>
 
