@@ -89,6 +89,7 @@ export interface ClientEvent {
   id: string
   title: string
   date: string
+  time?: string
 }
 
 export interface WorkshopQuestion {

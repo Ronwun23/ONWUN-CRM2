@@ -42,6 +42,16 @@ interface FullScreenCalendarProps {
 
 const colStartClasses = ['', 'col-start-2', 'col-start-3', 'col-start-4', 'col-start-5', 'col-start-6', 'col-start-7']
 
+// A soft brand-purple glow instead of a flat grey background — used on every
+// hoverable cell/card in the grid so hover reads as "lit up", not "greyed out".
+const dayHoverGlow =
+  'transition-all duration-150 hover:bg-brand-50 hover:shadow-[inset_0_0_0_1px_rgba(106,96,246,0.45),0_0_14px_rgba(106,96,246,0.28)]'
+const eventHoverGlow =
+  'transition-all duration-150 hover:border-brand-300 hover:bg-brand-50 hover:shadow-[0_0_10px_rgba(106,96,246,0.25)]'
+// Applied to "today" whenever it isn't the selected day, so it stays visible
+// while browsing without competing with the filled brand-500 selected state.
+const todayRing = 'ring-1 ring-inset ring-brand-400 text-brand-600'
+
 export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScreenCalendarProps) {
   const today = startOfToday()
   const [selectedDay, setSelectedDay] = React.useState(today)
@@ -74,9 +84,9 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
       <div className="flex flex-col space-y-4 p-4 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none">
         <div className="flex flex-auto">
           <div className="flex items-center gap-4">
-            <div className="hidden w-20 flex-col items-center justify-center rounded-lg border border-black/[0.08] bg-surface-sunken p-0.5 md:flex">
-              <h1 className="p-1 text-xs uppercase text-ink-muted">{format(today, 'MMM')}</h1>
-              <div className="flex w-full items-center justify-center rounded-lg border border-black/[0.08] bg-white p-0.5 text-lg font-bold text-ink-primary">
+            <div className="hidden w-20 flex-col items-center justify-center rounded-lg border border-brand-200 bg-brand-50 p-0.5 md:flex">
+              <h1 className="p-1 text-xs uppercase text-brand-600">{format(today, 'MMM')}</h1>
+              <div className="flex w-full items-center justify-center rounded-lg border border-brand-200 bg-white p-0.5 text-lg font-bold text-brand-600">
                 <span>{format(today, 'd')}</span>
               </div>
             </div>
@@ -164,15 +174,16 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
                       !isSameMonth(day, firstDayCurrentMonth) &&
                       'text-ink-muted',
                     (isEqual(day, selectedDay) || isToday(day)) && 'font-semibold',
-                    'flex h-14 flex-col border-b border-r border-black/[0.08] px-3 py-2 hover:bg-surface-sunken focus:z-10'
+                    'flex h-14 flex-col border-b border-r border-black/[0.08] px-3 py-2 focus:z-10',
+                    dayHoverGlow
                   )}
                 >
                   <time
                     dateTime={format(day, 'yyyy-MM-dd')}
                     className={cn(
                       'ml-auto flex size-6 items-center justify-center rounded-full',
-                      isEqual(day, selectedDay) && isToday(day) && 'bg-brand-500 text-white',
-                      isEqual(day, selectedDay) && !isToday(day) && 'bg-brand-500 text-white'
+                      isEqual(day, selectedDay) && 'bg-brand-500 text-white',
+                      !isEqual(day, selectedDay) && isToday(day) && todayRing
                     )}
                   >
                     {format(day, 'd')}
@@ -184,7 +195,7 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
                         .map((date) => (
                           <div key={date.day.toString()} className="-mx-0.5 mt-auto flex flex-wrap-reverse">
                             {date.events.map((event) => (
-                              <span key={event.id} className="mx-0.5 mt-1 h-1.5 w-1.5 rounded-full bg-ink-muted" />
+                              <span key={event.id} className="mx-0.5 mt-1 h-1.5 w-1.5 rounded-full bg-brand-400" />
                             ))}
                           </div>
                         ))}
@@ -201,8 +212,8 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
                       !isToday(day) &&
                       !isSameMonth(day, firstDayCurrentMonth) &&
                       'bg-surface-sunken/50 text-ink-muted',
-                    'relative flex flex-col border-b border-r border-black/[0.08] hover:bg-surface-sunken',
-                    !isEqual(day, selectedDay) && 'hover:bg-surface-sunken/75'
+                    'relative flex flex-col border-b border-r border-black/[0.08]',
+                    dayHoverGlow
                   )}
                 >
                   <header className="flex items-center justify-between p-2.5">
@@ -218,10 +229,10 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
                           !isToday(day) &&
                           !isSameMonth(day, firstDayCurrentMonth) &&
                           'text-ink-muted',
-                        isEqual(day, selectedDay) && isToday(day) && 'border-none bg-brand-500',
-                        isEqual(day, selectedDay) && !isToday(day) && 'bg-ink-primary',
+                        isEqual(day, selectedDay) && 'border-none bg-brand-500',
+                        !isEqual(day, selectedDay) && isToday(day) && todayRing,
                         (isEqual(day, selectedDay) || isToday(day)) && 'font-semibold',
-                        'flex h-7 w-7 items-center justify-center rounded-full text-xs hover:border'
+                        'flex h-7 w-7 items-center justify-center rounded-full text-xs'
                       )}
                     >
                       <time dateTime={format(day, 'yyyy-MM-dd')}>{format(day, 'd')}</time>
@@ -240,7 +251,10 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
                                 e.stopPropagation()
                                 onSelectEvent?.(event)
                               }}
-                              className="flex w-full flex-col items-start gap-1 rounded-lg border border-black/[0.08] bg-surface-sunken/60 p-2 text-left text-xs leading-tight hover:bg-surface-sunken"
+                              className={cn(
+                                'flex w-full flex-col items-start gap-1 rounded-lg border border-black/[0.08] bg-surface-sunken/60 p-2 text-left text-xs leading-tight',
+                                eventHoverGlow
+                              )}
                             >
                               <p className="font-medium leading-none text-ink-primary">{event.name}</p>
                               {event.time && <p className="leading-none text-ink-muted">{event.time}</p>}
@@ -271,15 +285,16 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
                     !isSameMonth(day, firstDayCurrentMonth) &&
                     'text-ink-muted',
                   (isEqual(day, selectedDay) || isToday(day)) && 'font-semibold',
-                  'flex h-14 flex-col border-b border-r border-black/[0.08] px-3 py-2 hover:bg-surface-sunken focus:z-10'
+                  'flex h-14 flex-col border-b border-r border-black/[0.08] px-3 py-2 focus:z-10',
+                  dayHoverGlow
                 )}
               >
                 <time
                   dateTime={format(day, 'yyyy-MM-dd')}
                   className={cn(
                     'ml-auto flex size-6 items-center justify-center rounded-full',
-                    isEqual(day, selectedDay) && isToday(day) && 'bg-brand-500 text-white',
-                    isEqual(day, selectedDay) && !isToday(day) && 'bg-brand-500 text-white'
+                    isEqual(day, selectedDay) && 'bg-brand-500 text-white',
+                    !isEqual(day, selectedDay) && isToday(day) && todayRing
                   )}
                 >
                   {format(day, 'd')}
@@ -291,7 +306,7 @@ export function FullScreenCalendar({ data, onNewEvent, onSelectEvent }: FullScre
                       .map((date) => (
                         <div key={date.day.toString()} className="-mx-0.5 mt-auto flex flex-wrap-reverse">
                           {date.events.map((event) => (
-                            <span key={event.id} className="mx-0.5 mt-1 h-1.5 w-1.5 rounded-full bg-ink-muted" />
+                            <span key={event.id} className="mx-0.5 mt-1 h-1.5 w-1.5 rounded-full bg-brand-400" />
                           ))}
                         </div>
                       ))}

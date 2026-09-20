@@ -11,9 +11,11 @@ const buttonVariants = cva(
       variant: {
         default: 'bg-brand-500 text-white hover:bg-brand-600',
         destructive: 'bg-status-critical text-white hover:bg-status-critical/90',
-        outline: 'border border-black/[0.10] bg-white text-ink-primary hover:bg-surface-sunken',
+        outline:
+          'border border-black/[0.10] bg-white text-ink-primary transition-all hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 hover:shadow-[0_0_10px_rgba(106,96,246,0.25)]',
         secondary: 'bg-surface-sunken text-ink-primary hover:bg-surface-sunken/70',
-        ghost: 'text-ink-secondary hover:bg-surface-sunken hover:text-ink-primary',
+        ghost:
+          'text-ink-secondary transition-all hover:bg-brand-50 hover:text-brand-700 hover:shadow-[0_0_10px_rgba(106,96,246,0.2)]',
         link: 'text-brand-600 underline-offset-4 hover:underline',
       },
       size: {

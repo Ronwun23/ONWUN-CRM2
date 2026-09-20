@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { format } from 'date-fns'
+import { format, parse } from 'date-fns'
 import { useApp } from '@/context/AppContext'
 import Drawer from '@/components/Drawer'
 import { FullScreenCalendar } from '@/components/ui/fullscreen-calendar'
@@ -7,11 +7,16 @@ import type { CalendarData, CalendarEvent } from '@/components/ui/fullscreen-cal
 import { DatePicker } from '@/components/ui/date-picker'
 import { toDisplayDate, formatCivilDate } from '@/lib/civilDate'
 
+function formatEventTime(time: string): string {
+  return format(parse(time, 'HH:mm', new Date()), 'h:mm a')
+}
+
 export default function StudioCalendar() {
   const { studio, addStudioEvent, removeStudioEvent } = useApp()
   const [showAdd, setShowAdd] = useState(false)
   const [title, setTitle] = useState('')
   const [date, setDate] = useState<string | undefined>(undefined)
+  const [time, setTime] = useState('')
 
   const calendarData = useMemo<CalendarData[]>(() => {
     const byDay = new Map<string, CalendarData>()
@@ -19,7 +24,14 @@ export default function StudioCalendar() {
       const day = toDisplayDate(event.date)
       const key = format(day, 'yyyy-MM-dd')
       if (!byDay.has(key)) byDay.set(key, { day, events: [] })
-      byDay.get(key)!.events.push({ id: event.id, name: event.title })
+      byDay.get(key)!.events.push({
+        id: event.id,
+        name: event.title,
+        time: event.time ? formatEventTime(event.time) : undefined,
+      })
+    }
+    for (const entry of byDay.values()) {
+      entry.events.sort((a, b) => (a.time ?? '').localeCompare(b.time ?? '') || a.name.localeCompare(b.name))
     }
     return [...byDay.values()]
   }, [studio.events])
@@ -30,16 +42,18 @@ export default function StudioCalendar() {
   }
 
   const handleSelectEvent = (event: CalendarEvent) => {
-    if (window.confirm(`Remove "${event.name}" from the calendar?`)) {
+    const when = event.time ? ` at ${event.time}` : ''
+    if (window.confirm(`Remove "${event.name}"${when} from the calendar?`)) {
       removeStudioEvent(event.id)
     }
   }
 
   const handleAdd = () => {
     if (!title.trim() || !date) return
-    addStudioEvent({ id: `studio-event-${Date.now()}`, title: title.trim(), date })
+    addStudioEvent({ id: `studio-event-${Date.now()}`, title: title.trim(), date, time: time || undefined })
     setTitle('')
     setDate(undefined)
+    setTime('')
     setShowAdd(false)
   }
 
@@ -67,9 +81,22 @@ export default function StudioCalendar() {
               data-lpignore="true"
             />
           </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Date</label>
-            <DatePicker value={date} onChange={setDate} placeholder="Select date" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Date</label>
+              <DatePicker value={date} onChange={setDate} placeholder="Select date" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">
+                Time <span className="normal-case text-ink-muted/70">(optional)</span>
+              </label>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
           </div>
           <button
             onClick={handleAdd}
