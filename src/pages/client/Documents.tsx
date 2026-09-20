@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ExternalLink, FileSignature, FileText, Link2, Plus, Presentation, Receipt, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
+import { useViewMode } from '@/context/ViewModeContext'
 import Pill from '@/components/Pill'
 import Drawer from '@/components/Drawer'
 import DocumentForm from '@/components/DocumentForm'
@@ -23,19 +24,22 @@ const TYPE_ICON: Record<DocumentType, LucideIcon> = {
 
 export default function ClientDocuments() {
   const client = useClientOutlet()
+  const { isClientView } = useViewMode()
   const [showAdd, setShowAdd] = useState(false)
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink-primary">Documents</h1>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-        >
-          <Plus size={16} />
-          New document
-        </button>
+        {!isClientView && (
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+          >
+            <Plus size={16} />
+            New document
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -67,7 +71,7 @@ export default function ClientDocuments() {
                 ) : (
                   <span className="flex items-center gap-1 text-xs text-ink-muted">
                     <Link2 size={11} />
-                    Add link
+                    {isClientView ? 'No link yet' : 'Add link'}
                   </span>
                 )}
               </div>
