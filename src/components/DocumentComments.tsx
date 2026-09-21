@@ -23,7 +23,7 @@ export default function DocumentComments({
   doc: ClientDocument
   pageLabel?: string
 }) {
-  const { addDocumentComment, addUpdate, activeAccount } = useApp()
+  const { addDocumentComment, activeAccount } = useApp()
   const { isClientView } = useViewMode()
   const [draft, setDraft] = useState('')
   // Defensive: documents created before comment threads existed (still
@@ -37,22 +37,13 @@ export default function DocumentComments({
   const send = () => {
     const text = draft.trim()
     if (!text) return
-    const createdAt = new Date().toISOString()
     addDocumentComment(client.id, doc.id, {
       id: `comment-${Date.now()}`,
       authorName,
       authorType: isClientView ? 'client' : 'agency',
       text,
-      createdAt,
+      createdAt: new Date().toISOString(),
       pageLabel,
-    })
-    addUpdate(client.id, {
-      id: `update-${Date.now()}`,
-      text: `Commented on "${doc.title}${pageLabel ? ` · ${pageLabel}` : ''}": ${text}`,
-      date: createdAt,
-      author: authorName,
-      authorType: isClientView ? 'client' : 'agency',
-      docId: doc.id,
     })
     setDraft('')
   }

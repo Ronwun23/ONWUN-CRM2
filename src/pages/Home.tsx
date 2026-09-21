@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, ArrowRight, Briefcase, Calendar, CheckCircle2, Trash2, Users } from 'lucide-react'
+import { AlertCircle, ArrowRight, Briefcase, Calendar, CheckCircle2, FileText, Trash2, Users } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { CURRENT_USER } from '@/data/team'
@@ -209,7 +209,13 @@ export default function HomePage() {
             {recentClientUpdates.map((update) => (
               <li key={update.id} className="flex items-start gap-2 py-2.5">
                 <button
-                  onClick={() => navigate(`/clients/${update.client.id}/updates`)}
+                  onClick={() =>
+                    navigate(
+                      update.docId
+                        ? `/clients/${update.client.id}/documents/${update.docId}`
+                        : `/clients/${update.client.id}/updates`
+                    )
+                  }
                   className="flex min-w-0 flex-1 items-start gap-3 text-left hover:bg-surface-sunken/40"
                 >
                   <ClientAvatar
@@ -219,6 +225,12 @@ export default function HomePage() {
                     size={28}
                   />
                   <div className="min-w-0 flex-1">
+                    {update.docId && update.docTitle && (
+                      <span className="mb-1 inline-flex w-fit items-center gap-1 rounded bg-surface-sunken px-1.5 py-0.5 text-[11px] font-medium text-ink-secondary">
+                        <FileText size={11} />
+                        Commented on {update.docTitle}
+                      </span>
+                    )}
                     <p className="truncate text-sm text-ink-primary">{update.text}</p>
                     <div className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
                       <span className="font-medium text-ink-secondary">{update.client.name}</span>

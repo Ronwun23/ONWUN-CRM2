@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Send, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { FileText, Send, Trash2 } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
 import { useViewMode } from '@/context/ViewModeContext'
@@ -63,6 +64,15 @@ export default function ClientUpdates() {
                 <MemberAvatar memberId={update.author} size={28} />
               )}
               <div className="min-w-0 flex-1">
+                {update.docId && update.docTitle && (
+                  <Link
+                    to={`/clients/${client.id}/documents/${update.docId}`}
+                    className="mb-1 flex w-fit items-center gap-1 rounded bg-surface-sunken px-1.5 py-0.5 text-[11px] font-medium text-ink-secondary hover:bg-black/[0.06]"
+                  >
+                    <FileText size={11} />
+                    Commented on {update.docTitle}
+                  </Link>
+                )}
                 <p className="text-sm text-ink-primary">{update.text}</p>
                 <div className="mt-1.5 flex items-center gap-1.5 text-xs text-ink-muted">
                   <span className="font-medium text-ink-secondary">{update.author}</span>

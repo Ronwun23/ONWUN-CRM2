@@ -70,6 +70,7 @@ export interface UpdateEntry {
   author: string
   authorType?: 'agency' | 'client'
   docId?: string
+  docTitle?: string
 }
 
 export type LibraryFileType = 'pdf' | 'png' | 'ttf' | 'link' | 'other'
