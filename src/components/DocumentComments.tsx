@@ -15,7 +15,7 @@ function formatCommentTime(iso: string): string {
 }
 
 export default function DocumentComments({ client, doc }: { client: Client; doc: ClientDocument }) {
-  const { addDocumentComment, activeAccount } = useApp()
+  const { addDocumentComment, addUpdate, activeAccount } = useApp()
   const { isClientView } = useViewMode()
   const [draft, setDraft] = useState('')
   // Defensive: documents created before comment threads existed (still
@@ -29,12 +29,21 @@ export default function DocumentComments({ client, doc }: { client: Client; doc:
   const send = () => {
     const text = draft.trim()
     if (!text) return
+    const createdAt = new Date().toISOString()
     addDocumentComment(client.id, doc.id, {
       id: `comment-${Date.now()}`,
       authorName,
       authorType: isClientView ? 'client' : 'agency',
       text,
-      createdAt: new Date().toISOString(),
+      createdAt,
+    })
+    addUpdate(client.id, {
+      id: `update-${Date.now()}`,
+      text: `Commented on "${doc.title}": ${text}`,
+      date: createdAt,
+      author: authorName,
+      authorType: isClientView ? 'client' : 'agency',
+      docId: doc.id,
     })
     setDraft('')
   }

@@ -68,6 +68,7 @@ export interface UpdateEntry {
   date: string
   author: string
   authorType?: 'agency' | 'client'
+  docId?: string
 }
 
 export type LibraryFileType = 'pdf' | 'png' | 'ttf' | 'link' | 'other'

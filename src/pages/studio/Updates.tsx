@@ -103,7 +103,13 @@ export default function StudioUpdates() {
             <li key={update.id} className="flex items-start gap-2 rounded-xl border border-black/[0.06] bg-white shadow-card">
               {update.client ? (
                 <button
-                  onClick={() => navigate(`/clients/${update.client!.id}/updates`)}
+                  onClick={() =>
+                    navigate(
+                      update.docId
+                        ? `/clients/${update.client!.id}/documents/${update.docId}`
+                        : `/clients/${update.client!.id}/updates`
+                    )
+                  }
                   className="flex min-w-0 flex-1 items-start gap-3 p-4 text-left hover:bg-surface-sunken/40"
                 >
                   {content}
