@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Link2, Pencil, Trash2 } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
@@ -27,6 +27,31 @@ export default function DocumentDetail() {
   const [showEdit, setShowEdit] = useState(false)
 
   const doc = client.documents.find((d) => d.id === docId)
+  const [pageLabel, setPageLabel] = useState<string | undefined>()
+
+  // Reset the tracked page whenever the viewer switches to a different
+  // document, so a stale page label from the last doc never leaks in.
+  useEffect(() => {
+    setPageLabel(undefined)
+  }, [docId])
+
+  useEffect(() => {
+    if (!doc?.url || !isFigmaUrl(doc.url)) return
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== 'https://www.figma.com') return
+      const data = event.data
+      if (data?.type === 'NEW_PAGE' && data.data?.name) {
+        setPageLabel(data.data.name)
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [doc?.url])
+
+  const handlePdfPageChange = useCallback((page: number) => {
+    setPageLabel(`Page ${page}`)
+  }, [])
+
   if (!doc) return <Navigate to={`/clients/${client.id}/documents`} replace />
 
   const handleRemove = () => {
@@ -105,7 +130,7 @@ export default function DocumentDetail() {
                 Needs "anyone with the link can view" set in Figma, or your client's own login instead.
               </p>
             </FullscreenViewer>
-            <DocumentComments client={client} doc={doc} />
+            <DocumentComments client={client} doc={doc} pageLabel={pageLabel} />
           </div>
         ) : isPdfDataUrl(doc.url) ? (
           <div className="flex flex-col gap-4 lg:flex-row">
@@ -131,11 +156,11 @@ export default function DocumentDetail() {
                     </div>
                   }
                 >
-                  <PdfPageViewer url={doc.url} />
+                  <PdfPageViewer url={doc.url} onPageChange={handlePdfPageChange} />
                 </Suspense>
               </ErrorBoundary>
             </FullscreenViewer>
-            <DocumentComments client={client} doc={doc} />
+            <DocumentComments client={client} doc={doc} pageLabel={pageLabel} />
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-black/[0.06] bg-white p-12 text-center shadow-card">

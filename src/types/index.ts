@@ -41,6 +41,7 @@ export interface DocumentComment {
   authorType: CommentAuthorType
   text: string
   createdAt: string
+  pageLabel?: string
 }
 
 export interface ClientDocument {
