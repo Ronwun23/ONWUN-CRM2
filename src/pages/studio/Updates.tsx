@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Send, Trash2 } from 'lucide-react'
+import { FileText, Send, Trash2 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import Card from '@/components/Card'
 import Pill from '@/components/Pill'
@@ -81,6 +81,12 @@ export default function StudioUpdates() {
                 <MemberAvatar memberId={update.author} size={28} />
               )}
               <div className="min-w-0 flex-1">
+                {update.docId && update.docTitle && (
+                  <span className="mb-1 inline-flex w-fit items-center gap-1 rounded bg-surface-sunken px-1.5 py-0.5 text-[11px] font-medium text-ink-secondary">
+                    <FileText size={11} />
+                    Commented on {update.docTitle}
+                  </span>
+                )}
                 <p className="text-sm text-ink-primary">{update.text}</p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
                   <span className="font-medium text-ink-secondary">{update.author}</span>
@@ -99,11 +105,16 @@ export default function StudioUpdates() {
               removeStudioUpdate(update.id)
             }
           }
+          const destination = update.client
+            ? update.docId
+              ? `/clients/${update.client.id}/documents/${update.docId}`
+              : `/clients/${update.client.id}/updates`
+            : null
           return (
             <li key={update.id} className="flex items-start gap-2 rounded-xl border border-black/[0.06] bg-white shadow-card">
-              {update.client ? (
+              {destination ? (
                 <button
-                  onClick={() => navigate(`/clients/${update.client!.id}/updates`)}
+                  onClick={() => navigate(destination)}
                   className="flex min-w-0 flex-1 items-start gap-3 p-4 text-left hover:bg-surface-sunken/40"
                 >
                   {content}

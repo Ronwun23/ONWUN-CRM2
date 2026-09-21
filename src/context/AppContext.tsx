@@ -282,12 +282,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addDocumentComment = useCallback(
     (clientId: string, docId: string, comment: DocumentComment) => {
-      updateClient(clientId, (c) => ({
-        ...c,
-        documents: c.documents.map((d) =>
-          d.id === docId ? { ...d, comments: [...(d.comments ?? []), comment] } : d
-        ),
-      }))
+      updateClient(clientId, (c) => {
+        const doc = c.documents.find((d) => d.id === docId)
+        return {
+          ...c,
+          documents: c.documents.map((d) =>
+            d.id === docId ? { ...d, comments: [...(d.comments ?? []), comment] } : d
+          ),
+          // Every document comment also drops into the updates feed, so a
+          // client's (or our own) feedback on a proposal/design surfaces
+          // without anyone having to open that document to notice it.
+          updates: [
+            {
+              id: `update-comment-${comment.id}`,
+              text: comment.text,
+              date: comment.createdAt,
+              author: comment.authorName,
+              authorType: comment.authorType,
+              docId,
+              docTitle: doc?.title,
+            },
+            ...c.updates,
+          ],
+        }
+      })
     },
     [updateClient]
   )
