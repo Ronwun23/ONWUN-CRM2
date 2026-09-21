@@ -28,6 +28,8 @@ export type DocumentType =
   | 'invoice'
   | 'strategy'
   | 'presentation'
+  | 'moodboard'
+  | 'identity'
   | 'guidelines'
   | 'other'
 

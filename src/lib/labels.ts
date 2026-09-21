@@ -25,6 +25,8 @@ export const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
   invoice: 'Invoice',
   strategy: 'Strategy',
   presentation: 'Presentation',
+  moodboard: 'Visual moodboard',
+  identity: 'Visual identity',
   guidelines: 'Guidelines',
   other: 'Other',
 }

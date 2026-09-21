@@ -7,7 +7,17 @@ import { Select } from '@/components/ui/select'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
 import type { ClientDocument, DocumentStatus, DocumentType } from '@/types'
 
-const TYPE_OPTIONS: DocumentType[] = ['proposal', 'contract', 'invoice', 'strategy', 'presentation', 'guidelines', 'other']
+const TYPE_OPTIONS: DocumentType[] = [
+  'proposal',
+  'contract',
+  'invoice',
+  'strategy',
+  'presentation',
+  'moodboard',
+  'identity',
+  'guidelines',
+  'other',
+]
 const STATUS_OPTIONS: DocumentStatus[] = ['with_client', 'with_you', 'signed', 'paid', 'unpaid', 'draft']
 const PDF_DATA_URL_PREFIX = 'data:application/pdf'
 
