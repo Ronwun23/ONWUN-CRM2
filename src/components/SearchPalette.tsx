@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, CheckSquare, FileText, LayoutDashboard, Megaphone } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
@@ -25,9 +25,11 @@ const PAGES = [
 export default function SearchPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { clients } = useApp()
   const navigate = useNavigate()
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     if (!open) return
+    setSearch('')
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
@@ -54,7 +56,12 @@ export default function SearchPalette({ open, onClose }: { open: boolean; onClos
         className="relative w-full max-w-lg overflow-hidden rounded-xl border border-black/[0.08] bg-white shadow-pop"
       >
         <Command loop>
-          <CommandInput autoFocus placeholder="Search clients, documents, or pages…" />
+          <CommandInput
+            autoFocus
+            value={search}
+            onValueChange={setSearch}
+            placeholder="Search clients, documents, or pages…"
+          />
           <CommandList>
             <CommandEmpty>No matches found.</CommandEmpty>
 
