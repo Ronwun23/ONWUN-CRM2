@@ -30,3 +30,49 @@ body {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* Pinterest-style masonry for the library folder grid. Native masonry
+   first (Firefox today, others behind flags); CSS multi-column fallback
+   everywhere else. Columns stack items down each column rather than
+   across rows, but folder contents have no meaningful reading order, so
+   that's fine here. */
+.library-masonry {
+  columns: 1;
+  column-gap: 0.75rem;
+}
+.library-masonry > * {
+  break-inside: avoid;
+  margin-bottom: 0.75rem;
+}
+@media (min-width: 640px) {
+  .library-masonry {
+    columns: 2;
+  }
+}
+@media (min-width: 1024px) {
+  .library-masonry {
+    columns: 3;
+  }
+}
+@supports (grid-template-rows: masonry) {
+  .library-masonry {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: masonry;
+    column-gap: 0.75rem;
+    row-gap: 0.75rem;
+  }
+  .library-masonry > * {
+    margin-bottom: 0;
+  }
+  @media (min-width: 640px) {
+    .library-masonry {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 1024px) {
+    .library-masonry {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+}
