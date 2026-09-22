@@ -1,7 +1,8 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import { ViewModeProvider } from '@/context/ViewModeContext'
 import { useApp } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
 import HomePage from '@/pages/Home'
 import StudioUpdates from '@/pages/studio/Updates'
 import StudioTasks from '@/pages/studio/Tasks'
@@ -25,6 +26,8 @@ import DiscoverySession from '@/pages/client/discovery/DiscoverySession'
 
 export default function App() {
   const { clientsLoading } = useApp()
+  const { profile } = useAuth()
+  const location = useLocation()
 
   if (clientsLoading) {
     return (
@@ -32,6 +35,22 @@ export default function App() {
         Loading…
       </div>
     )
+  }
+
+  // A real client account is confined to their own client subtree — this is
+  // UX/routing convenience only, the actual security boundary is RLS.
+  if (profile?.role === 'client') {
+    if (!profile.client_id) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-surface-page px-4 text-center text-sm text-ink-muted">
+          This account isn't linked to a client yet — ask Onwun to fix the invite.
+        </div>
+      )
+    }
+    const ownPrefix = `/clients/${profile.client_id}`
+    if (!location.pathname.startsWith(ownPrefix)) {
+      return <Navigate to={`${ownPrefix}/dashboard`} replace />
+    }
   }
 
   return (

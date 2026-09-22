@@ -40,7 +40,7 @@ import { fileToLogoDataUrl } from '@/lib/image'
  * at any given time. Not shown/editable to a client previewing their portal. */
 function AccountSwitcher({ editable }: { editable: boolean }) {
   const { activeAccount, setActiveAccount } = useApp()
-  const { signOut } = useAuth()
+  const { profile, session, signOut } = useAuth()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -52,6 +52,28 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
+
+  if (profile?.role === 'client') {
+    return (
+      <div className="mt-auto flex items-center gap-2.5 border-t border-white/10 px-5 py-4">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">
+          {(profile.full_name ?? session?.user.email ?? '?').slice(0, 1).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-medium leading-tight text-white">{profile.full_name ?? 'Client'}</p>
+          <p className="truncate text-[11px] leading-tight text-white/40">{session?.user.email}</p>
+        </div>
+        <button
+          onClick={() => signOut()}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/40 hover:bg-white/[0.06] hover:text-status-critical"
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          <LogOut size={14} />
+        </button>
+      </div>
+    )
+  }
 
   const avatar = (
     <div

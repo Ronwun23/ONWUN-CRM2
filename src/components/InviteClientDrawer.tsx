@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, Copy, Send, UserPlus } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { inviteClientUser } from '@/lib/api/auth'
 import Drawer from '@/components/Drawer'
 import type { Client } from '@/types'
 
@@ -20,6 +21,8 @@ export default function InviteClientDrawer({
   const { addUpdate, activeAccount } = useApp()
   const [emails, setEmails] = useState<string[]>([client.email ?? ''])
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   const portalLink = `${window.location.origin}/clients/${client.id}/dashboard`
@@ -30,9 +33,18 @@ export default function InviteClientDrawer({
 
   const handleAddEmail = () => setEmails((prev) => [...prev, ''])
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const validEmails = emails.map((e) => e.trim()).filter(Boolean)
     if (validEmails.length === 0) return
+    setSending(true)
+    setError(null)
+    const results = await Promise.all(validEmails.map((email) => inviteClientUser(email, client)))
+    const firstError = results.find((r) => r.error)?.error
+    setSending(false)
+    if (firstError) {
+      setError(firstError)
+      return
+    }
     addUpdate(client.id, {
       id: `update-${Date.now()}`,
       text: `Invited ${validEmails.join(', ')} to the client portal`,
@@ -94,7 +106,7 @@ export default function InviteClientDrawer({
 
         <button
           onClick={handleSend}
-          disabled={sent || emails.every((e) => !e.trim())}
+          disabled={sent || sending || emails.every((e) => !e.trim())}
           className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {sent ? (
@@ -102,6 +114,8 @@ export default function InviteClientDrawer({
               <Check size={14} />
               Invite sent
             </>
+          ) : sending ? (
+            'Sending…'
           ) : (
             <>
               <Send size={14} />
@@ -109,11 +123,15 @@ export default function InviteClientDrawer({
             </>
           )}
         </button>
+        {error && <p className="-mt-2 text-xs text-status-critical">{error}</p>}
 
         <hr className="border-black/[0.06]" />
 
         <div>
-          <label className={labelClass}>Invite via link</label>
+          <label className={labelClass}>Portal link</label>
+          <p className="mb-1.5 -mt-1 text-xs text-ink-muted">
+            Only works once they've signed in via an emailed invite above — share it as a bookmark, not as the way in.
+          </p>
           <div className="flex items-center gap-2">
             <input readOnly value={portalLink} className={`${inputClass} text-ink-muted`} />
             <button

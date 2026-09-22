@@ -14,6 +14,7 @@ interface AuthContextValue {
   session: Session | null
   profile: Profile | null
   loading: boolean
+  profileLoading: boolean
   linkError: string | null
   signInWithEmail: (email: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(true)
   const [linkError, setLinkError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -56,14 +58,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!session) {
       setProfile(null)
+      setProfileLoading(false)
       return
     }
+    setProfileLoading(true)
     supabase
       .from('profiles')
       .select('id, role, client_id, full_name')
       .eq('id', session.user.id)
       .single()
-      .then(({ data }) => setProfile(data as Profile | null))
+      .then(({ data }) => {
+        setProfile(data as Profile | null)
+        setProfileLoading(false)
+      })
   }, [session])
 
   const signInWithEmail = async (email: string) => {
@@ -79,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, linkError, signInWithEmail, signOut }}>
+    <AuthContext.Provider value={{ session, profile, loading, profileLoading, linkError, signInWithEmail, signOut }}>
       {children}
     </AuthContext.Provider>
   )
