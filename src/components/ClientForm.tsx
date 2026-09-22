@@ -12,6 +12,8 @@ import { initialsFromName } from '@/lib/names'
 import { fileToCompressedDataUrl } from '@/lib/image'
 import type { Client } from '@/types'
 
+const PROJECT_TYPES = ['Brand Identity', 'Website', 'Social Media Management', 'CRM']
+
 const inputClass =
   'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
 const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted'
@@ -21,7 +23,13 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
   const { addClient, updateClientProfile, activeAccount } = useApp()
   const navigate = useNavigate()
   const [name, setName] = useState(existing?.name ?? '')
-  const [projectName, setProjectName] = useState(existing?.projectName ?? 'Rebrand')
+  const [projectName, setProjectName] = useState(existing?.projectName ?? '')
+  // An existing client's project might predate this fixed list — keep it
+  // selectable so editing the client never silently wipes it out.
+  const projectOptions =
+    existing?.projectName && !PROJECT_TYPES.includes(existing.projectName)
+      ? [existing.projectName, ...PROJECT_TYPES]
+      : PROJECT_TYPES
   const [owner, setOwner] = useState(existing ? resolveMember(existing.owner).name : activeAccount.name)
   const [dueDate, setDueDate] = useState<string | undefined>(existing?.dueDate)
   const [email, setEmail] = useState(existing?.email ?? '')
@@ -143,14 +151,11 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
       </div>
       <div>
         <label className={labelClass}>Project</label>
-        <input
+        <Select
           value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
-          className={inputClass}
-          autoComplete="off"
-          data-1p-ignore
-          data-lpignore="true"
-          name="client-project"
+          onChange={setProjectName}
+          options={projectOptions.map((p) => ({ value: p, label: p }))}
+          placeholder="Select…"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
