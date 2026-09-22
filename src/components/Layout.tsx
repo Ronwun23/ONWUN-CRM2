@@ -12,6 +12,7 @@ import {
   ChevronsUpDown,
   FileText,
   LayoutDashboard,
+  LogOut,
   Megaphone,
   PanelLeftClose,
   PanelLeftOpen,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
 import { useViewMode } from '@/context/ViewModeContext'
 import { STUDIO_ACCOUNTS } from '@/data/team'
 import { ClientAvatar } from '@/components/Avatar'
@@ -38,6 +40,7 @@ import { fileToLogoDataUrl } from '@/lib/image'
  * at any given time. Not shown/editable to a client previewing their portal. */
 function AccountSwitcher({ editable }: { editable: boolean }) {
   const { activeAccount, setActiveAccount } = useApp()
+  const { signOut } = useAuth()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -97,6 +100,16 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
               {account.id === activeAccount.id && <Check size={13} className="shrink-0 text-brand-400" />}
             </button>
           ))}
+          <button
+            onClick={() => {
+              setOpen(false)
+              signOut()
+            }}
+            className="flex w-full items-center gap-2.5 border-t border-white/10 px-3 py-2.5 text-left text-status-critical hover:bg-white/[0.06]"
+          >
+            <LogOut size={13} className="shrink-0" />
+            <span className="text-xs font-medium">Sign out</span>
+          </button>
         </div>
       )}
       <button

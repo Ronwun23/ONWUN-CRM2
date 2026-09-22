@@ -14,18 +14,35 @@ interface AuthContextValue {
   session: Session | null
   profile: Profile | null
   loading: boolean
+  linkError: string | null
   signInWithEmail: (email: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+// Supabase leaves the magic-link result as a #-fragment in the URL after
+// processing it — clean that up so a failed/expired link doesn't sit in
+// the address bar, and surface a message instead of silently failing.
+function readAndClearUrlError(): string | null {
+  const hash = new URLSearchParams(window.location.hash.slice(1))
+  const errorDescription = hash.get('error_description')
+  if (window.location.hash) {
+    window.history.replaceState({}, '', window.location.pathname + window.location.search)
+  }
+  return errorDescription ? errorDescription.replace(/\+/g, ' ') : null
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [linkError, setLinkError] = useState<string | null>(null)
 
   useEffect(() => {
+    const urlError = readAndClearUrlError()
+    if (urlError) setLinkError(urlError)
+
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       setLoading(false)
@@ -62,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, signInWithEmail, signOut }}>
+    <AuthContext.Provider value={{ session, profile, loading, linkError, signInWithEmail, signOut }}>
       {children}
     </AuthContext.Provider>
   )

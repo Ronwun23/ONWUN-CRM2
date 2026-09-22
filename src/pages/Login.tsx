@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '@/context/AuthContext'
 
 export default function Login() {
-  const { signInWithEmail } = useAuth()
+  const { signInWithEmail, linkError } = useAuth()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (linkError) setError(linkError)
+  }, [linkError])
   const [sending, setSending] = useState(false)
 
   const handleSubmit = async (e: FormEvent) => {
