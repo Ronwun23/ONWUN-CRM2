@@ -80,6 +80,9 @@ interface AppContextValue {
   addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => void
   removeLibraryFile: (clientId: string, folderId: string, fileId: string) => void
   addBrandAsset: (clientId: string, asset: BrandAsset) => void
+  addClientEvent: (clientId: string, event: ClientEvent) => void
+  removeClientEvent: (clientId: string, eventId: string) => void
+  updateClientEventNotes: (clientId: string, eventId: string, notes: string) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string) => void
   setWorkshopPosition: (clientId: string, phaseIndex: number, screen: WorkshopScreen, questionIndex: number) => void
   startWorkshop: (clientId: string) => void
@@ -395,6 +398,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const addClientEvent = useCallback(
+    (clientId: string, event: ClientEvent) => {
+      updateClient(clientId, (c) => ({ ...c, events: [...c.events, event] }))
+    },
+    [updateClient]
+  )
+
+  const removeClientEvent = useCallback(
+    (clientId: string, eventId: string) => {
+      updateClient(clientId, (c) => ({ ...c, events: c.events.filter((e) => e.id !== eventId) }))
+    },
+    [updateClient]
+  )
+
+  const updateClientEventNotes = useCallback(
+    (clientId: string, eventId: string, notes: string) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        events: c.events.map((e) => (e.id === eventId ? { ...e, notes: notes || undefined } : e)),
+      }))
+    },
+    [updateClient]
+  )
+
   const saveWorkshopAnswer = useCallback(
     (clientId: string, questionId: string, answer: string) => {
       updateClient(clientId, (c) => ({
@@ -515,6 +542,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addLibraryFile,
       removeLibraryFile,
       addBrandAsset,
+      addClientEvent,
+      removeClientEvent,
+      updateClientEventNotes,
       saveWorkshopAnswer,
       setWorkshopPosition,
       startWorkshop,
@@ -558,6 +588,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addLibraryFile,
       removeLibraryFile,
       addBrandAsset,
+      addClientEvent,
+      removeClientEvent,
+      updateClientEventNotes,
       saveWorkshopAnswer,
       setWorkshopPosition,
       startWorkshop,
