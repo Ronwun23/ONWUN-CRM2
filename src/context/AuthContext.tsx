@@ -67,10 +67,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select('id, role, client_id, full_name')
       .eq('id', session.user.id)
       .single()
-      .then(({ data }) => {
-        setProfile(data as Profile | null)
-        setProfileLoading(false)
-      })
+      .then(
+        ({ data }) => {
+          setProfile(data as Profile | null)
+          setProfileLoading(false)
+        },
+        () => {
+          // A network-level failure (not a Supabase error response) would
+          // otherwise leave profileLoading stuck true forever — fall back to
+          // "no profile" so AuthGate can show a real state instead of hanging.
+          setProfile(null)
+          setProfileLoading(false)
+        }
+      )
   }, [session])
 
   const signInWithEmail = async (email: string) => {

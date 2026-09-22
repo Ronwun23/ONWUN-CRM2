@@ -25,7 +25,7 @@ import DiscoveryStrategy from '@/pages/client/discovery/DiscoveryStrategy'
 import DiscoverySession from '@/pages/client/discovery/DiscoverySession'
 
 export default function App() {
-  const { clientsLoading } = useApp()
+  const { clientsLoading, clients } = useApp()
   const { profile } = useAuth()
   const location = useLocation()
 
@@ -44,6 +44,18 @@ export default function App() {
       return (
         <div className="flex min-h-screen items-center justify-center bg-surface-page px-4 text-center text-sm text-ink-muted">
           This account isn't linked to a client yet — ask Onwun to fix the invite.
+        </div>
+      )
+    }
+    const myClient = clients.find((c) => c.id === String(profile.client_id))
+    if (!myClient) {
+      // Their client didn't come back from the initial fetch (RLS or a
+      // network error) — show that plainly instead of redirecting into
+      // ClientLayout, which would just bounce back out to "/" and loop
+      // forever with this guard redirecting back here.
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-surface-page px-4 text-center text-sm text-ink-muted">
+          Couldn't load your project data. Try reloading — if this keeps happening, let Onwun know.
         </div>
       )
     }
