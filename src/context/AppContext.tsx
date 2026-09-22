@@ -27,13 +27,14 @@ import {
   insertComment,
 } from '@/lib/api/documents'
 import { fetchTasks, insertTask, updateTaskRow } from '@/lib/api/tasks'
+import { fetchUpdates, insertUpdate, deleteUpdateRow } from '@/lib/api/updates'
 
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
 // Client core profile + phases + workshop, documents (with their
-// comments/testimonials), and tasks are Supabase-backed now (see
-// src/lib/api/). Updates, library files, brand assets and events aren't
-// migrated yet — they're still local-only state, same as before.
+// comments/testimonials), tasks, and updates are Supabase-backed now (see
+// src/lib/api/). Library files, brand assets and events aren't migrated
+// yet — they're still local-only state, same as before.
 function syncClientFields(clientId: string, patch: Record<string, unknown>) {
   updateClientRow(clientId, patch).catch((err) => {
     console.error('Failed to save to Supabase:', err)
@@ -80,7 +81,7 @@ interface AppContextValue {
   addStep: (clientId: string, phaseKey: string, title: string) => void
   toggleTask: (clientId: string, taskId: string) => void
   addTask: (clientId: string, task: ClientTask) => Promise<void>
-  addUpdate: (clientId: string, update: UpdateEntry) => void
+  addUpdate: (clientId: string, update: UpdateEntry) => Promise<void>
   removeUpdate: (clientId: string, updateId: string) => void
   addDocument: (clientId: string, doc: ClientDocument) => Promise<ClientDocument>
   updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
@@ -107,7 +108,7 @@ interface AppContextValue {
   studio: StudioState
   addStudioTask: (task: ClientTask) => Promise<void>
   toggleStudioTask: (taskId: string) => void
-  addStudioUpdate: (update: UpdateEntry) => void
+  addStudioUpdate: (update: UpdateEntry) => Promise<void>
   removeStudioUpdate: (updateId: string) => void
   addStudioEvent: (event: ClientEvent) => void
   removeStudioEvent: (eventId: string) => void
@@ -125,16 +126,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [studio, setStudio] = useState<StudioState>(loadInitialStudio)
 
   useEffect(() => {
-    Promise.all([fetchClients(), fetchDocumentsByClient(), fetchTasks()])
-      .then(([loadedClients, documentsByClient, tasks]) => {
+    Promise.all([fetchClients(), fetchDocumentsByClient(), fetchTasks(), fetchUpdates()])
+      .then(([loadedClients, documentsByClient, tasks, updates]) => {
         setClients(
           loadedClients.map((c) => ({
             ...c,
             documents: documentsByClient[c.id] ?? [],
             tasks: tasks.byClient[c.id] ?? [],
+            updates: updates.byClient[c.id] ?? [],
           }))
         )
-        setStudio((prev) => ({ ...prev, tasks: tasks.studio }))
+        setStudio((prev) => ({ ...prev, tasks: tasks.studio, updates: updates.studio }))
       })
       .catch((err) => console.error('Failed to load clients from Supabase:', err))
       .finally(() => setClientsLoading(false))
@@ -165,12 +167,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }))
   }, [])
 
-  const addStudioUpdate = useCallback((update: UpdateEntry) => {
-    setStudio((prev) => ({ ...prev, updates: [update, ...prev.updates] }))
+  const addStudioUpdate = useCallback(async (update: UpdateEntry) => {
+    const created = await insertUpdate(null, update)
+    setStudio((prev) => ({ ...prev, updates: [created, ...prev.updates] }))
   }, [])
 
   const removeStudioUpdate = useCallback((updateId: string) => {
     setStudio((prev) => ({ ...prev, updates: prev.updates.filter((u) => u.id !== updateId) }))
+    deleteUpdateRow(updateId).catch((err) => console.error('Failed to delete update from Supabase:', err))
   }, [])
 
   const addStudioEvent = useCallback((event: ClientEvent) => {
@@ -299,16 +303,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, tasks: [created, ...c.tasks] } : c)))
   }, [])
 
-  const addUpdate = useCallback(
-    (clientId: string, update: UpdateEntry) => {
-      updateClient(clientId, (c) => ({ ...c, updates: [update, ...c.updates] }))
-    },
-    [updateClient]
-  )
+  const addUpdate = useCallback(async (clientId: string, update: UpdateEntry) => {
+    const created = await insertUpdate(clientId, update)
+    setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, updates: [created, ...c.updates] } : c)))
+  }, [])
 
   const removeUpdate = useCallback(
     (clientId: string, updateId: string) => {
       updateClient(clientId, (c) => ({ ...c, updates: c.updates.filter((u) => u.id !== updateId) }))
+      deleteUpdateRow(updateId).catch((err) => console.error('Failed to delete update from Supabase:', err))
     },
     [updateClient]
   )
@@ -352,6 +355,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (clientId: string, docId: string, comment: DocumentComment) => {
       updateClient(clientId, (c) => {
         const doc = c.documents.find((d) => d.id === docId)
+        const updateEntry: UpdateEntry = {
+          id: `update-comment-${comment.id}`,
+          text: comment.text,
+          date: comment.createdAt,
+          author: comment.authorName,
+          authorType: comment.authorType,
+          docId,
+          docTitle: doc?.title,
+        }
+        insertUpdate(clientId, updateEntry).catch((err) => console.error('Failed to save update to Supabase:', err))
         return {
           ...c,
           documents: c.documents.map((d) =>
@@ -360,18 +373,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           // Every document comment also drops into the updates feed, so a
           // client's (or our own) feedback on a proposal/design surfaces
           // without anyone having to open that document to notice it.
-          updates: [
-            {
-              id: `update-comment-${comment.id}`,
-              text: comment.text,
-              date: comment.createdAt,
-              author: comment.authorName,
-              authorType: comment.authorType,
-              docId,
-              docTitle: doc?.title,
-            },
-            ...c.updates,
-          ],
+          updates: [updateEntry, ...c.updates],
         }
       })
       insertComment(docId, comment).catch((err) => console.error('Failed to save comment to Supabase:', err))
@@ -383,23 +385,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (clientId: string, docId: string, testimonial: DocumentTestimonial) => {
       updateClient(clientId, (c) => {
         const doc = c.documents.find((d) => d.id === docId)
+        const updateEntry: UpdateEntry = {
+          id: `update-testimonial-${docId}-${testimonial.createdAt}`,
+          text: testimonial.text,
+          date: testimonial.createdAt,
+          author: testimonial.authorName,
+          authorType: testimonial.authorType,
+          docId,
+          docTitle: doc?.title,
+        }
+        insertUpdate(clientId, updateEntry).catch((err) => console.error('Failed to save update to Supabase:', err))
         return {
           ...c,
           documents: c.documents.map((d) => (d.id === docId ? { ...d, testimonial } : d)),
           // A testimonial is a moment worth the agency noticing immediately,
           // same as a comment would be.
-          updates: [
-            {
-              id: `update-testimonial-${docId}-${testimonial.createdAt}`,
-              text: testimonial.text,
-              date: testimonial.createdAt,
-              author: testimonial.authorName,
-              authorType: testimonial.authorType,
-              docId,
-              docTitle: doc?.title,
-            },
-            ...c.updates,
-          ],
+          updates: [updateEntry, ...c.updates],
         }
       })
       syncDocumentFields(docId, {
