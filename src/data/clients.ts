@@ -94,6 +94,7 @@ export function blankDocuments(): ClientDocument[] {
     { id: nextId('doc'), title: 'Speed Run Presentation 2', type: 'identity', status: 'draft', updatedAt: now, comments: [] },
     { id: nextId('doc'), title: 'Final Brand Presentation', type: 'presentation', status: 'draft', updatedAt: now, comments: [] },
     { id: nextId('doc'), title: 'Figma Brand Guidelines', type: 'guidelines', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Offboarding', type: 'offboarding', status: 'draft', updatedAt: now, comments: [] },
   ]
 }
 

@@ -16,6 +16,7 @@ const TYPE_OPTIONS: DocumentType[] = [
   'moodboard',
   'identity',
   'guidelines',
+  'offboarding',
   'other',
 ]
 const STATUS_OPTIONS: DocumentStatus[] = ['with_client', 'with_you', 'signed', 'paid', 'unpaid', 'draft']

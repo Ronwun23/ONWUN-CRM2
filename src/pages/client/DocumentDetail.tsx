@@ -8,6 +8,7 @@ import Pill from '@/components/Pill'
 import Drawer from '@/components/Drawer'
 import DocumentForm from '@/components/DocumentForm'
 import DocumentComments from '@/components/DocumentComments'
+import DocumentTestimonial from '@/components/DocumentTestimonial'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import FullscreenViewer from '@/components/FullscreenViewer'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_STATUS_TONE, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
@@ -53,6 +54,13 @@ export default function DocumentDetail() {
   }, [])
 
   if (!doc) return <Navigate to={`/clients/${client.id}/documents`} replace />
+
+  const isOffboarding = doc.type === 'offboarding'
+  const sidePanel = isOffboarding ? (
+    <DocumentTestimonial client={client} doc={doc} />
+  ) : (
+    <DocumentComments client={client} doc={doc} pageLabel={pageLabel} />
+  )
 
   const handleRemove = () => {
     if (!window.confirm(`Remove "${doc.title}"? This can't be undone.`)) return
@@ -130,7 +138,7 @@ export default function DocumentDetail() {
                 Needs "anyone with the link can view" set in Figma, or your client's own login instead.
               </p>
             </FullscreenViewer>
-            <DocumentComments client={client} doc={doc} pageLabel={pageLabel} />
+            {sidePanel}
           </div>
         ) : isPdfDataUrl(doc.url) ? (
           <div className="flex flex-col gap-4 lg:flex-row">
@@ -160,7 +168,7 @@ export default function DocumentDetail() {
                 </Suspense>
               </ErrorBoundary>
             </FullscreenViewer>
-            <DocumentComments client={client} doc={doc} pageLabel={pageLabel} />
+            {sidePanel}
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-black/[0.06] bg-white p-12 text-center shadow-card">

@@ -7,6 +7,7 @@ import type {
   ClientEvent,
   ClientTask,
   DocumentComment,
+  DocumentTestimonial,
   LibraryFile,
   LibraryFolder,
   StrategyDraft,
@@ -30,7 +31,7 @@ function loadInitialClients(): Client[] {
   } catch {
     // fall through to mock data
   }
-  return CLIENTS
+  return CLIENTS.map(normalizeClient)
 }
 
 interface StudioState {
@@ -72,6 +73,8 @@ interface AppContextValue {
   updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
   removeDocument: (clientId: string, docId: string) => void
   addDocumentComment: (clientId: string, docId: string, comment: DocumentComment) => void
+  setDocumentTestimonial: (clientId: string, docId: string, testimonial: DocumentTestimonial) => void
+  removeDocumentTestimonial: (clientId: string, docId: string) => void
   addLibraryFolder: (clientId: string, folder: LibraryFolder) => void
   removeLibraryFolder: (clientId: string, folderId: string) => void
   addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => void
@@ -310,6 +313,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const setDocumentTestimonial = useCallback(
+    (clientId: string, docId: string, testimonial: DocumentTestimonial) => {
+      updateClient(clientId, (c) => {
+        const doc = c.documents.find((d) => d.id === docId)
+        return {
+          ...c,
+          documents: c.documents.map((d) => (d.id === docId ? { ...d, testimonial } : d)),
+          // A testimonial is a moment worth the agency noticing immediately,
+          // same as a comment would be.
+          updates: [
+            {
+              id: `update-testimonial-${docId}-${testimonial.createdAt}`,
+              text: testimonial.text,
+              date: testimonial.createdAt,
+              author: testimonial.authorName,
+              authorType: testimonial.authorType,
+              docId,
+              docTitle: doc?.title,
+            },
+            ...c.updates,
+          ],
+        }
+      })
+    },
+    [updateClient]
+  )
+
+  const removeDocumentTestimonial = useCallback(
+    (clientId: string, docId: string) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        documents: c.documents.map((d) => (d.id === docId ? { ...d, testimonial: undefined } : d)),
+      }))
+    },
+    [updateClient]
+  )
+
   const addLibraryFolder = useCallback(
     (clientId: string, folder: LibraryFolder) => {
       updateClient(clientId, (c) => ({ ...c, library: [...c.library, folder] }))
@@ -468,6 +508,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateDocument,
       removeDocument,
       addDocumentComment,
+      setDocumentTestimonial,
+      removeDocumentTestimonial,
       addLibraryFolder,
       removeLibraryFolder,
       addLibraryFile,
@@ -509,6 +551,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateDocument,
       removeDocument,
       addDocumentComment,
+      setDocumentTestimonial,
+      removeDocumentTestimonial,
       addLibraryFolder,
       removeLibraryFolder,
       addLibraryFile,

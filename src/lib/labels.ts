@@ -28,6 +28,7 @@ export const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
   moodboard: 'Visual moodboard',
   identity: 'Visual identity',
   guidelines: 'Guidelines',
+  offboarding: 'Offboarding',
   other: 'Other',
 }
 
