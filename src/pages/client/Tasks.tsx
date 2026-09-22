@@ -27,9 +27,9 @@ export default function ClientTasks() {
     .sort((a, b) => toDisplayDate(a.dueDate).getTime() - toDisplayDate(b.dueDate).getTime())
   const done = client.tasks.filter((t) => t.done)
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!title.trim() || !dueDate) return
-    addTask(client.id, {
+    await addTask(client.id, {
       id: `task-${Date.now()}`,
       title: title.trim(),
       done: false,

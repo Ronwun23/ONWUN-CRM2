@@ -26,13 +26,14 @@ import {
   deleteDocumentRow,
   insertComment,
 } from '@/lib/api/documents'
+import { fetchTasks, insertTask, updateTaskRow } from '@/lib/api/tasks'
 
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
-// Client core profile + phases + workshop, and documents (with their
-// comments/testimonials), are Supabase-backed now (see src/lib/api/).
-// Tasks, updates, library files, brand assets and events aren't migrated
-// yet — they're still local-only state, same as before.
+// Client core profile + phases + workshop, documents (with their
+// comments/testimonials), and tasks are Supabase-backed now (see
+// src/lib/api/). Updates, library files, brand assets and events aren't
+// migrated yet — they're still local-only state, same as before.
 function syncClientFields(clientId: string, patch: Record<string, unknown>) {
   updateClientRow(clientId, patch).catch((err) => {
     console.error('Failed to save to Supabase:', err)
@@ -78,7 +79,7 @@ interface AppContextValue {
   toggleStep: (clientId: string, phaseKey: string, stepId: string) => void
   addStep: (clientId: string, phaseKey: string, title: string) => void
   toggleTask: (clientId: string, taskId: string) => void
-  addTask: (clientId: string, task: ClientTask) => void
+  addTask: (clientId: string, task: ClientTask) => Promise<void>
   addUpdate: (clientId: string, update: UpdateEntry) => void
   removeUpdate: (clientId: string, updateId: string) => void
   addDocument: (clientId: string, doc: ClientDocument) => Promise<ClientDocument>
@@ -104,7 +105,7 @@ interface AppContextValue {
   updateStrategy: (clientId: string, updater: (s: StrategyDraft) => StrategyDraft) => void
   setStrategyStatus: (clientId: string, status: StrategyStatus) => void
   studio: StudioState
-  addStudioTask: (task: ClientTask) => void
+  addStudioTask: (task: ClientTask) => Promise<void>
   toggleStudioTask: (taskId: string) => void
   addStudioUpdate: (update: UpdateEntry) => void
   removeStudioUpdate: (updateId: string) => void
@@ -124,9 +125,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [studio, setStudio] = useState<StudioState>(loadInitialStudio)
 
   useEffect(() => {
-    Promise.all([fetchClients(), fetchDocumentsByClient()])
-      .then(([loadedClients, documentsByClient]) => {
-        setClients(loadedClients.map((c) => ({ ...c, documents: documentsByClient[c.id] ?? [] })))
+    Promise.all([fetchClients(), fetchDocumentsByClient(), fetchTasks()])
+      .then(([loadedClients, documentsByClient, tasks]) => {
+        setClients(
+          loadedClients.map((c) => ({
+            ...c,
+            documents: documentsByClient[c.id] ?? [],
+            tasks: tasks.byClient[c.id] ?? [],
+          }))
+        )
+        setStudio((prev) => ({ ...prev, tasks: tasks.studio }))
       })
       .catch((err) => console.error('Failed to load clients from Supabase:', err))
       .finally(() => setClientsLoading(false))
@@ -140,14 +148,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [studio])
 
-  const addStudioTask = useCallback((task: ClientTask) => {
-    setStudio((prev) => ({ ...prev, tasks: [task, ...prev.tasks] }))
+  const addStudioTask = useCallback(async (task: ClientTask) => {
+    const created = await insertTask(null, task)
+    setStudio((prev) => ({ ...prev, tasks: [created, ...prev.tasks] }))
   }, [])
 
   const toggleStudioTask = useCallback((taskId: string) => {
     setStudio((prev) => ({
       ...prev,
-      tasks: prev.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)),
+      tasks: prev.tasks.map((t) => {
+        if (t.id !== taskId) return t
+        const done = !t.done
+        updateTaskRow(taskId, { done }).catch((err) => console.error('Failed to save task to Supabase:', err))
+        return { ...t, done }
+      }),
     }))
   }, [])
 
@@ -269,18 +283,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (clientId: string, taskId: string) => {
       updateClient(clientId, (c) => ({
         ...c,
-        tasks: c.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)),
+        tasks: c.tasks.map((t) => {
+          if (t.id !== taskId) return t
+          const done = !t.done
+          updateTaskRow(taskId, { done }).catch((err) => console.error('Failed to save task to Supabase:', err))
+          return { ...t, done }
+        }),
       }))
     },
     [updateClient]
   )
 
-  const addTask = useCallback(
-    (clientId: string, task: ClientTask) => {
-      updateClient(clientId, (c) => ({ ...c, tasks: [task, ...c.tasks] }))
-    },
-    [updateClient]
-  )
+  const addTask = useCallback(async (clientId: string, task: ClientTask) => {
+    const created = await insertTask(clientId, task)
+    setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, tasks: [created, ...c.tasks] } : c)))
+  }, [])
 
   const addUpdate = useCallback(
     (clientId: string, update: UpdateEntry) => {
