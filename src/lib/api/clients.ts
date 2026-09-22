@@ -1,6 +1,18 @@
 import { supabase } from '@/lib/supabase'
-import { emptyWorkshop } from '@/data/clients'
+import { blankPhases, emptyWorkshop } from '@/data/clients'
+import { PHASES } from '@/types'
 import type { Client, ProjectPhase, WorkshopState } from '@/types'
+
+// Guards against a client row saved with missing/incomplete phases (e.g.
+// inserted by hand, or from before this field existed) — every client is
+// expected to have all four phases, so anything short of that gets
+// backfilled rather than crashing whatever renders the phase stepper.
+function normalizePhases(phases: ProjectPhase[] | null): ProjectPhase[] {
+  if (!phases || phases.length !== PHASES.length || PHASES.some((key) => !phases.some((p) => p.key === key))) {
+    return blankPhases()
+  }
+  return phases
+}
 
 // The `clients` table on Supabase only holds a client's core profile plus
 // `phases` and `workshop` (both stored as jsonb, since they're one cohesive
@@ -39,7 +51,7 @@ function rowToClient(row: ClientRow): Client {
     owner: row.owner,
     startDate: row.start_date,
     dueDate: row.due_date,
-    phases: row.phases ?? [],
+    phases: normalizePhases(row.phases),
     documents: [],
     tasks: [],
     updates: [],
