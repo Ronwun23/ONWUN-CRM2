@@ -209,6 +209,14 @@ export default function Layout({ children }: { children: ReactNode }) {
   const clientMatch = useMatch('/clients/:clientId/*')
   const clientId = clientMatch?.params.clientId
   const client = clientId ? getClient(clientId) : undefined
+  // Each project type gets its own layout over time — for now, Social Media
+  // Management clients trade the Brand hub for a Content calendar.
+  const clientNavItems =
+    client?.projectName === 'Social Media Management'
+      ? CLIENT_NAV_ITEMS.map((item) =>
+          item.to === 'brand-hub' ? { ...item, to: 'content-calendar', label: 'Content calendar', icon: CalendarIcon } : item
+        )
+      : CLIENT_NAV_ITEMS
   const [showAddClient, setShowAddClient] = useState(false)
   const [clientListExpanded, setClientListExpanded] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -349,7 +357,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               </div>
             </div>
             <nav className="flex flex-col gap-0.5 px-3 py-1">
-              {CLIENT_NAV_ITEMS.filter((item) => !item.studioOnly || !isClientView).map(({ to, label, icon: Icon }) => (
+              {clientNavItems.filter((item) => !item.studioOnly || !isClientView).map(({ to, label, icon: Icon }) => (
                 <NavLink
                   key={to}
                   to={`/clients/${client.id}/${to}`}
