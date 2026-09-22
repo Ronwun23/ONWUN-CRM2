@@ -29,13 +29,16 @@ import {
 import { fetchTasks, insertTask, updateTaskRow } from '@/lib/api/tasks'
 import { fetchUpdates, insertUpdate, deleteUpdateRow } from '@/lib/api/updates'
 import { fetchLibraryByClient, insertFolder, deleteFolderRow, insertFile, deleteFileRow } from '@/lib/api/library'
+import { fetchBrandAssetsByClient, insertBrandAsset } from '@/lib/api/brandAssets'
+import { fetchEvents, insertEvent, deleteEventRow, updateEventRow } from '@/lib/api/events'
 
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
-// Client core profile + phases + workshop, documents (with their
-// comments/testimonials), tasks, updates, and library files are
-// Supabase-backed now (see src/lib/api/). Brand assets and events aren't
-// migrated yet — they're still local-only state, same as before.
+// Every client-scoped resource — profile, phases, workshop, documents (with
+// comments/testimonials), tasks, updates, library files, brand assets and
+// events — is Supabase-backed now (see src/lib/api/). Only the studio's own
+// logo and active-account selection remain local (localStorage), since
+// they're per-browser preferences, not shared data.
 function syncClientFields(clientId: string, patch: Record<string, unknown>) {
   updateClientRow(clientId, patch).catch((err) => {
     console.error('Failed to save to Supabase:', err)
@@ -94,8 +97,8 @@ interface AppContextValue {
   removeLibraryFolder: (clientId: string, folderId: string) => void
   addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => Promise<LibraryFile>
   removeLibraryFile: (clientId: string, folderId: string, fileId: string) => void
-  addBrandAsset: (clientId: string, asset: BrandAsset) => void
-  addClientEvent: (clientId: string, event: ClientEvent) => void
+  addBrandAsset: (clientId: string, asset: BrandAsset) => Promise<BrandAsset>
+  addClientEvent: (clientId: string, event: ClientEvent) => Promise<ClientEvent>
   removeClientEvent: (clientId: string, eventId: string) => void
   updateClientEventNotes: (clientId: string, eventId: string, notes: string) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string) => void
@@ -111,7 +114,7 @@ interface AppContextValue {
   toggleStudioTask: (taskId: string) => void
   addStudioUpdate: (update: UpdateEntry) => Promise<void>
   removeStudioUpdate: (updateId: string) => void
-  addStudioEvent: (event: ClientEvent) => void
+  addStudioEvent: (event: ClientEvent) => Promise<void>
   removeStudioEvent: (eventId: string) => void
   setStudioLogo: (url: string | undefined) => void
   updateStudioEventNotes: (eventId: string, notes: string) => void
@@ -127,8 +130,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [studio, setStudio] = useState<StudioState>(loadInitialStudio)
 
   useEffect(() => {
-    Promise.all([fetchClients(), fetchDocumentsByClient(), fetchTasks(), fetchUpdates(), fetchLibraryByClient()])
-      .then(([loadedClients, documentsByClient, tasks, updates, libraryByClient]) => {
+    Promise.all([
+      fetchClients(),
+      fetchDocumentsByClient(),
+      fetchTasks(),
+      fetchUpdates(),
+      fetchLibraryByClient(),
+      fetchBrandAssetsByClient(),
+      fetchEvents(),
+    ])
+      .then(([loadedClients, documentsByClient, tasks, updates, libraryByClient, brandAssetsByClient, events]) => {
         setClients(
           loadedClients.map((c) => ({
             ...c,
@@ -136,9 +147,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             tasks: tasks.byClient[c.id] ?? [],
             updates: updates.byClient[c.id] ?? [],
             library: libraryByClient[c.id] ?? [],
+            brandHub: brandAssetsByClient[c.id] ?? [],
+            events: events.byClient[c.id] ?? [],
           }))
         )
-        setStudio((prev) => ({ ...prev, tasks: tasks.studio, updates: updates.studio }))
+        setStudio((prev) => ({ ...prev, tasks: tasks.studio, updates: updates.studio, events: events.studio }))
       })
       .catch((err) => console.error('Failed to load clients from Supabase:', err))
       .finally(() => setClientsLoading(false))
@@ -179,12 +192,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deleteUpdateRow(updateId).catch((err) => console.error('Failed to delete update from Supabase:', err))
   }, [])
 
-  const addStudioEvent = useCallback((event: ClientEvent) => {
-    setStudio((prev) => ({ ...prev, events: [...prev.events, event] }))
+  const addStudioEvent = useCallback(async (event: ClientEvent) => {
+    const created = await insertEvent(null, event)
+    setStudio((prev) => ({ ...prev, events: [...prev.events, created] }))
   }, [])
 
   const removeStudioEvent = useCallback((eventId: string) => {
     setStudio((prev) => ({ ...prev, events: prev.events.filter((e) => e.id !== eventId) }))
+    deleteEventRow(eventId).catch((err) => console.error('Failed to delete event from Supabase:', err))
   }, [])
 
   const setStudioLogo = useCallback((url: string | undefined) => {
@@ -196,6 +211,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...prev,
       events: prev.events.map((e) => (e.id === eventId ? { ...e, notes: notes || undefined } : e)),
     }))
+    updateEventRow(eventId, { notes: notes || null }).catch((err) =>
+      console.error('Failed to save event notes to Supabase:', err)
+    )
   }, [])
 
   const activeAccount =
@@ -478,23 +496,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
-  const addBrandAsset = useCallback(
-    (clientId: string, asset: BrandAsset) => {
-      updateClient(clientId, (c) => ({ ...c, brandHub: [asset, ...c.brandHub] }))
-    },
-    [updateClient]
-  )
+  const addBrandAsset = useCallback(async (clientId: string, asset: BrandAsset) => {
+    const created = await insertBrandAsset(clientId, asset)
+    setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, brandHub: [created, ...c.brandHub] } : c)))
+    return created
+  }, [])
 
-  const addClientEvent = useCallback(
-    (clientId: string, event: ClientEvent) => {
-      updateClient(clientId, (c) => ({ ...c, events: [...c.events, event] }))
-    },
-    [updateClient]
-  )
+  const addClientEvent = useCallback(async (clientId: string, event: ClientEvent) => {
+    const created = await insertEvent(clientId, event)
+    setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, events: [...c.events, created] } : c)))
+    return created
+  }, [])
 
   const removeClientEvent = useCallback(
     (clientId: string, eventId: string) => {
       updateClient(clientId, (c) => ({ ...c, events: c.events.filter((e) => e.id !== eventId) }))
+      deleteEventRow(eventId).catch((err) => console.error('Failed to delete event from Supabase:', err))
     },
     [updateClient]
   )
@@ -505,6 +522,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...c,
         events: c.events.map((e) => (e.id === eventId ? { ...e, notes: notes || undefined } : e)),
       }))
+      updateEventRow(eventId, { notes: notes || null }).catch((err) =>
+        console.error('Failed to save event notes to Supabase:', err)
+      )
     },
     [updateClient]
   )
