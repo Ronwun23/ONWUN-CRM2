@@ -55,7 +55,7 @@ function buildPhases(currentPhaseIndex: number, stepsDoneInCurrentPhase: number,
   })
 }
 
-function emptyWorkshop(): WorkshopState {
+export function emptyWorkshop(): WorkshopState {
   return {
     started: false,
     completed: false,
@@ -90,10 +90,11 @@ export function blankDocuments(): ClientDocument[] {
     { id: nextId('doc'), title: 'Contract', type: 'contract', status: 'draft', updatedAt: now, comments: [] },
     { id: nextId('doc'), title: 'Invoices', type: 'invoice', status: 'draft', updatedAt: now, comments: [] },
     { id: nextId('doc'), title: 'Brand Strategy', type: 'strategy', status: 'draft', updatedAt: now, comments: [] },
-    { id: nextId('doc'), title: 'Speed Run Presentation 1', type: 'presentation', status: 'draft', updatedAt: now, comments: [] },
-    { id: nextId('doc'), title: 'Speed Run Presentation 2', type: 'presentation', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Speed Run Presentation 1', type: 'moodboard', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Speed Run Presentation 2', type: 'identity', status: 'draft', updatedAt: now, comments: [] },
     { id: nextId('doc'), title: 'Final Brand Presentation', type: 'presentation', status: 'draft', updatedAt: now, comments: [] },
     { id: nextId('doc'), title: 'Figma Brand Guidelines', type: 'guidelines', status: 'draft', updatedAt: now, comments: [] },
+    { id: nextId('doc'), title: 'Offboarding', type: 'offboarding', status: 'draft', updatedAt: now, comments: [] },
   ]
 }
 
@@ -283,8 +284,8 @@ export const CLIENTS: Client[] = [
       ['Contract', 'contract', 'signed', 'Signed by all parties', -155],
       ['Invoices', 'invoice', 'paid', '£21,600 paid in full', -20],
       ['Brand Strategy', 'strategy', 'signed', 'Bloom Ventures Brand Strategy.pdf', -120],
-      ['Speed Run Presentation 1', 'presentation', 'signed', 'Figma', -90],
-      ['Speed Run Presentation 2', 'presentation', 'signed', 'Figma', -60],
+      ['Speed Run Presentation 1', 'moodboard', 'signed', 'Figma', -90],
+      ['Speed Run Presentation 2', 'identity', 'signed', 'Figma', -60],
       ['Final Brand Presentation', 'presentation', 'signed', 'Figma', -20],
       ['Figma Brand Guidelines', 'guidelines', 'signed', 'Figma', -18],
     ]),

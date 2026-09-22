@@ -7,7 +7,18 @@ import { Select } from '@/components/ui/select'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
 import type { ClientDocument, DocumentStatus, DocumentType } from '@/types'
 
-const TYPE_OPTIONS: DocumentType[] = ['proposal', 'contract', 'invoice', 'strategy', 'presentation', 'guidelines', 'other']
+const TYPE_OPTIONS: DocumentType[] = [
+  'proposal',
+  'contract',
+  'invoice',
+  'strategy',
+  'presentation',
+  'moodboard',
+  'identity',
+  'guidelines',
+  'offboarding',
+  'other',
+]
 const STATUS_OPTIONS: DocumentStatus[] = ['with_client', 'with_you', 'signed', 'paid', 'unpaid', 'draft']
 const PDF_DATA_URL_PREFIX = 'data:application/pdf'
 
@@ -27,6 +38,8 @@ export default function DocumentForm({
   onDone: () => void
 }) {
   const { addDocument, updateDocument } = useApp()
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [title, setTitle] = useState(existing?.title ?? '')
   const [type, setType] = useState<DocumentType>(existing?.type ?? 'other')
   const [status, setStatus] = useState<DocumentStatus>(existing?.status ?? 'draft')
@@ -39,7 +52,7 @@ export default function DocumentForm({
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!title.trim()) return
 
@@ -53,10 +66,20 @@ export default function DocumentForm({
 
     if (existing) {
       updateDocument(clientId, existing.id, payload)
-    } else {
-      addDocument(clientId, { id: `doc-${Date.now()}`, updatedAt: new Date().toISOString(), comments: [], ...payload })
+      onDone()
+      return
     }
-    onDone()
+
+    setSaving(true)
+    setSaveError(null)
+    try {
+      await addDocument(clientId, { id: `doc-${Date.now()}`, updatedAt: new Date().toISOString(), comments: [], ...payload })
+      onDone()
+    } catch {
+      setSaveError("Couldn't save this document — try again.")
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleSourceChange = (next: Source) => {
@@ -232,11 +255,13 @@ export default function DocumentForm({
         />
       </div>
 
+      {saveError && <p className="text-xs text-status-critical">{saveError}</p>}
       <button
         type="submit"
-        className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
+        disabled={saving}
+        className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {existing ? 'Save changes' : 'Add document'}
+        {existing ? 'Save changes' : saving ? 'Adding…' : 'Add document'}
       </button>
     </form>
   )

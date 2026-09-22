@@ -23,9 +23,9 @@ export default function StudioTasks() {
     .sort((a, b) => toDisplayDate(a.dueDate).getTime() - toDisplayDate(b.dueDate).getTime())
   const done = studio.tasks.filter((t) => t.done)
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!title.trim() || !dueDate) return
-    addStudioTask({
+    await addStudioTask({
       id: `studio-task-${Date.now()}`,
       title: title.trim(),
       done: false,

@@ -14,7 +14,15 @@ function formatCommentTime(iso: string): string {
   }).format(new Date(iso))
 }
 
-export default function DocumentComments({ client, doc }: { client: Client; doc: ClientDocument }) {
+export default function DocumentComments({
+  client,
+  doc,
+  pageLabel,
+}: {
+  client: Client
+  doc: ClientDocument
+  pageLabel?: string
+}) {
   const { addDocumentComment, activeAccount } = useApp()
   const { isClientView } = useViewMode()
   const [draft, setDraft] = useState('')
@@ -35,6 +43,7 @@ export default function DocumentComments({ client, doc }: { client: Client; doc:
       authorType: isClientView ? 'client' : 'agency',
       text,
       createdAt: new Date().toISOString(),
+      pageLabel,
     })
     setDraft('')
   }
@@ -61,9 +70,14 @@ export default function DocumentComments({ client, doc }: { client: Client; doc:
           <ul className="flex flex-col gap-4">
             {comments.map((comment) => (
               <li key={comment.id}>
-                <div className="flex items-baseline gap-1.5">
+                <div className="flex flex-wrap items-baseline gap-1.5">
                   <span className="text-sm font-semibold text-ink-primary">{comment.authorName}</span>
                   <span className="text-[11px] text-ink-muted">{formatCommentTime(comment.createdAt)}</span>
+                  {comment.pageLabel && (
+                    <span className="rounded bg-surface-sunken px-1.5 py-0.5 text-[10px] font-medium text-ink-muted">
+                      {comment.pageLabel}
+                    </span>
+                  )}
                 </div>
                 <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-ink-secondary">{comment.text}</p>
               </li>
@@ -72,23 +86,30 @@ export default function DocumentComments({ client, doc }: { client: Client; doc:
         )}
       </div>
 
-      <div className="flex items-end gap-2 border-t border-black/[0.06] p-3">
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={handleKeyDown}
-          rows={1}
-          placeholder={`Write to ${otherPartyName}…`}
-          className="max-h-24 flex-1 resize-none rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-        />
-        <button
-          onClick={send}
-          disabled={!draft.trim()}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Send comment"
-        >
-          <Send size={15} />
-        </button>
+      <div className="border-t border-black/[0.06]">
+        {pageLabel && (
+          <p className="px-3 pt-2 text-[11px] text-ink-muted">
+            Commenting on <span className="font-medium text-ink-secondary">{pageLabel}</span>
+          </p>
+        )}
+        <div className="flex items-end gap-2 p-3">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={handleKeyDown}
+            rows={1}
+            placeholder={`Write to ${otherPartyName}…`}
+            className="max-h-24 flex-1 resize-none rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+          <button
+            onClick={send}
+            disabled={!draft.trim()}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Send comment"
+          >
+            <Send size={15} />
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ExternalLink, FileSignature, FileText, Link2, Plus, Presentation, Receipt, Sparkles } from 'lucide-react'
+import { ExternalLink, FileSignature, FileText, Heart, Images, Link2, Palette, Plus, Presentation, Receipt, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
 import { useViewMode } from '@/context/ViewModeContext'
@@ -18,7 +18,10 @@ const TYPE_ICON: Record<DocumentType, LucideIcon> = {
   invoice: Receipt,
   strategy: FileText,
   presentation: Presentation,
+  moodboard: Images,
+  identity: Palette,
   guidelines: Sparkles,
+  offboarding: Heart,
   other: FileText,
 }
 

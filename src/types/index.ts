@@ -28,7 +28,10 @@ export type DocumentType =
   | 'invoice'
   | 'strategy'
   | 'presentation'
+  | 'moodboard'
+  | 'identity'
   | 'guidelines'
+  | 'offboarding'
   | 'other'
 
 export type DocumentStatus = 'with_client' | 'with_you' | 'signed' | 'paid' | 'unpaid' | 'draft'
@@ -41,6 +44,14 @@ export interface DocumentComment {
   authorType: CommentAuthorType
   text: string
   createdAt: string
+  pageLabel?: string
+}
+
+export interface DocumentTestimonial {
+  text: string
+  authorName: string
+  authorType: CommentAuthorType
+  createdAt: string
 }
 
 export interface ClientDocument {
@@ -52,6 +63,7 @@ export interface ClientDocument {
   url?: string
   updatedAt: string
   comments: DocumentComment[]
+  testimonial?: DocumentTestimonial
 }
 
 export interface ClientTask {
@@ -68,6 +80,8 @@ export interface UpdateEntry {
   date: string
   author: string
   authorType?: 'agency' | 'client'
+  docId?: string
+  docTitle?: string
 }
 
 export type LibraryFileType = 'pdf' | 'png' | 'ttf' | 'link' | 'other'

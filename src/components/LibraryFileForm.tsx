@@ -70,10 +70,10 @@ export default function LibraryFileForm({
     handleFile(e.dataTransfer.files[0])
   }
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !url) return
-    addLibraryFile(clientId, folderId, {
+    await addLibraryFile(clientId, folderId, {
       id: `libfile-${Date.now()}`,
       title: title.trim(),
       fileType: source === 'link' ? 'link' : fileType,

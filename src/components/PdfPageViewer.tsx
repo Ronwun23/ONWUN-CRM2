@@ -6,13 +6,23 @@ import PdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = PdfWorkerUrl
 
-export default function PdfPageViewer({ url }: { url: string }) {
+export default function PdfPageViewer({
+  url,
+  onPageChange,
+}: {
+  url: string
+  onPageChange?: (page: number, numPages: number) => void
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pdfRef = useRef<PDFDocumentProxy | null>(null)
   const renderTaskRef = useRef<RenderTask | null>(null)
   const [numPages, setNumPages] = useState(0)
   const [pageNum, setPageNum] = useState(1)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (numPages > 0) onPageChange?.(pageNum, numPages)
+  }, [pageNum, numPages, onPageChange])
 
   useEffect(() => {
     let cancelled = false

@@ -14,6 +14,20 @@ export function normalizeClient(client: Client): Client {
     comments: doc.comments ?? [],
   }))
 
+  // Every client should have an Offboarding document, including ones
+  // created before that document existed in the default checklist.
+  const hasOffboarding = documents.some((doc) => doc.type === 'offboarding')
+  if (!hasOffboarding) {
+    documents.push({
+      id: `doc-offboarding-${client.id}`,
+      title: 'Offboarding',
+      type: 'offboarding',
+      status: 'draft',
+      updatedAt: new Date().toISOString(),
+      comments: [],
+    })
+  }
+
   const libraryLooksCurrent =
     Array.isArray(client.library) && client.library.every((folder) => Array.isArray(folder?.files))
   const library = libraryLooksCurrent ? client.library : blankLibraryFolders()

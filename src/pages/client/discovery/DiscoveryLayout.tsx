@@ -4,6 +4,7 @@ import { useClientOutlet } from '@/lib/useClient'
 import { useViewMode } from '@/context/ViewModeContext'
 import { WORKSHOP_QUESTION_COUNT } from '@/data/workshopTemplate'
 import { answeredCount } from '@/lib/discoveryProgress'
+import BookStrategyCallButton from '@/components/BookStrategyCallButton'
 
 const ALL_TABS = [
   { to: '.', label: 'Workshop', end: true },
@@ -43,9 +44,12 @@ export default function DiscoveryLayout() {
             </span>
           )}
         </div>
-        <p className="text-xs text-ink-muted">
-          {answered} / {WORKSHOP_QUESTION_COUNT} questions answered
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-ink-muted">
+            {answered} / {WORKSHOP_QUESTION_COUNT} questions answered
+          </p>
+          <BookStrategyCallButton />
+        </div>
       </div>
 
       <nav className="flex items-center gap-1 border-b border-black/[0.08]">

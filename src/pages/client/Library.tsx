@@ -22,10 +22,10 @@ export default function ClientLibrary() {
   const [showAdd, setShowAdd] = useState(false)
   const [name, setName] = useState('')
 
-  const handleAdd = (e: FormEvent) => {
+  const handleAdd = async (e: FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
-    addLibraryFolder(client.id, { id: `folder-${Date.now()}`, name: name.trim(), files: [] })
+    await addLibraryFolder(client.id, { id: `folder-${Date.now()}`, name: name.trim(), files: [] })
     setName('')
     setShowAdd(false)
   }

@@ -12,6 +12,7 @@ import {
   ChevronsUpDown,
   FileText,
   LayoutDashboard,
+  LogOut,
   Megaphone,
   PanelLeftClose,
   PanelLeftOpen,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
 import { useViewMode } from '@/context/ViewModeContext'
 import { STUDIO_ACCOUNTS } from '@/data/team'
 import { ClientAvatar } from '@/components/Avatar'
@@ -38,6 +40,7 @@ import { fileToLogoDataUrl } from '@/lib/image'
  * at any given time. Not shown/editable to a client previewing their portal. */
 function AccountSwitcher({ editable }: { editable: boolean }) {
   const { activeAccount, setActiveAccount } = useApp()
+  const { profile, session, signOut } = useAuth()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -49,6 +52,28 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
+
+  if (profile?.role === 'client') {
+    return (
+      <div className="mt-auto flex items-center gap-2.5 border-t border-white/10 px-5 py-4">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">
+          {(profile.full_name ?? session?.user.email ?? '?').slice(0, 1).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-medium leading-tight text-white">{profile.full_name ?? 'Client'}</p>
+          <p className="truncate text-[11px] leading-tight text-white/40">{session?.user.email}</p>
+        </div>
+        <button
+          onClick={() => signOut()}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/40 hover:bg-white/[0.06] hover:text-status-critical"
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          <LogOut size={14} />
+        </button>
+      </div>
+    )
+  }
 
   const avatar = (
     <div
@@ -97,6 +122,16 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
               {account.id === activeAccount.id && <Check size={13} className="shrink-0 text-brand-400" />}
             </button>
           ))}
+          <button
+            onClick={() => {
+              setOpen(false)
+              signOut()
+            }}
+            className="flex w-full items-center gap-2.5 border-t border-white/10 px-3 py-2.5 text-left text-status-critical hover:bg-white/[0.06]"
+          >
+            <LogOut size={13} className="shrink-0" />
+            <span className="text-xs font-medium">Sign out</span>
+          </button>
         </div>
       )}
       <button
@@ -196,6 +231,14 @@ export default function Layout({ children }: { children: ReactNode }) {
   const clientMatch = useMatch('/clients/:clientId/*')
   const clientId = clientMatch?.params.clientId
   const client = clientId ? getClient(clientId) : undefined
+  // Each project type gets its own layout over time — for now, Social Media
+  // Management clients trade the Brand hub for a Content calendar.
+  const clientNavItems =
+    client?.projectName === 'Social Media Management'
+      ? CLIENT_NAV_ITEMS.map((item) =>
+          item.to === 'brand-hub' ? { ...item, to: 'content-calendar', label: 'Content calendar', icon: CalendarIcon } : item
+        )
+      : CLIENT_NAV_ITEMS
   const [showAddClient, setShowAddClient] = useState(false)
   const [clientListExpanded, setClientListExpanded] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -336,7 +379,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               </div>
             </div>
             <nav className="flex flex-col gap-0.5 px-3 py-1">
-              {CLIENT_NAV_ITEMS.filter((item) => !item.studioOnly || !isClientView).map(({ to, label, icon: Icon }) => (
+              {clientNavItems.filter((item) => !item.studioOnly || !isClientView).map(({ to, label, icon: Icon }) => (
                 <NavLink
                   key={to}
                   to={`/clients/${client.id}/${to}`}
