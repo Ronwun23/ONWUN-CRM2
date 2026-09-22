@@ -28,13 +28,14 @@ import {
 } from '@/lib/api/documents'
 import { fetchTasks, insertTask, updateTaskRow } from '@/lib/api/tasks'
 import { fetchUpdates, insertUpdate, deleteUpdateRow } from '@/lib/api/updates'
+import { fetchLibraryByClient, insertFolder, deleteFolderRow, insertFile, deleteFileRow } from '@/lib/api/library'
 
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
 // Client core profile + phases + workshop, documents (with their
-// comments/testimonials), tasks, and updates are Supabase-backed now (see
-// src/lib/api/). Library files, brand assets and events aren't migrated
-// yet — they're still local-only state, same as before.
+// comments/testimonials), tasks, updates, and library files are
+// Supabase-backed now (see src/lib/api/). Brand assets and events aren't
+// migrated yet — they're still local-only state, same as before.
 function syncClientFields(clientId: string, patch: Record<string, unknown>) {
   updateClientRow(clientId, patch).catch((err) => {
     console.error('Failed to save to Supabase:', err)
@@ -89,9 +90,9 @@ interface AppContextValue {
   addDocumentComment: (clientId: string, docId: string, comment: DocumentComment) => void
   setDocumentTestimonial: (clientId: string, docId: string, testimonial: DocumentTestimonial) => void
   removeDocumentTestimonial: (clientId: string, docId: string) => void
-  addLibraryFolder: (clientId: string, folder: LibraryFolder) => void
+  addLibraryFolder: (clientId: string, folder: LibraryFolder) => Promise<LibraryFolder>
   removeLibraryFolder: (clientId: string, folderId: string) => void
-  addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => void
+  addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => Promise<LibraryFile>
   removeLibraryFile: (clientId: string, folderId: string, fileId: string) => void
   addBrandAsset: (clientId: string, asset: BrandAsset) => void
   addClientEvent: (clientId: string, event: ClientEvent) => void
@@ -126,14 +127,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [studio, setStudio] = useState<StudioState>(loadInitialStudio)
 
   useEffect(() => {
-    Promise.all([fetchClients(), fetchDocumentsByClient(), fetchTasks(), fetchUpdates()])
-      .then(([loadedClients, documentsByClient, tasks, updates]) => {
+    Promise.all([fetchClients(), fetchDocumentsByClient(), fetchTasks(), fetchUpdates(), fetchLibraryByClient()])
+      .then(([loadedClients, documentsByClient, tasks, updates, libraryByClient]) => {
         setClients(
           loadedClients.map((c) => ({
             ...c,
             documents: documentsByClient[c.id] ?? [],
             tasks: tasks.byClient[c.id] ?? [],
             updates: updates.byClient[c.id] ?? [],
+            library: libraryByClient[c.id] ?? [],
           }))
         )
         setStudio((prev) => ({ ...prev, tasks: tasks.studio, updates: updates.studio }))
@@ -211,10 +213,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addClient = useCallback(async (client: Client) => {
     const created = await insertClient(client)
-    // Persist the starter document checklist (Proposal, Contract, etc.) too,
-    // rather than leaving it as local-only state that vanishes on refresh.
-    const documents = await Promise.all(client.documents.map((doc) => insertDocument(created.id, doc)))
-    const finalClient = { ...created, documents }
+    // Persist the starter document checklist and library folders too,
+    // rather than leaving them as local-only state that vanishes on refresh.
+    const [documents, library] = await Promise.all([
+      Promise.all(client.documents.map((doc) => insertDocument(created.id, doc))),
+      Promise.all(client.library.map((folder) => insertFolder(created.id, folder))),
+    ])
+    const finalClient = { ...created, documents, library }
     setClients((prev) => [finalClient, ...prev])
     return finalClient
   }, [])
@@ -429,31 +434,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
-  const addLibraryFolder = useCallback(
-    (clientId: string, folder: LibraryFolder) => {
-      updateClient(clientId, (c) => ({ ...c, library: [...c.library, folder] }))
-    },
-    [updateClient]
-  )
+  const addLibraryFolder = useCallback(async (clientId: string, folder: LibraryFolder) => {
+    const created = await insertFolder(clientId, folder)
+    setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, library: [...c.library, created] } : c)))
+    return created
+  }, [])
 
   const removeLibraryFolder = useCallback(
     (clientId: string, folderId: string) => {
       updateClient(clientId, (c) => ({ ...c, library: c.library.filter((f) => f.id !== folderId) }))
+      deleteFolderRow(folderId).catch((err) => console.error('Failed to delete folder from Supabase:', err))
     },
     [updateClient]
   )
 
-  const addLibraryFile = useCallback(
-    (clientId: string, folderId: string, file: LibraryFile) => {
-      updateClient(clientId, (c) => ({
-        ...c,
-        library: c.library.map((folder) =>
-          folder.id === folderId ? { ...folder, files: [file, ...folder.files] } : folder
-        ),
-      }))
-    },
-    [updateClient]
-  )
+  const addLibraryFile = useCallback(async (clientId: string, folderId: string, file: LibraryFile) => {
+    const created = await insertFile(folderId, file)
+    setClients((prev) =>
+      prev.map((c) =>
+        c.id === clientId
+          ? {
+              ...c,
+              library: c.library.map((folder) =>
+                folder.id === folderId ? { ...folder, files: [created, ...folder.files] } : folder
+              ),
+            }
+          : c
+      )
+    )
+    return created
+  }, [])
 
   const removeLibraryFile = useCallback(
     (clientId: string, folderId: string, fileId: string) => {
@@ -463,6 +473,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           folder.id === folderId ? { ...folder, files: folder.files.filter((f) => f.id !== fileId) } : folder
         ),
       }))
+      deleteFileRow(fileId).catch((err) => console.error('Failed to delete file from Supabase:', err))
     },
     [updateClient]
   )
