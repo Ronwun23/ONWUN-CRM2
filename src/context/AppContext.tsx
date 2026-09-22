@@ -19,16 +19,29 @@ import { synthesizeStrategy } from '@/lib/strategySynthesis'
 import { STUDIO_ACCOUNTS } from '@/data/team'
 import type { StudioAccount } from '@/data/team'
 import { fetchClients, insertClient, deleteClientRow, updateClientRow } from '@/lib/api/clients'
+import {
+  fetchDocumentsByClient,
+  insertDocument,
+  updateDocumentRow,
+  deleteDocumentRow,
+  insertComment,
+} from '@/lib/api/documents'
 
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
-// Client core profile + phases + workshop are Supabase-backed now (see
-// src/lib/api/clients.ts). Documents, tasks, updates, library files, brand
-// assets and events aren't migrated yet — they're still local-only state,
-// same as before.
+// Client core profile + phases + workshop, and documents (with their
+// comments/testimonials), are Supabase-backed now (see src/lib/api/).
+// Tasks, updates, library files, brand assets and events aren't migrated
+// yet — they're still local-only state, same as before.
 function syncClientFields(clientId: string, patch: Record<string, unknown>) {
   updateClientRow(clientId, patch).catch((err) => {
     console.error('Failed to save to Supabase:', err)
+  })
+}
+
+function syncDocumentFields(docId: string, patch: Record<string, unknown>) {
+  updateDocumentRow(docId, patch).catch((err) => {
+    console.error('Failed to save document to Supabase:', err)
   })
 }
 
@@ -68,7 +81,7 @@ interface AppContextValue {
   addTask: (clientId: string, task: ClientTask) => void
   addUpdate: (clientId: string, update: UpdateEntry) => void
   removeUpdate: (clientId: string, updateId: string) => void
-  addDocument: (clientId: string, doc: ClientDocument) => void
+  addDocument: (clientId: string, doc: ClientDocument) => Promise<ClientDocument>
   updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
   removeDocument: (clientId: string, docId: string) => void
   addDocumentComment: (clientId: string, docId: string, comment: DocumentComment) => void
@@ -111,8 +124,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [studio, setStudio] = useState<StudioState>(loadInitialStudio)
 
   useEffect(() => {
-    fetchClients()
-      .then(setClients)
+    Promise.all([fetchClients(), fetchDocumentsByClient()])
+      .then(([loadedClients, documentsByClient]) => {
+        setClients(loadedClients.map((c) => ({ ...c, documents: documentsByClient[c.id] ?? [] })))
+      })
       .catch((err) => console.error('Failed to load clients from Supabase:', err))
       .finally(() => setClientsLoading(false))
   }, [])
@@ -178,8 +193,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addClient = useCallback(async (client: Client) => {
     const created = await insertClient(client)
-    setClients((prev) => [created, ...prev])
-    return created
+    // Persist the starter document checklist (Proposal, Contract, etc.) too,
+    // rather than leaving it as local-only state that vanishes on refresh.
+    const documents = await Promise.all(client.documents.map((doc) => insertDocument(created.id, doc)))
+    const finalClient = { ...created, documents }
+    setClients((prev) => [finalClient, ...prev])
+    return finalClient
   }, [])
 
   const removeClient = useCallback((clientId: string) => {
@@ -277,19 +296,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
-  const addDocument = useCallback(
-    (clientId: string, doc: ClientDocument) => {
-      updateClient(clientId, (c) => ({ ...c, documents: [doc, ...c.documents] }))
-    },
-    [updateClient]
-  )
+  const addDocument = useCallback(async (clientId: string, doc: ClientDocument) => {
+    const created = await insertDocument(clientId, doc)
+    setClients((prev) =>
+      prev.map((c) => (c.id === clientId ? { ...c, documents: [created, ...c.documents] } : c))
+    )
+    return created
+  }, [])
 
   const updateDocument = useCallback(
     (clientId: string, docId: string, patch: Partial<ClientDocument>) => {
+      const updatedAt = new Date().toISOString()
       updateClient(clientId, (c) => ({
         ...c,
-        documents: c.documents.map((d) => (d.id === docId ? { ...d, ...patch, updatedAt: new Date().toISOString() } : d)),
+        documents: c.documents.map((d) => (d.id === docId ? { ...d, ...patch, updatedAt } : d)),
       }))
+      syncDocumentFields(docId, {
+        title: patch.title,
+        type: patch.type,
+        status: patch.status,
+        meta: patch.meta ?? null,
+        url: patch.url ?? null,
+        updated_at: updatedAt,
+      })
     },
     [updateClient]
   )
@@ -297,6 +326,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const removeDocument = useCallback(
     (clientId: string, docId: string) => {
       updateClient(clientId, (c) => ({ ...c, documents: c.documents.filter((d) => d.id !== docId) }))
+      deleteDocumentRow(docId).catch((err) => console.error('Failed to delete document from Supabase:', err))
     },
     [updateClient]
   )
@@ -327,6 +357,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ],
         }
       })
+      insertComment(docId, comment).catch((err) => console.error('Failed to save comment to Supabase:', err))
     },
     [updateClient]
   )
@@ -354,6 +385,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ],
         }
       })
+      syncDocumentFields(docId, {
+        testimonial_text: testimonial.text,
+        testimonial_author_name: testimonial.authorName,
+        testimonial_author_type: testimonial.authorType,
+        testimonial_created_at: testimonial.createdAt,
+      })
     },
     [updateClient]
   )
@@ -364,6 +401,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...c,
         documents: c.documents.map((d) => (d.id === docId ? { ...d, testimonial: undefined } : d)),
       }))
+      syncDocumentFields(docId, {
+        testimonial_text: null,
+        testimonial_author_name: null,
+        testimonial_author_type: null,
+        testimonial_created_at: null,
+      })
     },
     [updateClient]
   )
