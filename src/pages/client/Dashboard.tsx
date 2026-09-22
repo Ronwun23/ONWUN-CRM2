@@ -3,6 +3,7 @@ import { Check, Eye, Plus, UserPlus } from 'lucide-react'
 import clsx from 'clsx'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
 import { useViewMode } from '@/context/ViewModeContext'
 import Card from '@/components/Card'
 import Pill from '@/components/Pill'
@@ -18,7 +19,9 @@ import { PHASE_LABELS, PHASES } from '@/types'
 export default function ClientDashboard() {
   const client = useClientOutlet()
   const { toggleStep, addStep } = useApp()
+  const { profile } = useAuth()
   const { isClientView, setIsClientView } = useViewMode()
+  const isRealClient = profile?.role === 'client'
   const [selectedPhase, setSelectedPhase] = useState(client.phases[0].key)
   const [newStepTitle, setNewStepTitle] = useState('')
   const [showInvite, setShowInvite] = useState(false)
@@ -57,18 +60,20 @@ export default function ClientDashboard() {
               Invite client
             </button>
           )}
-          <button
-            onClick={() => setIsClientView(!isClientView)}
-            className={clsx(
-              'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
-              isClientView
-                ? 'bg-brand-500 text-white hover:bg-brand-600'
-                : 'border border-black/[0.10] text-ink-secondary hover:bg-surface-sunken'
-            )}
-          >
-            <Eye size={13} />
-            {isClientView ? 'Exit client view' : 'View as client'}
-          </button>
+          {!isRealClient && (
+            <button
+              onClick={() => setIsClientView(!isClientView)}
+              className={clsx(
+                'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+                isClientView
+                  ? 'bg-brand-500 text-white hover:bg-brand-600'
+                  : 'border border-black/[0.10] text-ink-secondary hover:bg-surface-sunken'
+              )}
+            >
+              <Eye size={13} />
+              {isClientView ? 'Exit client view' : 'View as client'}
+            </button>
+          )}
         </div>
       </div>
 
