@@ -55,6 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => listener.subscription.unsubscribe()
   }, [])
 
+  // Keyed on the user id, not the `session` object itself — Supabase
+  // silently issues a new session object (same user) on token refresh,
+  // which happens automatically whenever the tab regains focus. Depending
+  // on the whole object would re-fetch the profile and flash "Loading…"
+  // on every tab switch even though nothing about the user changed.
+  const userId = session?.user.id
+
   useEffect(() => {
     if (!session) {
       setProfile(null)
@@ -80,7 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfileLoading(false)
         }
       )
-  }, [session])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   const signInWithEmail = async (email: string) => {
     const { error } = await supabase.auth.signInWithOtp({
