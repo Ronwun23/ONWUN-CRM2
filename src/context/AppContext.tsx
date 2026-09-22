@@ -15,23 +15,21 @@ import type {
   UpdateEntry,
   WorkshopScreen,
 } from '@/types'
-import { CLIENTS } from '@/data/clients'
 import { synthesizeStrategy } from '@/lib/strategySynthesis'
-import { normalizeClient } from '@/lib/normalizeClient'
 import { STUDIO_ACCOUNTS } from '@/data/team'
 import type { StudioAccount } from '@/data/team'
+import { fetchClients, insertClient, deleteClientRow, updateClientRow } from '@/lib/api/clients'
 
-const STORAGE_KEY = 'onwun-studio-clients-v4'
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
-function loadInitialClients(): Client[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (raw) return (JSON.parse(raw) as Client[]).map(normalizeClient)
-  } catch {
-    // fall through to mock data
-  }
-  return CLIENTS.map(normalizeClient)
+// Client core profile + phases + workshop are Supabase-backed now (see
+// src/lib/api/clients.ts). Documents, tasks, updates, library files, brand
+// assets and events aren't migrated yet — they're still local-only state,
+// same as before.
+function syncClientFields(clientId: string, patch: Record<string, unknown>) {
+  updateClientRow(clientId, patch).catch((err) => {
+    console.error('Failed to save to Supabase:', err)
+  })
 }
 
 interface StudioState {
@@ -54,8 +52,9 @@ function loadInitialStudio(): StudioState {
 
 interface AppContextValue {
   clients: Client[]
+  clientsLoading: boolean
   getClient: (id: string) => Client | undefined
-  addClient: (client: Client) => void
+  addClient: (client: Client) => Promise<Client>
   removeClient: (clientId: string) => void
   updateClientProfile: (
     clientId: string,
@@ -104,16 +103,16 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [clients, setClients] = useState<Client[]>(loadInitialClients)
+  const [clients, setClients] = useState<Client[]>([])
+  const [clientsLoading, setClientsLoading] = useState(true)
   const [studio, setStudio] = useState<StudioState>(loadInitialStudio)
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(clients))
-    } catch {
-      // ignore storage failures (private mode, quota, etc.)
-    }
-  }, [clients])
+    fetchClients()
+      .then(setClients)
+      .catch((err) => console.error('Failed to load clients from Supabase:', err))
+      .finally(() => setClientsLoading(false))
+  }, [])
 
   useEffect(() => {
     try {
@@ -174,26 +173,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const getClient = useCallback((id: string) => clients.find((c) => c.id === id), [clients])
 
-  const addClient = useCallback((client: Client) => {
-    setClients((prev) => [client, ...prev])
+  const addClient = useCallback(async (client: Client) => {
+    const created = await insertClient(client)
+    setClients((prev) => [created, ...prev])
+    return created
   }, [])
 
   const removeClient = useCallback((clientId: string) => {
     setClients((prev) => prev.filter((c) => c.id !== clientId))
+    deleteClientRow(clientId).catch((err) => console.error('Failed to delete client from Supabase:', err))
   }, [])
 
   const updateClientProfile = useCallback(
     (clientId: string, patch: Parameters<AppContextValue['updateClientProfile']>[1]) => {
       updateClient(clientId, (c) => ({ ...c, ...patch }))
+      syncClientFields(clientId, {
+        name: patch.name,
+        project_name: patch.projectName,
+        owner: patch.owner,
+        due_date: patch.dueDate,
+        avatar_url: patch.avatarUrl,
+        color: patch.color,
+        initials: patch.initials,
+        email: patch.email,
+        phone: patch.phone,
+      })
     },
     [updateClient]
   )
 
   const toggleStep = useCallback(
     (clientId: string, phaseKey: string, stepId: string) => {
-      updateClient(clientId, (c) => ({
-        ...c,
-        phases: c.phases.map((phase) =>
+      updateClient(clientId, (c) => {
+        const phases = c.phases.map((phase) =>
           phase.key === phaseKey
             ? {
                 ...phase,
@@ -208,22 +220,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 ),
               }
             : phase
-        ),
-      }))
+        )
+        syncClientFields(clientId, { phases })
+        return { ...c, phases }
+      })
     },
     [updateClient]
   )
 
   const addStep = useCallback(
     (clientId: string, phaseKey: string, title: string) => {
-      updateClient(clientId, (c) => ({
-        ...c,
-        phases: c.phases.map((phase) =>
+      updateClient(clientId, (c) => {
+        const phases = c.phases.map((phase) =>
           phase.key === phaseKey
             ? { ...phase, steps: [...phase.steps, { id: `step-${Date.now()}`, title, done: false }] }
             : phase
-        ),
-      }))
+        )
+        syncClientFields(clientId, { phases })
+        return { ...c, phases }
+      })
     },
     [updateClient]
   )
@@ -397,69 +412,78 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const saveWorkshopAnswer = useCallback(
     (clientId: string, questionId: string, answer: string) => {
-      updateClient(clientId, (c) => ({
-        ...c,
-        workshop: {
-          ...c.workshop,
-          answers: { ...c.workshop.answers, [questionId]: answer },
-        },
-      }))
+      updateClient(clientId, (c) => {
+        const workshop = { ...c.workshop, answers: { ...c.workshop.answers, [questionId]: answer } }
+        syncClientFields(clientId, { workshop })
+        return { ...c, workshop }
+      })
     },
     [updateClient]
   )
 
   const setWorkshopPosition = useCallback(
     (clientId: string, phaseIndex: number, screen: WorkshopScreen, questionIndex: number) => {
-      updateClient(clientId, (c) => ({
-        ...c,
-        workshop: {
+      updateClient(clientId, (c) => {
+        const workshop = {
           ...c.workshop,
           currentPhaseIndex: phaseIndex,
           currentScreen: screen,
           currentQuestionIndex: questionIndex,
-        },
-      }))
+        }
+        syncClientFields(clientId, { workshop })
+        return { ...c, workshop }
+      })
     },
     [updateClient]
   )
 
   const startWorkshop = useCallback(
     (clientId: string) => {
-      updateClient(clientId, (c) => ({
-        ...c,
-        workshop: {
+      updateClient(clientId, (c) => {
+        const workshop = {
           ...c.workshop,
           started: true,
           completed: false,
           currentPhaseIndex: 0,
-          currentScreen: 'intro',
+          currentScreen: 'intro' as const,
           currentQuestionIndex: 0,
-        },
-      }))
+        }
+        syncClientFields(clientId, { workshop })
+        return { ...c, workshop }
+      })
     },
     [updateClient]
   )
 
   const completeWorkshop = useCallback(
     (clientId: string) => {
-      updateClient(clientId, (c) => ({ ...c, workshop: { ...c.workshop, completed: true } }))
+      updateClient(clientId, (c) => {
+        const workshop = { ...c.workshop, completed: true }
+        syncClientFields(clientId, { workshop })
+        return { ...c, workshop }
+      })
     },
     [updateClient]
   )
 
   const saveTranscript = useCallback(
     (clientId: string, transcript: string) => {
-      updateClient(clientId, (c) => ({ ...c, workshop: { ...c.workshop, transcript } }))
+      updateClient(clientId, (c) => {
+        const workshop = { ...c.workshop, transcript }
+        syncClientFields(clientId, { workshop })
+        return { ...c, workshop }
+      })
     },
     [updateClient]
   )
 
   const generateStrategy = useCallback(
     (clientId: string) => {
-      updateClient(clientId, (c) => ({
-        ...c,
-        workshop: { ...c.workshop, strategy: synthesizeStrategy(c.workshop.answers, c.workshop.transcript) },
-      }))
+      updateClient(clientId, (c) => {
+        const workshop = { ...c.workshop, strategy: synthesizeStrategy(c.workshop.answers, c.workshop.transcript) }
+        syncClientFields(clientId, { workshop })
+        return { ...c, workshop }
+      })
     },
     [updateClient]
   )
@@ -469,13 +493,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateClient(clientId, (c) => {
         if (!c.workshop.strategy) return c
         const next = updater(c.workshop.strategy)
-        return {
-          ...c,
-          workshop: {
-            ...c.workshop,
-            strategy: { ...next, status: next.status === 'ai_draft' ? 'agency_reviewed' : next.status },
-          },
+        const workshop = {
+          ...c.workshop,
+          strategy: { ...next, status: next.status === 'ai_draft' ? ('agency_reviewed' as const) : next.status },
         }
+        syncClientFields(clientId, { workshop })
+        return { ...c, workshop }
       })
     },
     [updateClient]
@@ -485,7 +508,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (clientId: string, status: StrategyStatus) => {
       updateClient(clientId, (c) => {
         if (!c.workshop.strategy) return c
-        return { ...c, workshop: { ...c.workshop, strategy: { ...c.workshop.strategy, status } } }
+        const workshop = { ...c.workshop, strategy: { ...c.workshop.strategy, status } }
+        syncClientFields(clientId, { workshop })
+        return { ...c, workshop }
       })
     },
     [updateClient]
@@ -494,6 +519,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       clients,
+      clientsLoading,
       getClient,
       addClient,
       removeClient,
@@ -537,6 +563,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       clients,
+      clientsLoading,
       getClient,
       addClient,
       removeClient,

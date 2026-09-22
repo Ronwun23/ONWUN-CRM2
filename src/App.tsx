@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import { ViewModeProvider } from '@/context/ViewModeContext'
+import { useApp } from '@/context/AppContext'
 import HomePage from '@/pages/Home'
 import StudioUpdates from '@/pages/studio/Updates'
 import StudioTasks from '@/pages/studio/Tasks'
@@ -22,6 +23,16 @@ import DiscoveryStrategy from '@/pages/client/discovery/DiscoveryStrategy'
 import DiscoverySession from '@/pages/client/discovery/DiscoverySession'
 
 export default function App() {
+  const { clientsLoading } = useApp()
+
+  if (clientsLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface-page text-sm text-ink-muted">
+        Loading…
+      </div>
+    )
+  }
+
   return (
     <ViewModeProvider>
       <Layout>

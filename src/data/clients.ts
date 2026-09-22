@@ -55,7 +55,7 @@ function buildPhases(currentPhaseIndex: number, stepsDoneInCurrentPhase: number,
   })
 }
 
-function emptyWorkshop(): WorkshopState {
+export function emptyWorkshop(): WorkshopState {
   return {
     started: false,
     completed: false,

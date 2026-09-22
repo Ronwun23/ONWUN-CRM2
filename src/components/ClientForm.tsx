@@ -45,7 +45,10 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
     }
   }
 
-  const handleSubmit = (e: FormEvent) => {
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !owner.trim() || !dueDate) return
 
@@ -74,9 +77,17 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
       email: email.trim() || undefined,
       phone: phone.trim() || undefined,
     })
-    addClient(client)
-    onDone()
-    navigate(`/clients/${client.id}/dashboard`)
+    setCreating(true)
+    setCreateError(null)
+    try {
+      const created = await addClient(client)
+      onDone()
+      navigate(`/clients/${created.id}/dashboard`)
+    } catch {
+      setCreateError("Couldn't save this client — try again.")
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
@@ -187,11 +198,13 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
           />
         </div>
       </div>
+      {createError && <p className="text-xs text-status-critical">{createError}</p>}
       <button
         type="submit"
-        className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
+        disabled={creating}
+        className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {existing ? 'Save changes' : 'Add client'}
+        {existing ? 'Save changes' : creating ? 'Adding…' : 'Add client'}
       </button>
     </form>
   )
