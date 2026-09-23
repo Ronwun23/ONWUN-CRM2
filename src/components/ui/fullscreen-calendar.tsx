@@ -41,11 +41,15 @@ interface FullScreenCalendarProps {
   onRemoveEvent?: (event: CalendarEvent) => void
   /** Called when an event card is double-clicked, to open/edit its notes. */
   onOpenNotes?: (event: CalendarEvent) => void
+  /** Called when a day cell itself is clicked — lets a caller navigate to a
+   * dedicated page for that day instead of just highlighting it. Leaving
+   * this unset keeps the plain "select day" behavior other calendars use. */
+  onDayClick?: (day: Date) => void
 }
 
 const colStartClasses = ['', 'col-start-2', 'col-start-3', 'col-start-4', 'col-start-5', 'col-start-6', 'col-start-7']
 
-export function FullScreenCalendar({ data, onNewEvent, onRemoveEvent, onOpenNotes }: FullScreenCalendarProps) {
+export function FullScreenCalendar({ data, onNewEvent, onRemoveEvent, onOpenNotes, onDayClick }: FullScreenCalendarProps) {
   const today = startOfToday()
   const [selectedDay, setSelectedDay] = React.useState(today)
   const [currentMonth, setCurrentMonth] = React.useState(format(today, 'MMM-yyyy'))
@@ -207,6 +211,7 @@ export function FullScreenCalendar({ data, onNewEvent, onRemoveEvent, onOpenNote
                     setSelectedDay(day)
                     setArmedEventId(null)
                   }}
+                  onDoubleClick={() => onDayClick?.(day)}
                   className={cn(
                     dayIdx === 0 && colStartClasses[getDay(day)],
                     !isEqual(day, selectedDay) &&
@@ -230,8 +235,7 @@ export function FullScreenCalendar({ data, onNewEvent, onRemoveEvent, onOpenNote
                           !isToday(day) &&
                           !isSameMonth(day, firstDayCurrentMonth) &&
                           'text-ink-muted',
-                        isEqual(day, selectedDay) && isToday(day) && 'border-none bg-brand-500',
-                        isEqual(day, selectedDay) && !isToday(day) && 'bg-ink-primary',
+                        isEqual(day, selectedDay) && 'border-none bg-brand-500',
                         (isEqual(day, selectedDay) || isToday(day)) && 'font-semibold',
                         'flex h-7 w-7 items-center justify-center rounded-full text-xs hover:border'
                       )}
@@ -301,6 +305,7 @@ export function FullScreenCalendar({ data, onNewEvent, onRemoveEvent, onOpenNote
                   setSelectedDay(day)
                   setArmedEventId(null)
                 }}
+                onDoubleClick={() => onDayClick?.(day)}
                 key={dayIdx}
                 type="button"
                 className={cn(

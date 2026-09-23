@@ -18,6 +18,7 @@ import ClientLibrary from '@/pages/client/Library'
 import ClientLibraryFolder from '@/pages/client/LibraryFolder'
 import ClientBrandHub from '@/pages/client/BrandHub'
 import ClientContentCalendar from '@/pages/client/ContentCalendar'
+import ClientContentDay from '@/pages/client/ContentDay'
 import ClientSettings from '@/pages/client/ClientSettings'
 import DiscoveryLayout from '@/pages/client/discovery/DiscoveryLayout'
 import DiscoveryDashboard from '@/pages/client/discovery/DiscoveryDashboard'
@@ -92,6 +93,7 @@ export default function App() {
             <Route path="discovery/session" element={<DiscoverySession />} />
             <Route path="brand-hub" element={<ClientBrandHub />} />
             <Route path="content-calendar" element={<ClientContentCalendar />} />
+            <Route path="content-calendar/:date" element={<ClientContentDay />} />
             <Route path="settings" element={<ClientSettings />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
