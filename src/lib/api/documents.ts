@@ -74,15 +74,25 @@ function documentToRow(clientId: string, doc: ClientDocument) {
   }
 }
 
-// Fetches every document and comment across all clients in two queries and
-// groups them by client_id, so each client's `documents` array can be
-// populated right alongside the client list itself.
-export async function fetchDocumentsByClient(): Promise<Record<string, ClientDocument[]>> {
-  const [{ data: docRows, error: docError }, { data: commentRows, error: commentError }] = await Promise.all([
-    supabase.from('documents').select('*').order('id', { ascending: false }),
-    supabase.from('document_comments').select('*').order('id', { ascending: true }),
-  ])
+// Fetches one client's documents (and their comments) in two scoped
+// queries — called lazily, the first time that client is actually opened,
+// rather than loading every client's documents up front.
+export async function fetchDocumentsForClient(clientId: string): Promise<ClientDocument[]> {
+  const { data: docRows, error: docError } = await supabase
+    .from('documents')
+    .select('*')
+    .eq('client_id', Number(clientId))
+    .order('id', { ascending: false })
   if (docError) throw docError
+  const docs = docRows as DocumentRow[]
+  const docIds = docs.map((d) => d.id)
+  if (docIds.length === 0) return []
+
+  const { data: commentRows, error: commentError } = await supabase
+    .from('document_comments')
+    .select('*')
+    .in('document_id', docIds)
+    .order('id', { ascending: true })
   if (commentError) throw commentError
 
   const commentsByDoc = new Map<number, DocumentComment[]>()
@@ -92,13 +102,7 @@ export async function fetchDocumentsByClient(): Promise<Record<string, ClientDoc
     commentsByDoc.set(row.document_id, list)
   }
 
-  const byClient: Record<string, ClientDocument[]> = {}
-  for (const row of docRows as DocumentRow[]) {
-    const doc = rowToDocument(row, commentsByDoc.get(row.id) ?? [])
-    const clientId = String(row.client_id)
-    ;(byClient[clientId] ??= []).push(doc)
-  }
-  return byClient
+  return docs.map((row) => rowToDocument(row, commentsByDoc.get(row.id) ?? []))
 }
 
 export async function insertDocument(clientId: string, doc: ClientDocument): Promise<ClientDocument> {

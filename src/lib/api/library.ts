@@ -39,12 +39,24 @@ function fileToRow(folderId: string, file: LibraryFile) {
   }
 }
 
-export async function fetchLibraryByClient(): Promise<Record<string, LibraryFolder[]>> {
-  const [{ data: folderRows, error: folderError }, { data: fileRows, error: fileError }] = await Promise.all([
-    supabase.from('library_folders').select('*').order('id', { ascending: true }),
-    supabase.from('library_files').select('*').order('id', { ascending: false }),
-  ])
+// Fetches one client's library folders (and their files) — called lazily,
+// the first time that client is actually opened.
+export async function fetchLibraryForClient(clientId: string): Promise<LibraryFolder[]> {
+  const { data: folderRows, error: folderError } = await supabase
+    .from('library_folders')
+    .select('*')
+    .eq('client_id', Number(clientId))
+    .order('id', { ascending: true })
   if (folderError) throw folderError
+  const folders = folderRows as FolderRow[]
+  const folderIds = folders.map((f) => f.id)
+  if (folderIds.length === 0) return []
+
+  const { data: fileRows, error: fileError } = await supabase
+    .from('library_files')
+    .select('*')
+    .in('folder_id', folderIds)
+    .order('id', { ascending: false })
   if (fileError) throw fileError
 
   const filesByFolder = new Map<number, LibraryFile[]>()
@@ -54,13 +66,7 @@ export async function fetchLibraryByClient(): Promise<Record<string, LibraryFold
     filesByFolder.set(row.folder_id, list)
   }
 
-  const byClient: Record<string, LibraryFolder[]> = {}
-  for (const row of folderRows as FolderRow[]) {
-    const folder: LibraryFolder = { id: String(row.id), name: row.name, files: filesByFolder.get(row.id) ?? [] }
-    const clientId = String(row.client_id)
-    ;(byClient[clientId] ??= []).push(folder)
-  }
-  return byClient
+  return folders.map((row) => ({ id: String(row.id), name: row.name, files: filesByFolder.get(row.id) ?? [] }))
 }
 
 export async function insertFolder(clientId: string, folder: LibraryFolder): Promise<LibraryFolder> {

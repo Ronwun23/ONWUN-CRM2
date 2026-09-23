@@ -32,21 +32,24 @@ function taskToRow(clientId: string | null, task: ClientTask) {
   }
 }
 
-export async function fetchTasks(): Promise<{ byClient: Record<string, ClientTask[]>; studio: ClientTask[] }> {
-  const { data, error } = await supabase.from('tasks').select('*').order('id', { ascending: false })
+// Fetches one client's tasks — called lazily, the first time that client
+// is actually opened, instead of loading every client's tasks up front.
+export async function fetchTasksForClient(clientId: string): Promise<ClientTask[]> {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('client_id', Number(clientId))
+    .order('id', { ascending: false })
   if (error) throw error
-  const byClient: Record<string, ClientTask[]> = {}
-  const studio: ClientTask[] = []
-  for (const row of data as TaskRow[]) {
-    const task = rowToTask(row)
-    if (row.client_id === null) {
-      studio.push(task)
-    } else {
-      const key = String(row.client_id)
-      ;(byClient[key] ??= []).push(task)
-    }
-  }
-  return { byClient, studio }
+  return (data as TaskRow[]).map(rowToTask)
+}
+
+// Studio-wide tasks (client_id null) are loaded up front — this stays
+// small regardless of how many clients exist, unlike per-client data.
+export async function fetchStudioTasks(): Promise<ClientTask[]> {
+  const { data, error } = await supabase.from('tasks').select('*').is('client_id', null).order('id', { ascending: false })
+  if (error) throw error
+  return (data as TaskRow[]).map(rowToTask)
 }
 
 export async function insertTask(clientId: string | null, task: ClientTask): Promise<ClientTask> {

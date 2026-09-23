@@ -38,21 +38,26 @@ function updateToRow(clientId: string | null, entry: UpdateEntry) {
   }
 }
 
-export async function fetchUpdates(): Promise<{ byClient: Record<string, UpdateEntry[]>; studio: UpdateEntry[] }> {
-  const { data, error } = await supabase.from('updates').select('*').order('id', { ascending: false })
+// Fetches one client's updates — called lazily, the first time that client
+// is actually opened, instead of loading every client's updates up front.
+export async function fetchUpdatesForClient(clientId: string): Promise<UpdateEntry[]> {
+  const { data, error } = await supabase
+    .from('updates')
+    .select('*')
+    .eq('client_id', Number(clientId))
+    .order('id', { ascending: false })
   if (error) throw error
-  const byClient: Record<string, UpdateEntry[]> = {}
-  const studio: UpdateEntry[] = []
-  for (const row of data as UpdateRow[]) {
-    const entry = rowToUpdate(row)
-    if (row.client_id === null) {
-      studio.push(entry)
-    } else {
-      const key = String(row.client_id)
-      ;(byClient[key] ??= []).push(entry)
-    }
-  }
-  return { byClient, studio }
+  return (data as UpdateRow[]).map(rowToUpdate)
+}
+
+// Studio-wide updates (client_id null) are loaded up front — this stays
+// small regardless of how many clients exist, unlike per-client data. The
+// combined feed on the Studio Updates page also needs every client's
+// updates, which it loads by opening each client the normal (lazy) way.
+export async function fetchStudioUpdates(): Promise<UpdateEntry[]> {
+  const { data, error } = await supabase.from('updates').select('*').is('client_id', null).order('id', { ascending: false })
+  if (error) throw error
+  return (data as UpdateRow[]).map(rowToUpdate)
 }
 
 export async function insertUpdate(clientId: string | null, entry: UpdateEntry): Promise<UpdateEntry> {

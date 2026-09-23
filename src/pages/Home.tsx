@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertCircle, ArrowRight, Briefcase, Calendar, CheckCircle2, FileText, Trash2, Users } from 'lucide-react'
 import clsx from 'clsx'
@@ -31,9 +31,17 @@ const ViewCalendarLink = ({ onClick }: { onClick: () => void }) => (
 )
 
 export default function HomePage() {
-  const { clients, studio, toggleTask, toggleStudioTask, removeUpdate } = useApp()
+  const { clients, studio, toggleTask, toggleStudioTask, removeUpdate, ensureClientDataLoaded } = useApp()
   const navigate = useNavigate()
   const goToCalendar = () => navigate('/calendar')
+
+  // Home's stat tiles and cards pull from every client's tasks/documents/
+  // updates (unpaid invoices, waiting-on-me, today's tasks, recent client
+  // activity) — unlike most pages, it needs everyone's data, not just one
+  // client's, so it warms all of them here.
+  useEffect(() => {
+    clients.forEach((c) => ensureClientDataLoaded(c.id))
+  }, [clients, ensureClientDataLoaded])
 
   const stats = useMemo(() => {
     const activeProjects = clients.filter((c) => c.status === 'active').length

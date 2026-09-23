@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type {
   BrandAsset,
@@ -20,17 +20,17 @@ import { STUDIO_ACCOUNTS } from '@/data/team'
 import type { StudioAccount } from '@/data/team'
 import { fetchClients, insertClient, deleteClientRow, updateClientRow } from '@/lib/api/clients'
 import {
-  fetchDocumentsByClient,
+  fetchDocumentsForClient,
   insertDocument,
   updateDocumentRow,
   deleteDocumentRow,
   insertComment,
 } from '@/lib/api/documents'
-import { fetchTasks, insertTask, updateTaskRow } from '@/lib/api/tasks'
-import { fetchUpdates, insertUpdate, deleteUpdateRow } from '@/lib/api/updates'
-import { fetchLibraryByClient, insertFolder, deleteFolderRow, insertFile, deleteFileRow } from '@/lib/api/library'
-import { fetchBrandAssetsByClient, insertBrandAsset } from '@/lib/api/brandAssets'
-import { fetchEvents, insertEvent, deleteEventRow, updateEventRow } from '@/lib/api/events'
+import { fetchTasksForClient, fetchStudioTasks, insertTask, updateTaskRow } from '@/lib/api/tasks'
+import { fetchUpdatesForClient, fetchStudioUpdates, insertUpdate, deleteUpdateRow } from '@/lib/api/updates'
+import { fetchLibraryForClient, insertFolder, deleteFolderRow, insertFile, deleteFileRow } from '@/lib/api/library'
+import { fetchBrandAssetsForClient, insertBrandAsset } from '@/lib/api/brandAssets'
+import { fetchEventsForClient, fetchStudioEvents, insertEvent, deleteEventRow, updateEventRow } from '@/lib/api/events'
 
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
@@ -72,6 +72,8 @@ function loadInitialStudio(): StudioState {
 interface AppContextValue {
   clients: Client[]
   clientsLoading: boolean
+  loadingClientIds: Set<string>
+  ensureClientDataLoaded: (clientId: string) => Promise<void>
   getClient: (id: string) => Client | undefined
   addClient: (client: Client) => Promise<Client>
   removeClient: (clientId: string) => void
@@ -124,22 +126,21 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null)
 
-// The initial load fires 7 queries at once — Supabase's free-tier instance
-// occasionally cancels one under load (statement timeout), which fails the
-// whole batch. That's transient, not a real data/permissions problem, so
-// retry a couple of times before actually giving up.
-async function fetchInitialData(attempts = 3, delayMs = 800) {
+// The initial load only fetches the client list itself (names, status,
+// phases, workshop — everything shown before you open a specific client)
+// plus the studio-wide tasks/updates/events, which stay small regardless of
+// how many clients exist. A client's documents/tasks/updates/library/brand
+// assets/events are loaded lazily via ensureClientDataLoaded, the first
+// time that client is actually opened — otherwise every refresh, on any
+// page, was re-fetching every client's everything.
+//
+// Supabase's free-tier instance occasionally cancels a query under load
+// (statement timeout), which is transient, not a real data/permissions
+// problem — retry a couple of times before actually giving up.
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3, delayMs = 800): Promise<T> {
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      return await Promise.all([
-        fetchClients(),
-        fetchDocumentsByClient(),
-        fetchTasks(),
-        fetchUpdates(),
-        fetchLibraryByClient(),
-        fetchBrandAssetsByClient(),
-        fetchEvents(),
-      ])
+      return await fn()
     } catch (err) {
       if (attempt === attempts) throw err
       await new Promise((resolve) => setTimeout(resolve, delayMs))
@@ -152,25 +153,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [clients, setClients] = useState<Client[]>([])
   const [clientsLoading, setClientsLoading] = useState(true)
   const [studio, setStudio] = useState<StudioState>(loadInitialStudio)
+  const [loadingClientIds, setLoadingClientIds] = useState<Set<string>>(new Set())
+  const loadedClientIdsRef = useRef<Set<string>>(new Set())
+  const pendingClientFetchesRef = useRef<Map<string, Promise<void>>>(new Map())
 
   useEffect(() => {
-    fetchInitialData()
-      .then(([loadedClients, documentsByClient, tasks, updates, libraryByClient, brandAssetsByClient, events]) => {
-        setClients(
-          loadedClients.map((c) => ({
-            ...c,
-            documents: documentsByClient[c.id] ?? [],
-            tasks: tasks.byClient[c.id] ?? [],
-            updates: updates.byClient[c.id] ?? [],
-            library: libraryByClient[c.id] ?? [],
-            brandHub: brandAssetsByClient[c.id] ?? [],
-            events: events.byClient[c.id] ?? [],
-          }))
-        )
-        setStudio((prev) => ({ ...prev, tasks: tasks.studio, updates: updates.studio, events: events.studio }))
+    withRetry(() => Promise.all([fetchClients(), fetchStudioTasks(), fetchStudioUpdates(), fetchStudioEvents()]))
+      .then(([loadedClients, studioTasks, studioUpdates, studioEvents]) => {
+        setClients(loadedClients)
+        setStudio((prev) => ({ ...prev, tasks: studioTasks, updates: studioUpdates, events: studioEvents }))
       })
       .catch((err) => console.error('Failed to load clients from Supabase:', err))
       .finally(() => setClientsLoading(false))
+  }, [])
+
+  // Loads one client's documents/tasks/updates/library/brand assets/events
+  // the first time that client is actually opened, rather than upfront for
+  // every client on every page load. Safe to call repeatedly — a client
+  // already loaded (or currently loading) resolves immediately/shares the
+  // in-flight request instead of re-fetching.
+  const ensureClientDataLoaded = useCallback((clientId: string): Promise<void> => {
+    if (loadedClientIdsRef.current.has(clientId)) return Promise.resolve()
+    const existing = pendingClientFetchesRef.current.get(clientId)
+    if (existing) return existing
+
+    setLoadingClientIds((prev) => new Set(prev).add(clientId))
+
+    const promise = withRetry(() =>
+      Promise.all([
+        fetchDocumentsForClient(clientId),
+        fetchTasksForClient(clientId),
+        fetchUpdatesForClient(clientId),
+        fetchLibraryForClient(clientId),
+        fetchBrandAssetsForClient(clientId),
+        fetchEventsForClient(clientId),
+      ])
+    )
+      .then(([documents, tasks, updates, library, brandHub, events]) => {
+        setClients((prev) =>
+          prev.map((c) => (c.id === clientId ? { ...c, documents, tasks, updates, library, brandHub, events } : c))
+        )
+        loadedClientIdsRef.current.add(clientId)
+      })
+      .catch((err) => console.error('Failed to load client data from Supabase:', err))
+      .finally(() => {
+        setLoadingClientIds((prev) => {
+          const next = new Set(prev)
+          next.delete(clientId)
+          return next
+        })
+        pendingClientFetchesRef.current.delete(clientId)
+      })
+
+    pendingClientFetchesRef.current.set(clientId, promise)
+    return promise
   }, [])
 
   useEffect(() => {
@@ -255,6 +291,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ])
     const finalClient = { ...created, documents, library }
     setClients((prev) => [finalClient, ...prev])
+    // Already have accurate (mostly empty) data for this client locally —
+    // no need for ensureClientDataLoaded to re-fetch it the first time
+    // it's opened.
+    loadedClientIdsRef.current.add(finalClient.id)
     return finalClient
   }, [])
 
@@ -655,6 +695,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       clients,
       clientsLoading,
+      loadingClientIds,
+      ensureClientDataLoaded,
       getClient,
       addClient,
       removeClient,
@@ -702,6 +744,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       clients,
       clientsLoading,
+      loadingClientIds,
+      ensureClientDataLoaded,
       getClient,
       addClient,
       removeClient,

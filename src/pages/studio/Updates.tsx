@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText, Send, Trash2 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
@@ -11,9 +11,16 @@ import type { Client, UpdateEntry } from '@/types'
 type FeedEntry = UpdateEntry & { client?: Client }
 
 export default function StudioUpdates() {
-  const { clients, studio, addStudioUpdate, removeStudioUpdate, removeUpdate, activeAccount } = useApp()
+  const { clients, studio, addStudioUpdate, removeStudioUpdate, removeUpdate, activeAccount, ensureClientDataLoaded } =
+    useApp()
   const navigate = useNavigate()
   const [text, setText] = useState('')
+
+  // This is the one page that needs every client's updates in one combined
+  // feed — everywhere else only loads the client actually being viewed.
+  useEffect(() => {
+    clients.forEach((c) => ensureClientDataLoaded(c.id))
+  }, [clients, ensureClientDataLoaded])
 
   const handlePost = () => {
     if (!text.trim()) return

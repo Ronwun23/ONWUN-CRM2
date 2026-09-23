@@ -23,19 +23,24 @@ const PAGES = [
  * input's autoFocus has already stolen focus, so this is too late to
  * capture what was focused *before* the palette opened. */
 export default function SearchPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { clients } = useApp()
+  const { clients, ensureClientDataLoaded } = useApp()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
 
   useEffect(() => {
     if (!open) return
     setSearch('')
+    // Search can surface any client's documents, not just whichever one
+    // (if any) has already been opened — warm everyone the moment the
+    // palette opens, rather than requiring every client to be visited
+    // first for its documents to be searchable.
+    clients.forEach((c) => ensureClientDataLoaded(c.id))
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, onClose])
+  }, [open, onClose, clients, ensureClientDataLoaded])
 
   if (!open) return null
 

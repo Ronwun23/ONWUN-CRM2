@@ -32,21 +32,24 @@ function eventToRow(clientId: string | null, event: ClientEvent) {
   }
 }
 
-export async function fetchEvents(): Promise<{ byClient: Record<string, ClientEvent[]>; studio: ClientEvent[] }> {
-  const { data, error } = await supabase.from('events').select('*').order('id', { ascending: true })
+// Fetches one client's events — called lazily, the first time that client
+// is actually opened, instead of loading every client's events up front.
+export async function fetchEventsForClient(clientId: string): Promise<ClientEvent[]> {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('client_id', Number(clientId))
+    .order('id', { ascending: true })
   if (error) throw error
-  const byClient: Record<string, ClientEvent[]> = {}
-  const studio: ClientEvent[] = []
-  for (const row of data as EventRow[]) {
-    const event = rowToEvent(row)
-    if (row.client_id === null) {
-      studio.push(event)
-    } else {
-      const key = String(row.client_id)
-      ;(byClient[key] ??= []).push(event)
-    }
-  }
-  return { byClient, studio }
+  return (data as EventRow[]).map(rowToEvent)
+}
+
+// Studio-wide events (client_id null) are loaded up front — the Calendar
+// page only ever shows these, never per-client events.
+export async function fetchStudioEvents(): Promise<ClientEvent[]> {
+  const { data, error } = await supabase.from('events').select('*').is('client_id', null).order('id', { ascending: true })
+  if (error) throw error
+  return (data as EventRow[]).map(rowToEvent)
 }
 
 export async function insertEvent(clientId: string | null, event: ClientEvent): Promise<ClientEvent> {

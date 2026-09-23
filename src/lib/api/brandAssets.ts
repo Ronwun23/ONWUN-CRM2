@@ -18,15 +18,16 @@ function rowToAsset(row: BrandAssetRow): BrandAsset {
   }
 }
 
-export async function fetchBrandAssetsByClient(): Promise<Record<string, BrandAsset[]>> {
-  const { data, error } = await supabase.from('brand_assets').select('*').order('id', { ascending: false })
+// Fetches one client's brand assets — called lazily, the first time that
+// client is actually opened.
+export async function fetchBrandAssetsForClient(clientId: string): Promise<BrandAsset[]> {
+  const { data, error } = await supabase
+    .from('brand_assets')
+    .select('*')
+    .eq('client_id', Number(clientId))
+    .order('id', { ascending: false })
   if (error) throw error
-  const byClient: Record<string, BrandAsset[]> = {}
-  for (const row of data as BrandAssetRow[]) {
-    const key = String(row.client_id)
-    ;(byClient[key] ??= []).push(rowToAsset(row))
-  }
-  return byClient
+  return (data as BrandAssetRow[]).map(rowToAsset)
 }
 
 export async function insertBrandAsset(clientId: string, asset: BrandAsset): Promise<BrandAsset> {
