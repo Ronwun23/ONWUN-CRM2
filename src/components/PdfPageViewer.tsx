@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import * as pdfjsLib from 'pdfjs-dist'
-import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
+import type { OnProgressParameters, PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
 import PdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
+import ProgressRing from '@/components/ProgressRing'
+import Spinner from '@/components/Spinner'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = PdfWorkerUrl
 
@@ -19,6 +21,9 @@ export default function PdfPageViewer({
   const [numPages, setNumPages] = useState(0)
   const [pageNum, setPageNum] = useState(1)
   const [error, setError] = useState<string | null>(null)
+  // null = total byte size not yet known (server didn't send a
+  // content-length) — fall back to an indeterminate spinner until it is.
+  const [downloadPercent, setDownloadPercent] = useState<number | null>(null)
 
   useEffect(() => {
     if (numPages > 0) onPageChange?.(pageNum, numPages)
@@ -28,9 +33,14 @@ export default function PdfPageViewer({
     let cancelled = false
     setError(null)
     setNumPages(0)
-    pdfjsLib
-      .getDocument(url)
-      .promise.then((pdf) => {
+    setDownloadPercent(null)
+    const loadingTask = pdfjsLib.getDocument(url)
+    loadingTask.onProgress = ({ loaded, total }: OnProgressParameters) => {
+      if (cancelled) return
+      setDownloadPercent(total ? Math.min(100, (loaded / total) * 100) : null)
+    }
+    loadingTask.promise
+      .then((pdf) => {
         if (cancelled) return
         pdfRef.current = pdf
         setNumPages(pdf.numPages)
@@ -41,7 +51,7 @@ export default function PdfPageViewer({
       })
     return () => {
       cancelled = true
-      pdfRef.current?.destroy()
+      loadingTask.destroy()
     }
   }, [url])
 
@@ -73,6 +83,21 @@ export default function PdfPageViewer({
     return (
       <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-black text-sm text-white/60">
         {error}
+      </div>
+    )
+  }
+
+  if (numPages === 0) {
+    return (
+      <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl bg-black text-white/60">
+        {downloadPercent !== null ? (
+          <ProgressRing value={downloadPercent} label="Downloading PDF" />
+        ) : (
+          <>
+            <Spinner size={24} label="Downloading PDF" />
+            <span className="text-xs">Downloading…</span>
+          </>
+        )}
       </div>
     )
   }
