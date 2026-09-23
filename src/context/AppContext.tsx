@@ -124,21 +124,37 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null)
 
+// The initial load fires 7 queries at once — Supabase's free-tier instance
+// occasionally cancels one under load (statement timeout), which fails the
+// whole batch. That's transient, not a real data/permissions problem, so
+// retry a couple of times before actually giving up.
+async function fetchInitialData(attempts = 3, delayMs = 800) {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await Promise.all([
+        fetchClients(),
+        fetchDocumentsByClient(),
+        fetchTasks(),
+        fetchUpdates(),
+        fetchLibraryByClient(),
+        fetchBrandAssetsByClient(),
+        fetchEvents(),
+      ])
+    } catch (err) {
+      if (attempt === attempts) throw err
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+  }
+  throw new Error('unreachable')
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [clients, setClients] = useState<Client[]>([])
   const [clientsLoading, setClientsLoading] = useState(true)
   const [studio, setStudio] = useState<StudioState>(loadInitialStudio)
 
   useEffect(() => {
-    Promise.all([
-      fetchClients(),
-      fetchDocumentsByClient(),
-      fetchTasks(),
-      fetchUpdates(),
-      fetchLibraryByClient(),
-      fetchBrandAssetsByClient(),
-      fetchEvents(),
-    ])
+    fetchInitialData()
       .then(([loadedClients, documentsByClient, tasks, updates, libraryByClient, brandAssetsByClient, events]) => {
         setClients(
           loadedClients.map((c) => ({
