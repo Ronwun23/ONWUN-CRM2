@@ -45,11 +45,20 @@ interface FullScreenCalendarProps {
    * dedicated page for that day instead of just highlighting it. Leaving
    * this unset keeps the plain "select day" behavior other calendars use. */
   onDayClick?: (day: Date) => void
+  /** Label for the top-right add button. Defaults to "New Event". */
+  newEventLabel?: string
 }
 
 const colStartClasses = ['', 'col-start-2', 'col-start-3', 'col-start-4', 'col-start-5', 'col-start-6', 'col-start-7']
 
-export function FullScreenCalendar({ data, onNewEvent, onRemoveEvent, onOpenNotes, onDayClick }: FullScreenCalendarProps) {
+export function FullScreenCalendar({
+  data,
+  onNewEvent,
+  onRemoveEvent,
+  onOpenNotes,
+  onDayClick,
+  newEventLabel = 'New Event',
+}: FullScreenCalendarProps) {
   const today = startOfToday()
   const [selectedDay, setSelectedDay] = React.useState(today)
   const [currentMonth, setCurrentMonth] = React.useState(format(today, 'MMM-yyyy'))
@@ -139,7 +148,7 @@ export function FullScreenCalendar({ data, onNewEvent, onRemoveEvent, onOpenNote
 
           <Button className="w-full gap-2 md:w-auto" onClick={() => onNewEvent?.(selectedDay)}>
             <PlusCircleIcon size={16} strokeWidth={2} aria-hidden="true" />
-            <span>New Event</span>
+            <span>{newEventLabel}</span>
           </Button>
         </div>
       </div>
