@@ -11,9 +11,10 @@ import DocumentComments from '@/components/DocumentComments'
 import DocumentTestimonial from '@/components/DocumentTestimonial'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import FullscreenViewer from '@/components/FullscreenViewer'
+import { getSignedDocumentUrl } from '@/lib/api/documents'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_STATUS_TONE, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
 import { formatDate } from '@/lib/format'
-import { figmaEmbedSrc, isFigmaUrl, isPdfDataUrl } from '@/lib/embed'
+import { figmaEmbedSrc, isFigmaUrl, isPdfDataUrl, isStoragePath } from '@/lib/embed'
 
 // pdfjs-dist is a large dependency — only fetch it when a document is
 // actually a PDF, not on every page load.
@@ -29,12 +30,34 @@ export default function DocumentDetail() {
 
   const doc = client.documents.find((d) => d.id === docId)
   const [pageLabel, setPageLabel] = useState<string | undefined>()
+  const [resolvedPdfUrl, setResolvedPdfUrl] = useState<string | null>(null)
+  const [resolveError, setResolveError] = useState(false)
 
   // Reset the tracked page whenever the viewer switches to a different
   // document, so a stale page label from the last doc never leaks in.
   useEffect(() => {
     setPageLabel(undefined)
   }, [docId])
+
+  // A PDF stored in Supabase Storage is only ever a "storage:<path>"
+  // marker — resolve it to a short-lived signed URL before it can be
+  // previewed or downloaded, rather than exposing a permanent public link.
+  useEffect(() => {
+    setResolvedPdfUrl(null)
+    setResolveError(false)
+    if (!doc?.url || !isStoragePath(doc.url)) return
+    let cancelled = false
+    getSignedDocumentUrl(doc.url)
+      .then((url) => {
+        if (!cancelled) setResolvedPdfUrl(url)
+      })
+      .catch(() => {
+        if (!cancelled) setResolveError(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [doc?.url])
 
   useEffect(() => {
     if (!doc?.url || !isFigmaUrl(doc.url)) return
@@ -54,6 +77,9 @@ export default function DocumentDetail() {
   }, [])
 
   if (!doc) return <Navigate to={`/clients/${client.id}/documents`} replace />
+
+  const isPdf = !!doc.url && (isPdfDataUrl(doc.url) || isStoragePath(doc.url))
+  const pdfSrc = doc.url && isStoragePath(doc.url) ? resolvedPdfUrl : doc.url
 
   const isOffboarding = doc.type === 'offboarding'
   const sidePanel = isOffboarding ? (
@@ -90,15 +116,15 @@ export default function DocumentDetail() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {doc.url && (
+          {doc.url && (!isStoragePath(doc.url) || resolvedPdfUrl) && (
             <a
-              href={doc.url}
+              href={isStoragePath(doc.url) ? resolvedPdfUrl! : doc.url}
               target="_blank"
               rel="noopener noreferrer"
-              download={isPdfDataUrl(doc.url) ? `${doc.title}.pdf` : undefined}
+              download={isPdf ? `${doc.title}.pdf` : undefined}
               className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] bg-white px-3 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
             >
-              {isFigmaUrl(doc.url) ? 'Open in Figma' : isPdfDataUrl(doc.url) ? 'Download PDF' : 'Open link'}
+              {isFigmaUrl(doc.url) ? 'Open in Figma' : isPdf ? 'Download PDF' : 'Open link'}
               <ExternalLink size={13} />
             </a>
           )}
@@ -140,33 +166,43 @@ export default function DocumentDetail() {
             </FullscreenViewer>
             {sidePanel}
           </div>
-        ) : isPdfDataUrl(doc.url) ? (
+        ) : isPdf ? (
           <div className="flex flex-col gap-4 lg:flex-row">
             <FullscreenViewer className="min-w-0 flex-1 rounded-xl shadow-card">
-              <ErrorBoundary
-                fallback={
-                  <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 rounded-xl bg-black text-center text-sm text-white/60">
-                    <p>Couldn't preview this PDF here.</p>
-                    <a
-                      href={doc.url}
-                      download={`${doc.title}.pdf`}
-                      className="rounded-lg bg-white px-3.5 py-2 text-sm font-semibold text-black hover:bg-white/90"
-                    >
-                      Download it instead
-                    </a>
-                  </div>
-                }
-              >
-                <Suspense
+              {resolveError ? (
+                <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-black text-sm text-white/60">
+                  Couldn't load this PDF.
+                </div>
+              ) : !pdfSrc ? (
+                <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-black text-sm text-white/50">
+                  Loading PDF viewer…
+                </div>
+              ) : (
+                <ErrorBoundary
                   fallback={
-                    <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-black text-sm text-white/50">
-                      Loading PDF viewer…
+                    <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 rounded-xl bg-black text-center text-sm text-white/60">
+                      <p>Couldn't preview this PDF here.</p>
+                      <a
+                        href={pdfSrc}
+                        download={`${doc.title}.pdf`}
+                        className="rounded-lg bg-white px-3.5 py-2 text-sm font-semibold text-black hover:bg-white/90"
+                      >
+                        Download it instead
+                      </a>
                     </div>
                   }
                 >
-                  <PdfPageViewer url={doc.url} onPageChange={handlePdfPageChange} />
-                </Suspense>
-              </ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-black text-sm text-white/50">
+                        Loading PDF viewer…
+                      </div>
+                    }
+                  >
+                    <PdfPageViewer url={pdfSrc} onPageChange={handlePdfPageChange} />
+                  </Suspense>
+                </ErrorBoundary>
+              )}
             </FullscreenViewer>
             {sidePanel}
           </div>

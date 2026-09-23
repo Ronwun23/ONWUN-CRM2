@@ -1,5 +1,8 @@
 import { supabase } from '@/lib/supabase'
+import { storagePathFrom, toStoragePath } from '@/lib/embed'
 import type { ClientDocument, DocumentComment } from '@/types'
+
+const DOCUMENTS_BUCKET = 'documents'
 
 interface DocumentRow {
   id: number
@@ -103,6 +106,25 @@ export async function fetchDocumentsForClient(clientId: string): Promise<ClientD
   }
 
   return docs.map((row) => rowToDocument(row, commentsByDoc.get(row.id) ?? []))
+}
+
+// Uploads a PDF directly to Supabase Storage instead of embedding it as
+// base64 in the database — returns a "storage:<path>" marker to store in
+// the document's `url` column.
+export async function uploadDocumentFile(clientId: string, file: File): Promise<string> {
+  const path = `${clientId}/${Date.now()}-${file.name}`
+  const { error } = await supabase.storage.from(DOCUMENTS_BUCKET).upload(path, file)
+  if (error) throw error
+  return toStoragePath(path)
+}
+
+// Storage is private — a document's PDF is only ever accessed via a
+// short-lived signed URL generated on demand, not a permanent public link.
+export async function getSignedDocumentUrl(storageUrl: string): Promise<string> {
+  const path = storagePathFrom(storageUrl)
+  const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).createSignedUrl(path, 3600)
+  if (error) throw error
+  return data.signedUrl
 }
 
 export async function insertDocument(clientId: string, doc: ClientDocument): Promise<ClientDocument> {

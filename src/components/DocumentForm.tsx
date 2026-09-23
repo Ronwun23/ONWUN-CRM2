@@ -4,6 +4,8 @@ import { FileText, Upload, X } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { Select } from '@/components/ui/select'
+import { uploadDocumentFile } from '@/lib/api/documents'
+import { isStoragePath } from '@/lib/embed'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
 import type { ClientDocument, DocumentStatus, DocumentType } from '@/types'
 
@@ -21,6 +23,10 @@ const TYPE_OPTIONS: DocumentType[] = [
 ]
 const STATUS_OPTIONS: DocumentStatus[] = ['with_client', 'with_you', 'signed', 'paid', 'unpaid', 'draft']
 const PDF_DATA_URL_PREFIX = 'data:application/pdf'
+
+function isExistingPdf(url: string | undefined): boolean {
+  return !!url && (url.startsWith(PDF_DATA_URL_PREFIX) || isStoragePath(url))
+}
 
 type Source = 'figma' | 'pdf'
 
@@ -45,10 +51,10 @@ export default function DocumentForm({
   const [status, setStatus] = useState<DocumentStatus>(existing?.status ?? 'draft')
   const [meta, setMeta] = useState(existing?.meta ?? '')
   const [url, setUrl] = useState(existing?.url ?? '')
-  const [source, setSource] = useState<Source>(existing?.url?.startsWith(PDF_DATA_URL_PREFIX) ? 'pdf' : 'figma')
-  const [pdfFileName, setPdfFileName] = useState(
-    existing?.url?.startsWith(PDF_DATA_URL_PREFIX) ? `${existing.title}.pdf` : ''
-  )
+  const [source, setSource] = useState<Source>(isExistingPdf(existing?.url) ? 'pdf' : 'figma')
+  const [pdfFileName, setPdfFileName] = useState(isExistingPdf(existing?.url) ? `${existing?.title}.pdf` : '')
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -86,12 +92,19 @@ export default function DocumentForm({
     setPdfFileName('')
   }
 
-  const handleFile = (file: File | undefined) => {
+  const handleFile = async (file: File | undefined) => {
     if (!file || file.type !== 'application/pdf') return
     setPdfFileName(file.name)
-    const reader = new FileReader()
-    reader.onload = () => setUrl(typeof reader.result === 'string' ? reader.result : '')
-    reader.readAsDataURL(file)
+    setUploadError(null)
+    setUploadingFile(true)
+    try {
+      setUrl(await uploadDocumentFile(clientId, file))
+    } catch {
+      setUploadError("Couldn't upload this PDF — try again.")
+      setPdfFileName('')
+    } finally {
+      setUploadingFile(false)
+    }
   }
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -228,7 +241,7 @@ export default function DocumentForm({
                 </button>
                 <FileText className="text-brand-600" size={20} />
                 <p className="max-w-full truncate text-sm font-medium text-ink-primary">{pdfFileName}</p>
-                <p className="text-xs text-ink-muted">Click to replace</p>
+                <p className="text-xs text-ink-muted">{uploadingFile ? 'Uploading…' : 'Click to replace'}</p>
               </>
             ) : (
               <>
@@ -237,6 +250,7 @@ export default function DocumentForm({
               </>
             )}
           </div>
+          {uploadError && <p className="mt-1.5 text-xs text-status-critical">{uploadError}</p>}
         </div>
       )}
 
@@ -256,7 +270,7 @@ export default function DocumentForm({
       {saveError && <p className="text-xs text-status-critical">{saveError}</p>}
       <button
         type="submit"
-        disabled={saving}
+        disabled={saving || uploadingFile}
         className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {saving ? (existing ? 'Saving…' : 'Adding…') : existing ? 'Save changes' : 'Add document'}
