@@ -6,6 +6,7 @@ import Card from '@/components/Card'
 import Pill from '@/components/Pill'
 import { ClientAvatar, MemberAvatar } from '@/components/Avatar'
 import { formatRelativeDate } from '@/lib/format'
+import { confirmAction } from '@/lib/confirm'
 import type { Client, UpdateEntry } from '@/types'
 
 type FeedEntry = UpdateEntry & { client?: Client }
@@ -104,8 +105,8 @@ export default function StudioUpdates() {
               </div>
             </>
           )
-          const handleDelete = () => {
-            if (!window.confirm('Delete this update?')) return
+          const handleDelete = async () => {
+            if (!(await confirmAction('Delete this update?', { confirmLabel: 'Delete', destructive: true }))) return
             if (update.client) {
               removeUpdate(update.client.id, update.id)
             } else {

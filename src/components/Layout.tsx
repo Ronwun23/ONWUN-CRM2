@@ -33,6 +33,7 @@ import ClientAvatarStack from '@/components/ClientAvatarStack'
 import Drawer from '@/components/Drawer'
 import ClientForm from '@/components/ClientForm'
 import SearchPalette from '@/components/SearchPalette'
+import { confirmAction } from '@/lib/confirm'
 import { fileToLogoDataUrl } from '@/lib/image'
 
 /** Bottom-left "who's managing this" switcher — lets Ro or Niall flip
@@ -275,12 +276,14 @@ export default function Layout({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [lockedToClient])
 
-  const handleRemoveClient = (e: MouseEvent, name: string, id: string) => {
+  const handleRemoveClient = async (e: MouseEvent, name: string, id: string) => {
     e.preventDefault()
     e.stopPropagation()
-    if (window.confirm(`Remove "${name}"? This deletes all their tasks, documents, and workshop answers — it can't be undone.`)) {
-      removeClient(id)
-    }
+    const confirmed = await confirmAction(
+      `Remove "${name}"? This deletes all their tasks, documents, and workshop answers — it can't be undone.`,
+      { confirmLabel: 'Remove', destructive: true }
+    )
+    if (confirmed) removeClient(id)
   }
 
   if (isImmersiveSession) {

@@ -8,6 +8,7 @@ import type { CalendarData, CalendarEvent } from '@/components/ui/fullscreen-cal
 import { DatePicker } from '@/components/ui/date-picker'
 import { TimePicker } from '@/components/ui/time-picker'
 import { toDisplayDate, formatCivilDate } from '@/lib/civilDate'
+import { confirmAction } from '@/lib/confirm'
 
 function formatEventTime(time: string): string {
   return format(parse(time, 'HH:mm', new Date()), 'h:mm a')
@@ -50,11 +51,13 @@ export default function ClientContentCalendar() {
     setShowAdd(true)
   }
 
-  const handleRemoveEvent = (event: CalendarEvent) => {
+  const handleRemoveEvent = async (event: CalendarEvent) => {
     const when = event.time ? ` at ${event.time}` : ''
-    if (window.confirm(`Remove "${event.name}"${when} from the calendar?`)) {
-      removeClientEvent(client.id, event.id)
-    }
+    const confirmed = await confirmAction(`Remove "${event.name}"${when} from the calendar?`, {
+      confirmLabel: 'Remove',
+      destructive: true,
+    })
+    if (confirmed) removeClientEvent(client.id, event.id)
   }
 
   const handleOpenNotes = (event: CalendarEvent) => {
