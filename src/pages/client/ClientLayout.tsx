@@ -4,6 +4,7 @@ import { Eye } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { useViewMode } from '@/context/ViewModeContext'
+import Spinner from '@/components/Spinner'
 
 const TAB_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
@@ -61,7 +62,10 @@ export default function ClientLayout() {
         Onwun <span className="mx-1">/</span> {client.name} <span className="mx-1">/</span> {tabLabel}
       </p>
       {isLoadingClientData ? (
-        <div className="flex items-center justify-center py-16 text-sm text-ink-muted">Loading…</div>
+        <div className="flex items-center justify-center gap-2 py-16 text-sm text-ink-muted">
+          <Spinner />
+          Loading…
+        </div>
       ) : (
         <Outlet context={client} />
       )}

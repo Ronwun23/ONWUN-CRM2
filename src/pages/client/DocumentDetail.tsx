@@ -11,6 +11,7 @@ import DocumentComments from '@/components/DocumentComments'
 import DocumentTestimonial from '@/components/DocumentTestimonial'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import FullscreenViewer from '@/components/FullscreenViewer'
+import Spinner from '@/components/Spinner'
 import { getSignedDocumentUrl } from '@/lib/api/documents'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_STATUS_TONE, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
 import { formatDate } from '@/lib/format'
@@ -174,7 +175,8 @@ export default function DocumentDetail() {
                   Couldn't load this PDF.
                 </div>
               ) : !pdfSrc ? (
-                <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-black text-sm text-white/50">
+                <div className="flex min-h-[420px] items-center justify-center gap-2 rounded-xl bg-black text-sm text-white/50">
+                  <Spinner className="text-white/50" />
                   Loading PDF viewer…
                 </div>
               ) : (
@@ -194,7 +196,8 @@ export default function DocumentDetail() {
                 >
                   <Suspense
                     fallback={
-                      <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-black text-sm text-white/50">
+                      <div className="flex min-h-[420px] items-center justify-center gap-2 rounded-xl bg-black text-sm text-white/50">
+                        <Spinner className="text-white/50" />
                         Loading PDF viewer…
                       </div>
                     }

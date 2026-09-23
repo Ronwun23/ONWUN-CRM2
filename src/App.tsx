@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Layout from '@/components/Layout'
+import Spinner from '@/components/Spinner'
 import { ViewModeProvider } from '@/context/ViewModeContext'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
@@ -31,7 +32,8 @@ export default function App() {
 
   if (clientsLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface-page text-sm text-ink-muted">
+      <div className="flex min-h-screen items-center justify-center gap-2 bg-surface-page text-sm text-ink-muted">
+        <Spinner />
         Loading…
       </div>
     )
