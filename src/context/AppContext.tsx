@@ -31,6 +31,8 @@ import { fetchUpdatesForClient, fetchStudioUpdates, insertUpdate, deleteUpdateRo
 import { fetchLibraryForClient, insertFolder, deleteFolderRow, insertFile, deleteFileRow } from '@/lib/api/library'
 import { fetchBrandAssetsForClient, insertBrandAsset } from '@/lib/api/brandAssets'
 import { fetchEventsForClient, fetchStudioEvents, insertEvent, deleteEventRow, updateEventRow } from '@/lib/api/events'
+import { subscribeToRealtimeUpdates } from '@/lib/realtime'
+import { supabase } from '@/lib/supabase'
 
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
@@ -51,7 +53,7 @@ function syncDocumentFields(docId: string, patch: Record<string, unknown>) {
   })
 }
 
-interface StudioState {
+export interface StudioState {
   tasks: ClientTask[]
   updates: UpdateEntry[]
   events: ClientEvent[]
@@ -207,6 +209,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     pendingClientFetchesRef.current.set(clientId, promise)
     return promise
+  }, [])
+
+  // Live updates: documents, comments, tasks and updates saved from
+  // anywhere else (another tab, the client's own session) arrive over this
+  // one websocket and get merged straight into state — no manual refresh
+  // needed to see them. See src/lib/realtime.ts for the required Supabase
+  // publication setup.
+  useEffect(() => {
+    const channel = subscribeToRealtimeUpdates({
+      setClients,
+      setStudio,
+      isClientLoaded: (clientId) => loadedClientIdsRef.current.has(clientId),
+    })
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   useEffect(() => {

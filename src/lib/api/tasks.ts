@@ -3,7 +3,7 @@ import type { ClientTask } from '@/types'
 
 // client_id is nullable: a task with no client is a studio-wide task, same
 // dual-scope pattern as `updates` and `events`.
-interface TaskRow {
+export interface TaskRow {
   id: number
   client_id: number | null
   title: string
@@ -12,7 +12,7 @@ interface TaskRow {
   assignee: string
 }
 
-function rowToTask(row: TaskRow): ClientTask {
+export function rowToTask(row: TaskRow): ClientTask {
   return {
     id: String(row.id),
     title: row.title,

@@ -3,7 +3,7 @@ import type { UpdateEntry } from '@/types'
 
 // client_id is nullable: an update with no client is a studio-wide note,
 // same dual-scope pattern as `tasks` and `events`.
-interface UpdateRow {
+export interface UpdateRow {
   id: number
   client_id: number | null
   text: string
@@ -14,7 +14,7 @@ interface UpdateRow {
   doc_title: string | null
 }
 
-function rowToUpdate(row: UpdateRow): UpdateEntry {
+export function rowToUpdate(row: UpdateRow): UpdateEntry {
   return {
     id: String(row.id),
     text: row.text,
