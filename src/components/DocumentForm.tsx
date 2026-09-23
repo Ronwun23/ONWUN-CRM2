@@ -64,16 +64,14 @@ export default function DocumentForm({
       url: url.trim() || undefined,
     }
 
-    if (existing) {
-      updateDocument(clientId, existing.id, payload)
-      onDone()
-      return
-    }
-
     setSaving(true)
     setSaveError(null)
     try {
-      await addDocument(clientId, { id: `doc-${Date.now()}`, updatedAt: new Date().toISOString(), comments: [], ...payload })
+      if (existing) {
+        await updateDocument(clientId, existing.id, payload)
+      } else {
+        await addDocument(clientId, { id: `doc-${Date.now()}`, updatedAt: new Date().toISOString(), comments: [], ...payload })
+      }
       onDone()
     } catch {
       setSaveError("Couldn't save this document — try again.")
@@ -261,7 +259,7 @@ export default function DocumentForm({
         disabled={saving}
         className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {existing ? 'Save changes' : saving ? 'Adding…' : 'Add document'}
+        {saving ? (existing ? 'Saving…' : 'Adding…') : existing ? 'Save changes' : 'Add document'}
       </button>
     </form>
   )

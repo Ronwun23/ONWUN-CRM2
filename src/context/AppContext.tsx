@@ -88,7 +88,7 @@ interface AppContextValue {
   addUpdate: (clientId: string, update: UpdateEntry) => Promise<void>
   removeUpdate: (clientId: string, updateId: string) => void
   addDocument: (clientId: string, doc: ClientDocument) => Promise<ClientDocument>
-  updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => void
+  updateDocument: (clientId: string, docId: string, patch: Partial<ClientDocument>) => Promise<void>
   removeDocument: (clientId: string, docId: string) => void
   addDocumentComment: (clientId: string, docId: string, comment: DocumentComment) => void
   setDocumentTestimonial: (clientId: string, docId: string, testimonial: DocumentTestimonial) => void
@@ -348,13 +348,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateDocument = useCallback(
-    (clientId: string, docId: string, patch: Partial<ClientDocument>) => {
+    async (clientId: string, docId: string, patch: Partial<ClientDocument>) => {
       const updatedAt = new Date().toISOString()
       updateClient(clientId, (c) => ({
         ...c,
         documents: c.documents.map((d) => (d.id === docId ? { ...d, ...patch, updatedAt } : d)),
       }))
-      syncDocumentFields(docId, {
+      await updateDocumentRow(docId, {
         title: patch.title,
         type: patch.type,
         status: patch.status,
