@@ -110,12 +110,21 @@ export interface BrandAsset {
   addedAt: string
 }
 
+export type ContentEventType = 'shoot_day' | 'reel' | 'static' | 'story' | 'carousel'
+export type ReelDuration = '0_5' | '5_10' | '10_20' | '20_plus'
+
 export interface ClientEvent {
   id: string
   title: string
   date: string
   time?: string
   notes?: string
+  contentType?: ContentEventType
+  // Only meaningful when contentType is 'reel'.
+  duration?: ReelDuration
+  // Only meaningful when contentType is set and isn't 'reel' — how many
+  // posts of that type are planned for the day.
+  amount?: number
 }
 
 export interface WorkshopQuestion {
