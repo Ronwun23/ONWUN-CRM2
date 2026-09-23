@@ -11,6 +11,7 @@ import { TimePicker } from '@/components/ui/time-picker'
 import { Select } from '@/components/ui/select'
 import { toDisplayDate, formatCivilDate } from '@/lib/civilDate'
 import { CONTENT_EVENT_TYPE_LABEL, REEL_DURATION_LABEL } from '@/lib/labels'
+import { confirmAction } from '@/lib/confirm'
 import type { ContentEventType, ReelDuration } from '@/types'
 
 const CONTENT_TYPE_OPTIONS: ContentEventType[] = ['shoot_day', 'reel', 'static', 'story', 'carousel']
@@ -74,11 +75,13 @@ export default function ClientContentCalendar() {
     setShowAdd(true)
   }
 
-  const handleRemoveEvent = (event: CalendarEvent) => {
+  const handleRemoveEvent = async (event: CalendarEvent) => {
     const when = event.time ? ` at ${event.time}` : ''
-    if (window.confirm(`Remove "${event.name}"${when} from the calendar?`)) {
-      removeClientEvent(client.id, event.id)
-    }
+    const confirmed = await confirmAction(`Remove "${event.name}"${when} from the calendar?`, {
+      confirmLabel: 'Remove',
+      destructive: true,
+    })
+    if (confirmed) removeClientEvent(client.id, event.id)
   }
 
   const handleAdd = () => {

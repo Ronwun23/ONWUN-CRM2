@@ -4,6 +4,7 @@ import { ArrowRight, Sparkles } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
 import { useViewMode } from '@/context/ViewModeContext'
+import { confirmAction } from '@/lib/confirm'
 import { WORKSHOP_PHASES } from '@/data/workshopTemplate'
 
 export default function DiscoveryAnswers() {
@@ -23,9 +24,9 @@ export default function DiscoveryAnswers() {
 
   const hasAnyAnswers = Object.values(workshop.answers).some((a) => a.trim().length > 0)
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const proceed = workshop.strategy
-      ? window.confirm('Regenerating will replace the current AI draft. Continue?')
+      ? await confirmAction('Regenerating will replace the current AI draft. Continue?', { confirmLabel: 'Continue' })
       : true
     if (!proceed) return
     saveTranscript(client.id, transcript)

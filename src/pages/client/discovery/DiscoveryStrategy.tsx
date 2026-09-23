@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
 import { formatDate } from '@/lib/format'
+import { confirmAction } from '@/lib/confirm'
 import type { StrategyDraft, StrategyStatus } from '@/types'
 
 const STATUS_STEPS: { key: StrategyStatus; label: string }[] = [
@@ -100,8 +101,9 @@ export default function DiscoveryStrategy() {
     setDraft((prev) => (prev ? fn(prev) : prev))
   }
 
-  const handleRegenerate = () => {
-    if (!window.confirm('Regenerating will replace the current AI draft. Continue?')) return
+  const handleRegenerate = async () => {
+    if (!(await confirmAction('Regenerating will replace the current AI draft. Continue?', { confirmLabel: 'Continue' })))
+      return
     generateStrategy(client.id)
   }
 

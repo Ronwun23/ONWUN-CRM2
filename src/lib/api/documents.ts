@@ -4,7 +4,7 @@ import type { ClientDocument, DocumentComment } from '@/types'
 
 const DOCUMENTS_BUCKET = 'documents'
 
-interface DocumentRow {
+export interface DocumentRow {
   id: number
   client_id: number
   title: string
@@ -19,7 +19,7 @@ interface DocumentRow {
   testimonial_created_at: string | null
 }
 
-interface CommentRow {
+export interface CommentRow {
   id: number
   document_id: number
   author_name: string
@@ -29,7 +29,7 @@ interface CommentRow {
   created_at: string
 }
 
-function rowToComment(row: CommentRow): DocumentComment {
+export function rowToComment(row: CommentRow): DocumentComment {
   return {
     id: String(row.id),
     authorName: row.author_name,
@@ -40,7 +40,7 @@ function rowToComment(row: CommentRow): DocumentComment {
   }
 }
 
-function rowToDocument(row: DocumentRow, comments: DocumentComment[]): ClientDocument {
+export function rowToDocument(row: DocumentRow, comments: DocumentComment[]): ClientDocument {
   return {
     id: String(row.id),
     title: row.title,
