@@ -13,7 +13,8 @@ import type { Client } from '@/types'
 // `link_client_invite` RPC (a SECURITY DEFINER function, agency-only) always
 // correctly (re)links the account regardless of whether it's brand new or
 // already existed, so it's called every time as the source of truth.
-export async function inviteClientUser(email: string, client: Client): Promise<{ error: string | null }> {
+export async function inviteClientUser(rawEmail: string, client: Client): Promise<{ error: string | null }> {
+  const email = rawEmail.trim().toLowerCase()
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
