@@ -125,6 +125,11 @@ export interface ClientEvent {
   // Only meaningful when contentType is set and isn't 'reel' — how many
   // posts of that type are planned for the day.
   amount?: number
+  // A single attached PNG or MP4 for this task — a moodboard frame, a raw
+  // clip, whatever the team needs to see alongside the plan.
+  fileUrl?: string
+  fileName?: string
+  fileKind?: 'png' | 'mp4'
 }
 
 export interface WorkshopQuestion {

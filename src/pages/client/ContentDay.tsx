@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import type { DragEvent, MouseEvent } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Film, Plus, Trash2, Upload, X } from 'lucide-react'
 import { format, parse } from 'date-fns'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
@@ -11,10 +12,121 @@ import { confirmAction } from '@/lib/confirm'
 import { isCivilDate, parseCivilDate } from '@/lib/civilDate'
 import { eventDisplayTitle } from '@/lib/contentEvent'
 import { CONTENT_EVENT_TYPE_LABEL, REEL_DURATION_LABEL } from '@/lib/labels'
-import type { ContentEventType, ReelDuration } from '@/types'
+import type { ClientEvent, ContentEventType, ReelDuration } from '@/types'
 
 const CONTENT_TYPE_OPTIONS: ContentEventType[] = ['shoot_day', 'reel', 'static', 'story', 'carousel']
 const REEL_DURATION_OPTIONS: ReelDuration[] = ['0_5', '5_10', '10_20', '20_plus']
+const MAX_FILE_BYTES = 15 * 1024 * 1024
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(reader.error ?? new Error('Could not read file'))
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
+    reader.readAsDataURL(file)
+  })
+}
+
+// Portrait drop zone for a single PNG or MP4 per task — click to browse (the
+// OS decides which folder it opens to) or drag a file straight in.
+function ContentFileBox({ clientId, event }: { clientId: string; event: ClientEvent }) {
+  const { updateClientEventFile } = useApp()
+  const { isClientView } = useViewMode()
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return
+    const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')
+    const isMp4 = file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4')
+    if (!isPng && !isMp4) {
+      setError('Only PNG or MP4 files are supported.')
+      return
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      setError('That file is too large — keep it under 15MB.')
+      return
+    }
+    setError(null)
+    const fileUrl = await readFileAsDataUrl(file)
+    updateClientEventFile(clientId, event.id, { fileUrl, fileName: file.name, fileKind: isPng ? 'png' : 'mp4' })
+  }
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDraggingOver(false)
+    if (isClientView) return
+    handleFile(e.dataTransfer.files[0])
+  }
+
+  const handleRemove = (e: MouseEvent) => {
+    e.stopPropagation()
+    updateClientEventFile(clientId, event.id, { fileUrl: undefined, fileName: undefined, fileKind: undefined })
+  }
+
+  if (event.fileUrl) {
+    return (
+      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-black/[0.06] bg-black shadow-card">
+        {event.fileKind === 'mp4' ? (
+          <video src={event.fileUrl} controls className="h-full w-full object-contain" />
+        ) : (
+          <img src={event.fileUrl} alt={event.fileName ?? ''} className="h-full w-full object-contain" />
+        )}
+        {!isClientView && (
+          <button
+            onClick={handleRemove}
+            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+            aria-label="Remove file"
+          >
+            <X size={14} />
+          </button>
+        )}
+        {event.fileName && (
+          <p className="absolute inset-x-0 bottom-0 truncate bg-black/60 px-2.5 py-1.5 text-xs text-white">
+            {event.fileName}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  if (isClientView) return null
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setIsDraggingOver(true)
+        }}
+        onDragLeave={() => setIsDraggingOver(false)}
+        onDrop={handleDrop}
+        className={`flex aspect-[3/4] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-4 text-center transition-colors ${
+          isDraggingOver ? 'border-brand-500 bg-brand-50' : 'border-black/[0.12] bg-white/60 hover:bg-surface-sunken'
+        }`}
+      >
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-sunken text-ink-secondary">
+          {isDraggingOver ? <Upload size={18} /> : <Film size={18} />}
+        </div>
+        <p className="text-sm font-semibold text-ink-primary">PNG &amp; MP4</p>
+        <p className="text-xs text-ink-muted">Click to upload or drag and drop</p>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/png,video/mp4,.png,.mp4"
+          onChange={(e) => handleFile(e.target.files?.[0])}
+          className="hidden"
+        />
+      </div>
+      {error && <p className="text-xs text-status-critical">{error}</p>}
+    </div>
+  )
+}
 
 function formatEventTime(time: string): string {
   return format(parse(time, 'HH:mm', new Date()), 'h:mm a')
@@ -213,8 +325,12 @@ export default function ClientContentDay() {
           )}
         </div>
 
-        {/* Right: reserved for later */}
-        <div />
+        {/* Right: attach a PNG or MP4 per task */}
+        <div className="flex flex-col gap-4">
+          {dayEvents.map((event) => (
+            <ContentFileBox key={event.id} clientId={client.id} event={event} />
+          ))}
+        </div>
       </div>
     </div>
   )

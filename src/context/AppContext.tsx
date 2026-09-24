@@ -105,6 +105,11 @@ interface AppContextValue {
   addClientEvent: (clientId: string, event: ClientEvent) => Promise<ClientEvent>
   removeClientEvent: (clientId: string, eventId: string) => void
   updateClientEventNotes: (clientId: string, eventId: string, notes: string) => void
+  updateClientEventFile: (
+    clientId: string,
+    eventId: string,
+    file: { fileUrl?: string; fileName?: string; fileKind?: 'png' | 'mp4' }
+  ) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string) => void
   setWorkshopPosition: (clientId: string, phaseIndex: number, screen: WorkshopScreen, questionIndex: number) => void
   startWorkshop: (clientId: string) => void
@@ -603,6 +608,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const updateClientEventFile = useCallback(
+    (clientId: string, eventId: string, file: { fileUrl?: string; fileName?: string; fileKind?: 'png' | 'mp4' }) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        events: c.events.map((e) => (e.id === eventId ? { ...e, ...file } : e)),
+      }))
+      updateEventRow(eventId, {
+        file_url: file.fileUrl ?? null,
+        file_name: file.fileName ?? null,
+        file_kind: file.fileKind ?? null,
+      }).catch((err) => console.error('Failed to save event file to Supabase:', err))
+    },
+    [updateClient]
+  )
+
   const saveWorkshopAnswer = useCallback(
     (clientId: string, questionId: string, answer: string) => {
       updateClient(clientId, (c) => {
@@ -739,6 +759,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addClientEvent,
       removeClientEvent,
       updateClientEventNotes,
+      updateClientEventFile,
       saveWorkshopAnswer,
       setWorkshopPosition,
       startWorkshop,
@@ -788,6 +809,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addClientEvent,
       removeClientEvent,
       updateClientEventNotes,
+      updateClientEventFile,
       saveWorkshopAnswer,
       setWorkshopPosition,
       startWorkshop,
