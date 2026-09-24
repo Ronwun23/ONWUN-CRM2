@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { Request, Response } from 'express'
 import { clientRegistrationHandler } from '@modelcontextprotocol/sdk/server/auth/handlers/register.js'
 import { clientsStore } from './_mcp/store.js'
+import { rehydrateBody } from './_mcp/rehydrateBody.js'
 
 // Dynamic Client Registration (RFC 7591) — the first thing Claude's side
 // does when you paste in the server URL: it registers itself and gets
@@ -20,7 +21,7 @@ export default function mcpRegister(req: VercelRequest, res: VercelResponse) {
     res.status(204).end()
     return
   }
-  handler(req as unknown as Request, res as unknown as Response, (err) => {
+  handler(rehydrateBody(req) as unknown as Request, res as unknown as Response, (err) => {
     if (err) {
       console.error('mcp-register error:', err)
       res.status(500).json({ error: 'server_error' })
