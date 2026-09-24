@@ -163,6 +163,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [loadingClientIds, setLoadingClientIds] = useState<Set<string>>(new Set())
   const loadedClientIdsRef = useRef<Set<string>>(new Set())
   const pendingClientFetchesRef = useRef<Map<string, Promise<void>>>(new Map())
+  // Mirrors `clients` for callbacks (like generateStrategy) that need to
+  // read current workshop data before an async call, without needing
+  // `clients` itself in their dependency array.
+  const clientsRef = useRef<Client[]>([])
+  useEffect(() => {
+    clientsRef.current = clients
+  }, [clients])
 
   useEffect(() => {
     withRetry(() => Promise.all([fetchClients(), fetchStudioTasks(), fetchStudioUpdates(), fetchStudioEvents()]))
@@ -691,9 +698,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const generateStrategy = useCallback(
-    (clientId: string) => {
+    async (clientId: string) => {
+      const client = clientsRef.current.find((c) => c.id === clientId)
+      if (!client) return
+      const strategy = await generateStrategyDraft(client.workshop.answers, client.workshop.transcript)
       updateClient(clientId, (c) => {
-        const workshop = { ...c.workshop, strategy: synthesizeStrategy(c.workshop.answers, c.workshop.transcript) }
+        const workshop = { ...c.workshop, strategy }
         syncClientFields(clientId, { workshop })
         return { ...c, workshop }
       })
