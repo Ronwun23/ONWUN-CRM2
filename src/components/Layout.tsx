@@ -123,6 +123,14 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
               {account.id === activeAccount.id && <Check size={13} className="shrink-0 text-brand-400" />}
             </button>
           ))}
+          <Link
+            to="/settings"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2.5 border-t border-white/10 px-3 py-2.5 text-left text-white/70 hover:bg-white/[0.06]"
+          >
+            <Settings size={13} className="shrink-0" />
+            <span className="text-xs font-medium">Settings</span>
+          </Link>
           <button
             onClick={() => {
               setOpen(false)
@@ -213,7 +221,6 @@ const STUDIO_NAV_ITEMS = [
   { to: '/updates', label: 'Updates', icon: Megaphone, end: false },
   { to: '/tasks', label: 'Tasks', icon: CheckSquare, end: false },
   { to: '/calendar', label: 'Calendar', icon: CalendarIcon, end: false },
-  { to: '/settings', label: 'Settings', icon: Settings, end: false },
 ]
 
 const CLIENT_NAV_ITEMS = [
