@@ -15,7 +15,7 @@ import type {
   UpdateEntry,
   WorkshopScreen,
 } from '@/types'
-import { synthesizeStrategy } from '@/lib/strategySynthesis'
+import { generateStrategyDraft } from '@/lib/api/strategy'
 import { STUDIO_ACCOUNTS } from '@/data/team'
 import type { StudioAccount } from '@/data/team'
 import { fetchClients, insertClient, deleteClientRow, updateClientRow } from '@/lib/api/clients'
@@ -110,7 +110,7 @@ interface AppContextValue {
   startWorkshop: (clientId: string) => void
   completeWorkshop: (clientId: string) => void
   saveTranscript: (clientId: string, transcript: string) => void
-  generateStrategy: (clientId: string) => void
+  generateStrategy: (clientId: string) => Promise<void>
   updateStrategy: (clientId: string, updater: (s: StrategyDraft) => StrategyDraft) => void
   setStrategyStatus: (clientId: string, status: StrategyStatus) => void
   studio: StudioState
