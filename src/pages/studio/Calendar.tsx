@@ -21,6 +21,8 @@ export default function StudioCalendar() {
   const [time, setTime] = useState('')
   const [notesEvent, setNotesEvent] = useState<CalendarEvent | null>(null)
   const [notesText, setNotesText] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
 
   const calendarData = useMemo<CalendarData[]>(() => {
     const byDay = new Map<string, CalendarData>()
@@ -43,6 +45,7 @@ export default function StudioCalendar() {
 
   const handleNewEvent = (day: Date) => {
     setDate(formatCivilDate(day))
+    setAddError(null)
     setShowAdd(true)
   }
 
@@ -66,13 +69,22 @@ export default function StudioCalendar() {
     setNotesEvent(null)
   }
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!title.trim() || !date) return
-    addStudioEvent({ id: `studio-event-${Date.now()}`, title: title.trim(), date, time: time || undefined })
-    setTitle('')
-    setDate(undefined)
-    setTime('')
-    setShowAdd(false)
+    setAdding(true)
+    setAddError(null)
+    try {
+      await addStudioEvent({ id: `studio-event-${Date.now()}`, title: title.trim(), date, time: time || undefined })
+      setTitle('')
+      setDate(undefined)
+      setTime('')
+      setShowAdd(false)
+    } catch (err) {
+      console.error('Failed to add event:', err)
+      setAddError("Couldn't add this event — try again.")
+    } finally {
+      setAdding(false)
+    }
   }
 
   return (
@@ -116,11 +128,13 @@ export default function StudioCalendar() {
               <TimePicker value={time} onChange={setTime} />
             </div>
           </div>
+          {addError && <p className="text-xs text-status-critical">{addError}</p>}
           <button
             onClick={handleAdd}
-            className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
+            disabled={adding}
+            className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Add event
+            {adding ? 'Adding…' : 'Add event'}
           </button>
         </div>
       </Drawer>
