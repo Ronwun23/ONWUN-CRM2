@@ -3,6 +3,7 @@ import type { Request, Response } from 'express'
 import { clientRegistrationHandler } from '@modelcontextprotocol/sdk/server/auth/handlers/register.js'
 import { clientsStore } from './_mcp/store.js'
 import { rehydrateBody } from './_mcp/rehydrateBody.js'
+import { normalizeRouterPath } from './_mcp/normalizeRouterPath.js'
 
 // Dynamic Client Registration (RFC 7591) — the first thing Claude's side
 // does when you paste in the server URL: it registers itself and gets
@@ -21,6 +22,7 @@ export default function mcpRegister(req: VercelRequest, res: VercelResponse) {
     res.status(204).end()
     return
   }
+  normalizeRouterPath(req)
   handler(rehydrateBody(req) as unknown as Request, res as unknown as Response, (err) => {
     if (err) {
       console.error('mcp-register error:', err)

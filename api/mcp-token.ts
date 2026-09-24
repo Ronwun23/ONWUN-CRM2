@@ -3,6 +3,7 @@ import type { Request, Response } from 'express'
 import { tokenHandler } from '@modelcontextprotocol/sdk/server/auth/handlers/token.js'
 import { oauthProvider } from './_mcp/store.js'
 import { rehydrateBody } from './_mcp/rehydrateBody.js'
+import { normalizeRouterPath } from './_mcp/normalizeRouterPath.js'
 
 const handler = tokenHandler({ provider: oauthProvider, rateLimit: false })
 
@@ -14,6 +15,7 @@ export default function mcpToken(req: VercelRequest, res: VercelResponse) {
     res.status(204).end()
     return
   }
+  normalizeRouterPath(req)
   handler(rehydrateBody(req) as unknown as Request, res as unknown as Response, (err) => {
     if (err) {
       console.error('mcp-token error:', err)
