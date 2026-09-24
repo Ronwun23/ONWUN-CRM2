@@ -26,11 +26,19 @@ import DiscoveryDashboard from '@/pages/client/discovery/DiscoveryDashboard'
 import DiscoveryAnswers from '@/pages/client/discovery/DiscoveryAnswers'
 import DiscoveryStrategy from '@/pages/client/discovery/DiscoveryStrategy'
 import DiscoverySession from '@/pages/client/discovery/DiscoverySession'
+import McpConnect from '@/pages/McpConnect'
 
 export default function App() {
   const { clientsLoading, clients } = useApp()
   const { profile } = useAuth()
   const location = useLocation()
+
+  // Full-screen, no sidebar — same treatment as the login page gets, and
+  // for the same reason: it's a bridge screen, not a normal in-app page.
+  // Checked first so it doesn't wait on client data it doesn't need.
+  if (location.pathname === '/mcp-connect') {
+    return <McpConnect />
+  }
 
   if (clientsLoading) {
     return (
