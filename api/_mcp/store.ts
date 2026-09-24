@@ -8,6 +8,21 @@ import { supabaseAdmin, supabaseUrl, supabaseAnonKey } from './supabaseAdmin.js'
 const ACCESS_TOKEN_TTL_SECONDS = 60 * 60 // 1 hour — refreshed transparently via the refresh token.
 const AUTH_CODE_TTL_SECONDS = 60 * 10 // 10 minutes to complete the login+redirect round trip.
 
+// authorize() (below) isn't given the incoming request, so it can't read
+// the Host header the way every other handler in this folder does — but
+// it still needs to know which origin it's running on (production, or one
+// of Vercel's per-deployment preview URLs) to build a same-origin redirect
+// to /mcp-connect. api/mcp-authorize.ts sets this from req.headers.host
+// immediately before invoking the SDK's handler, which calls authorize()
+// synchronously within that same request — safe because Node handles one
+// request to completion per module instance before the next runs. A
+// mutable container (not a reassigned export) because live ESM bindings
+// can only be written from the module that exports them.
+const originState = { current: 'https://onwun-crm-2.vercel.app' }
+export function setCurrentRequestOrigin(origin: string) {
+  originState.current = origin
+}
+
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex')
 }
@@ -113,12 +128,7 @@ async function authorize(client: OAuthClientInformationFull, params: Authorizati
     resource: params.resource?.toString(),
   }
   const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url')
-  // authorize() isn't given the incoming request, so the origin can't be
-  // derived from its Host header the way every other handler in this
-  // folder does — fixed to the production origin, with an env var to
-  // override it (e.g. for testing against a preview deployment).
-  const origin = process.env.MCP_ORIGIN_OVERRIDE ?? 'https://onwun-crm-2.vercel.app'
-  res.redirect(302, `${origin}/mcp-connect?req=${encoded}`)
+  res.redirect(302, `${originState.current}/mcp-connect?req=${encoded}`)
 }
 
 async function challengeForAuthorizationCode(client: OAuthClientInformationFull, authorizationCode: string): Promise<string> {
