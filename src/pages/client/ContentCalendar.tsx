@@ -12,16 +12,11 @@ import { Select } from '@/components/ui/select'
 import { toDisplayDate, formatCivilDate } from '@/lib/civilDate'
 import { CONTENT_EVENT_TYPE_LABEL, REEL_DURATION_LABEL } from '@/lib/labels'
 import { confirmAction } from '@/lib/confirm'
+import { eventDisplayTitle } from '@/lib/contentEvent'
 import type { ContentEventType, ReelDuration } from '@/types'
 
 const CONTENT_TYPE_OPTIONS: ContentEventType[] = ['shoot_day', 'reel', 'static', 'story', 'carousel']
 const REEL_DURATION_OPTIONS: ReelDuration[] = ['0_5', '5_10', '10_20', '20_plus']
-
-function eventDisplayTitle(contentType: ContentEventType, duration: ReelDuration | '', amount: string): string {
-  const label = CONTENT_EVENT_TYPE_LABEL[contentType]
-  if (contentType === 'reel') return duration ? `${label} — ${REEL_DURATION_LABEL[duration]}` : label
-  return amount ? `${label} — ${amount} post${amount === '1' ? '' : 's'}` : label
-}
 
 function formatEventTime(time: string): string {
   return format(parse(time, 'HH:mm', new Date()), 'h:mm a')
@@ -163,17 +158,15 @@ export default function ClientContentCalendar() {
               />
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Date</label>
-              <DatePicker value={date} onChange={setDate} placeholder="Select date" />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">
-                Time <span className="normal-case text-ink-muted/70">(optional)</span>
-              </label>
-              <TimePicker value={time} onChange={setTime} />
-            </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Date</label>
+            <DatePicker value={date} onChange={setDate} placeholder="Select date" />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">
+              Time <span className="normal-case text-ink-muted/70">(optional)</span>
+            </label>
+            <TimePicker value={time} onChange={setTime} />
           </div>
           <button
             onClick={handleAdd}
