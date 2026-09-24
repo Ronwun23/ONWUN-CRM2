@@ -213,6 +213,7 @@ const STUDIO_NAV_ITEMS = [
   { to: '/updates', label: 'Updates', icon: Megaphone, end: false },
   { to: '/tasks', label: 'Tasks', icon: CheckSquare, end: false },
   { to: '/calendar', label: 'Calendar', icon: CalendarIcon, end: false },
+  { to: '/settings', label: 'Settings', icon: Settings, end: false },
 ]
 
 const CLIENT_NAV_ITEMS = [

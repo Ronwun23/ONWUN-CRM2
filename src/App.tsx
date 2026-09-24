@@ -8,6 +8,7 @@ import HomePage from '@/pages/Home'
 import StudioUpdates from '@/pages/studio/Updates'
 import StudioTasks from '@/pages/studio/Tasks'
 import StudioCalendar from '@/pages/studio/Calendar'
+import StudioSettings from '@/pages/studio/Settings'
 import ClientLayout from '@/pages/client/ClientLayout'
 import ClientDashboard from '@/pages/client/Dashboard'
 import ClientUpdates from '@/pages/client/Updates'
@@ -76,6 +77,7 @@ export default function App() {
           <Route path="/updates" element={<StudioUpdates />} />
           <Route path="/tasks" element={<StudioTasks />} />
           <Route path="/calendar" element={<StudioCalendar />} />
+          <Route path="/settings" element={<StudioSettings />} />
           <Route path="/clients/:clientId" element={<ClientLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<ClientDashboard />} />
