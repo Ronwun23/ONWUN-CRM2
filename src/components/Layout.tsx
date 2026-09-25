@@ -460,39 +460,38 @@ export default function Layout({ children }: { children: ReactNode }) {
             </div>
 
             {clientListExpanded ? (
-              <nav className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
+              <nav className="mt-1.5 flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto px-3 pb-3">
                 {clients.map((c) => (
                   <div key={c.id} className="group relative">
                     <NavLink
                       to={`/clients/${c.id}/dashboard`}
+                      title={c.name}
                       className={({ isActive }) =>
                         clsx(
-                          'flex items-center gap-2.5 rounded-lg py-2 pl-2.5 pr-8 text-sm font-medium transition-colors',
-                          isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                          'flex h-9 w-9 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-black transition-colors',
+                          isActive ? 'ring-brand-500' : 'ring-transparent hover:ring-white/20'
                         )
                       }
                     >
-                      <ClientAvatar initials={c.initials} color={c.color} avatarUrl={c.avatarUrl} size={22} />
-                      <span className="truncate">{c.name}</span>
+                      <ClientAvatar initials={c.initials} color={c.color} avatarUrl={c.avatarUrl} size={36} />
                     </NavLink>
                     <button
                       onClick={(e) => handleRemoveClient(e, c.name, c.id)}
-                      className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-white/0 opacity-0 transition-opacity hover:bg-white/10 hover:text-white group-hover:text-white/50 group-hover:opacity-100 group-focus-within:opacity-100"
+                      className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#141414] text-white/0 opacity-0 shadow ring-1 ring-white/10 transition-opacity hover:text-white group-hover:text-white/50 group-hover:opacity-100 group-focus-within:opacity-100"
                       aria-label={`Remove ${c.name}`}
                       title={`Remove ${c.name}`}
                     >
-                      <X size={13} />
+                      <X size={10} />
                     </button>
                   </div>
                 ))}
                 <button
                   onClick={() => setShowAddClient(true)}
-                  className="mt-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-white/40 hover:bg-white/[0.06] hover:text-white"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-dashed border-white/25 text-white/40 hover:border-white/40 hover:text-white/70"
+                  aria-label="Add client"
+                  title="Add client"
                 >
-                  <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-lg border border-dashed border-white/25">
-                    <Plus size={12} />
-                  </span>
-                  Add client
+                  <Plus size={14} />
                 </button>
               </nav>
             ) : (
