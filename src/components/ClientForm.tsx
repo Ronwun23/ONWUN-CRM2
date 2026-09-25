@@ -161,12 +161,23 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Owner</label>
-          <Select
+          <input
+            required
             value={owner}
-            onChange={setOwner}
-            options={STUDIO_ACCOUNTS.map((a) => ({ value: a.name, label: a.name }))}
-            placeholder="Select…"
+            onChange={(e) => setOwner(e.target.value)}
+            className={inputClass}
+            list="owner-suggestions"
+            placeholder="Client name"
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            name="client-owner"
           />
+          <datalist id="owner-suggestions">
+            {STUDIO_ACCOUNTS.map((a) => (
+              <option key={a.id} value={a.name} />
+            ))}
+          </datalist>
         </div>
         <div>
           <label className={labelClass}>Due date</label>

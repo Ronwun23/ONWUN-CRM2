@@ -27,8 +27,8 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-// Portrait drop zone for a single PNG or MP4 per task — click to browse (the
-// OS decides which folder it opens to) or drag a file straight in.
+// Portrait drop zone for a single PNG, JPG or MP4 per task — click to browse
+// (the OS decides which folder it opens to) or drag a file straight in.
 function ContentFileBox({ clientId, event }: { clientId: string; event: ClientEvent }) {
   const { updateClientEventFile } = useApp()
   const { isClientView } = useViewMode()
@@ -39,9 +39,10 @@ function ContentFileBox({ clientId, event }: { clientId: string; event: ClientEv
   const handleFile = async (file: File | undefined) => {
     if (!file) return
     const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')
+    const isJpg = file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name)
     const isMp4 = file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4')
-    if (!isPng && !isMp4) {
-      setError('Only PNG or MP4 files are supported.')
+    if (!isPng && !isJpg && !isMp4) {
+      setError('Only PNG, JPG or MP4 files are supported.')
       return
     }
     if (file.size > MAX_FILE_BYTES) {
@@ -50,7 +51,8 @@ function ContentFileBox({ clientId, event }: { clientId: string; event: ClientEv
     }
     setError(null)
     const fileUrl = await readFileAsDataUrl(file)
-    updateClientEventFile(clientId, event.id, { fileUrl, fileName: file.name, fileKind: isPng ? 'png' : 'mp4' })
+    const fileKind = isPng ? 'png' : isJpg ? 'jpg' : 'mp4'
+    updateClientEventFile(clientId, event.id, { fileUrl, fileName: file.name, fileKind })
   }
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -113,12 +115,12 @@ function ContentFileBox({ clientId, event }: { clientId: string; event: ClientEv
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-sunken text-ink-secondary">
           {isDraggingOver ? <Upload size={18} /> : <Film size={18} />}
         </div>
-        <p className="text-sm font-semibold text-ink-primary">PNG &amp; MP4</p>
+        <p className="text-sm font-semibold text-ink-primary">PNG, JPG &amp; MP4</p>
         <p className="text-xs text-ink-muted">Click to upload or drag and drop</p>
         <input
           ref={inputRef}
           type="file"
-          accept="image/png,video/mp4,.png,.mp4"
+          accept="image/png,image/jpeg,video/mp4,.png,.jpg,.jpeg,.mp4"
           onChange={(e) => handleFile(e.target.files?.[0])}
           className="hidden"
         />
