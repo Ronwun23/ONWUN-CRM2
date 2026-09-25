@@ -67,7 +67,7 @@ export default function ClientLibraryFolder() {
       {folder.files.length === 0 ? (
         <p className="text-sm text-ink-muted">Nothing in this folder yet.</p>
       ) : (
-        <div className="library-masonry">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {folder.files.map((file) => {
             const Icon = FILE_TYPE_ICON[file.fileType]
             const isPreviewableImage = file.fileType === 'png' && Boolean(file.url)
