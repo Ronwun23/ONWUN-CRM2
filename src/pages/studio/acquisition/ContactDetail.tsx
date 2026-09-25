@@ -14,6 +14,7 @@ import { LEAD_STATUS_TONE } from '@/lib/labels'
 import {
   LEAD_STATUS_LABEL,
   SEQUENCE_STEP_LABEL,
+  TOUCH_KIND_LABEL,
   canAskAQuestion,
   canConvertToClient,
   isLive,
@@ -257,7 +258,8 @@ export default function AcquisitionContactDetail() {
               <ul className="flex flex-col gap-1.5">
                 {lead.touches.map((touch) => (
                   <li key={touch.id} className="text-xs text-ink-secondary">
-                    <span className="text-ink-muted">{formatDate(touch.createdAt)}</span> — {touch.note || touch.kind}
+                    <span className="text-ink-muted">{formatDate(touch.createdAt)}</span> —{' '}
+                    {touch.note || TOUCH_KIND_LABEL[touch.kind]}
                   </li>
                 ))}
               </ul>

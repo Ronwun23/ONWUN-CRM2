@@ -3,9 +3,16 @@
 // the browser (AppContext) and, if ever needed, a server-side tool
 // without duplicating the rules in two places.
 import { formatCivilDate } from '@/lib/civilDate'
-import type { LeadStatus, SequenceStepType } from '@/types'
+import type { LeadStatus, SequenceStepType, TouchKind } from '@/types'
 
 export const SEQUENCE_STEP_ORDER: SequenceStepType[] = ['email_1', 'call_1', 'email_2', 'call_2', 'call_3', 'email_3']
+
+export const TOUCH_KIND_LABEL: Record<TouchKind, string> = {
+  email_sent: 'Email sent',
+  call_made: 'Call made',
+  reply_received: 'Reply received',
+  outcome_set: 'Outcome updated',
+}
 
 export const SEQUENCE_STEP_LABEL: Record<SequenceStepType, string> = {
   email_1: 'Send email 1',
