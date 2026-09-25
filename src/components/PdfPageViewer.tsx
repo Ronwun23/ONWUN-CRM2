@@ -16,7 +16,11 @@ export default function PdfPageViewer({
   onPageChange?: (page: number, numPages: number) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  // A callback ref (not a plain ref + mount-effect) because this div only
+  // exists once the PDF has loaded — a `useEffect(..., [])` would run while
+  // the loading placeholder is still showing, see containerRef.current as
+  // null forever, and never attach the observer below.
+  const [container, setContainer] = useState<HTMLDivElement | null>(null)
   const pdfRef = useRef<PDFDocumentProxy | null>(null)
   const renderTaskRef = useRef<RenderTask | null>(null)
   const [numPages, setNumPages] = useState(0)
@@ -61,7 +65,6 @@ export default function PdfPageViewer({
   }, [url])
 
   useEffect(() => {
-    const container = containerRef.current
     if (!container) return
     const observer = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect
@@ -69,7 +72,7 @@ export default function PdfPageViewer({
     })
     observer.observe(container)
     return () => observer.disconnect()
-  }, [])
+  }, [container])
 
   useEffect(() => {
     const pdf = pdfRef.current
@@ -133,7 +136,7 @@ export default function PdfPageViewer({
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl bg-black">
-      <div ref={containerRef} className="flex min-h-[420px] flex-1 items-center justify-center overflow-auto p-6">
+      <div ref={setContainer} className="flex min-h-[420px] flex-1 items-center justify-center overflow-auto p-6">
         <canvas ref={canvasRef} className="shadow-2xl" />
       </div>
       {numPages > 1 && (
