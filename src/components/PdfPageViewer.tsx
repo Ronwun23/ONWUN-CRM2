@@ -16,11 +16,16 @@ export default function PdfPageViewer({
   onPageChange?: (page: number, numPages: number) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const pdfRef = useRef<PDFDocumentProxy | null>(null)
   const renderTaskRef = useRef<RenderTask | null>(null)
   const [numPages, setNumPages] = useState(0)
   const [pageNum, setPageNum] = useState(1)
   const [error, setError] = useState<string | null>(null)
+  // Re-render at the sharpest scale for however big the viewer currently is
+  // (fills the width fullscreen resizes to, and accounts for Retina/HiDPI
+  // screens) instead of a fixed scale that goes soft when stretched bigger.
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   // null = total byte size not yet known (server didn't send a
   // content-length) — fall back to an indeterminate spinner until it is.
   const [downloadPercent, setDownloadPercent] = useState<number | null>(null)
@@ -56,17 +61,41 @@ export default function PdfPageViewer({
   }, [url])
 
   useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const observer = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect
+      setContainerSize({ width, height })
+    })
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
     const pdf = pdfRef.current
     const canvas = canvasRef.current
-    if (!pdf || !canvas) return
+    if (!pdf || !canvas || !containerSize.width || !containerSize.height) return
     let cancelled = false
 
     pdf.getPage(pageNum).then((page) => {
       if (cancelled) return
       renderTaskRef.current?.cancel()
-      const viewport = page.getViewport({ scale: 1.6 })
+
+      // Fit the page inside the current viewer size, then render at that
+      // many device pixels (capped) so it stays crisp on Retina/HiDPI
+      // screens and when the viewer grows (e.g. fullscreen) — instead of a
+      // fixed scale that's just CSS-stretched bigger and looks worse.
+      const unscaled = page.getViewport({ scale: 1 })
+      const fitScale = Math.min(containerSize.width / unscaled.width, containerSize.height / unscaled.height)
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      const renderScale = fitScale * dpr
+      const viewport = page.getViewport({ scale: renderScale })
+
       canvas.width = viewport.width
       canvas.height = viewport.height
+      canvas.style.width = `${unscaled.width * fitScale}px`
+      canvas.style.height = `${unscaled.height * fitScale}px`
+
       const context = canvas.getContext('2d')
       if (!context) return
       const task = page.render({ canvasContext: context, viewport })
@@ -77,7 +106,7 @@ export default function PdfPageViewer({
     return () => {
       cancelled = true
     }
-  }, [pageNum, numPages])
+  }, [pageNum, numPages, containerSize.width, containerSize.height])
 
   if (error) {
     return (
@@ -104,8 +133,8 @@ export default function PdfPageViewer({
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl bg-black">
-      <div className="flex min-h-[420px] flex-1 items-center justify-center overflow-auto p-6">
-        <canvas ref={canvasRef} className="max-h-full max-w-full shadow-2xl" />
+      <div ref={containerRef} className="flex min-h-[420px] flex-1 items-center justify-center overflow-auto p-6">
+        <canvas ref={canvasRef} className="shadow-2xl" />
       </div>
       {numPages > 1 && (
         <div className="flex items-center justify-center gap-4 border-t border-white/10 py-3">
