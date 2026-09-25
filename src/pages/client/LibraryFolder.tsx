@@ -72,15 +72,20 @@ export default function ClientLibraryFolder() {
       {folder.files.length === 0 ? (
         <p className="text-sm text-ink-muted">Nothing in this folder yet.</p>
       ) : (
-        <div className="library-masonry">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {folder.files.map((file) => {
             const Icon = FILE_TYPE_ICON[file.fileType]
             const isPreviewableImage = file.fileType === 'png' && Boolean(file.url)
             return (
               <div key={file.id} className="overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
                 {isPreviewableImage ? (
-                  <div className="relative">
-                    <img src={file.url} alt={file.title} loading="lazy" className="block w-full" />
+                  <div className="relative flex h-40 items-center justify-center bg-surface-sunken p-4">
+                    <img
+                      src={file.url}
+                      alt={file.title}
+                      loading="lazy"
+                      className="max-h-full max-w-full object-contain"
+                    />
                     {!isClientView && (
                       <button
                         onClick={() => handleRemove(file.id, file.title)}
