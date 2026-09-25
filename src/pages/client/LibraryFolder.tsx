@@ -74,8 +74,13 @@ export default function ClientLibraryFolder() {
             return (
               <div key={file.id} className="overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
                 {isPreviewableImage ? (
-                  <div className="relative">
-                    <img src={file.url} alt={file.title} loading="lazy" className="block w-full" />
+                  <div className="relative flex h-40 items-center justify-center bg-surface-sunken p-4">
+                    <img
+                      src={file.url}
+                      alt={file.title}
+                      loading="lazy"
+                      className="max-h-full max-w-full object-contain"
+                    />
                     {!isClientView && (
                       <button
                         onClick={() => handleRemove(file.id, file.title)}
