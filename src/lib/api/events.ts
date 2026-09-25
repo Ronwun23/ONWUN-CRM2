@@ -10,6 +10,12 @@ interface EventRow {
   date: string
   time: string | null
   notes: string | null
+  content_type: string | null
+  duration: string | null
+  amount: number | null
+  file_url: string | null
+  file_name: string | null
+  file_kind: string | null
 }
 
 function rowToEvent(row: EventRow): ClientEvent {
@@ -19,6 +25,12 @@ function rowToEvent(row: EventRow): ClientEvent {
     date: row.date,
     time: row.time ?? undefined,
     notes: row.notes ?? undefined,
+    contentType: (row.content_type as ClientEvent['contentType']) ?? undefined,
+    duration: (row.duration as ClientEvent['duration']) ?? undefined,
+    amount: row.amount ?? undefined,
+    fileUrl: row.file_url ?? undefined,
+    fileName: row.file_name ?? undefined,
+    fileKind: (row.file_kind as ClientEvent['fileKind']) ?? undefined,
   }
 }
 
@@ -29,6 +41,12 @@ function eventToRow(clientId: string | null, event: ClientEvent) {
     date: event.date,
     time: event.time ?? null,
     notes: event.notes ?? null,
+    content_type: event.contentType ?? null,
+    duration: event.duration ?? null,
+    amount: event.amount ?? null,
+    file_url: event.fileUrl ?? null,
+    file_name: event.fileName ?? null,
+    file_kind: event.fileKind ?? null,
   }
 }
 

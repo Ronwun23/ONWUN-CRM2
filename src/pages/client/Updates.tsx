@@ -8,6 +8,7 @@ import Card from '@/components/Card'
 import Pill from '@/components/Pill'
 import { ClientAvatar, MemberAvatar } from '@/components/Avatar'
 import { formatRelativeDate } from '@/lib/format'
+import { confirmAction } from '@/lib/confirm'
 
 export default function ClientUpdates() {
   const client = useClientOutlet()
@@ -82,8 +83,8 @@ export default function ClientUpdates() {
               </div>
               {!isClientView && (
                 <button
-                  onClick={() => {
-                    if (!window.confirm('Delete this update?')) return
+                  onClick={async () => {
+                    if (!(await confirmAction('Delete this update?', { confirmLabel: 'Delete', destructive: true }))) return
                     removeUpdate(client.id, update.id)
                   }}
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-[#fbecec] hover:text-status-critical"

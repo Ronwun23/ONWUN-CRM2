@@ -13,6 +13,7 @@ import { CLIENT_STATUS_LABEL, CLIENT_STATUS_TONE } from '@/lib/labels'
 import { currentPhaseKey, overallProgress } from '@/lib/progress'
 import { formatDate, formatDueDate, formatRelativeDate } from '@/lib/format'
 import { toDisplayDate, todayCivil } from '@/lib/civilDate'
+import { confirmAction } from '@/lib/confirm'
 import { PHASE_LABELS } from '@/types'
 
 function formatEventDate(civilOrIso: string): string {
@@ -248,8 +249,8 @@ export default function HomePage() {
                   </div>
                 </button>
                 <button
-                  onClick={() => {
-                    if (!window.confirm('Delete this update?')) return
+                  onClick={async () => {
+                    if (!(await confirmAction('Delete this update?', { confirmLabel: 'Delete', destructive: true }))) return
                     removeUpdate(update.client.id, update.id)
                   }}
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-[#fbecec] hover:text-status-critical"

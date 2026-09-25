@@ -91,9 +91,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [userId])
 
   const signInWithEmail = async (email: string) => {
+    // The full URL, not just the origin — otherwise a magic link clicked
+    // from, say, the MCP connect page (/mcp-connect?req=...) would drop
+    // that continuation and strand the person back at the bare homepage.
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: window.location.href },
     })
     return { error: error?.message ?? null }
   }
