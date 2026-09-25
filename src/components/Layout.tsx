@@ -460,7 +460,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </div>
 
             {clientListExpanded ? (
-              <nav className="mt-1.5 flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto px-3 pb-3">
+              <nav className="mt-1.5 flex max-h-40 flex-wrap content-start gap-2 overflow-y-auto px-3 pb-3">
                 {clients.map((c) => (
                   <div key={c.id} className="group relative">
                     <NavLink
