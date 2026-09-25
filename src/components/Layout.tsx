@@ -260,6 +260,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       : CLIENT_NAV_ITEMS
   const [showAddClient, setShowAddClient] = useState(false)
   const [clientListExpanded, setClientListExpanded] = useState(false)
+  const [acquisitionExpanded, setAcquisitionExpanded] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [searchOpen, setSearchOpen] = useState(false)
   // Whatever had focus the instant the palette was triggered (the sidebar
@@ -438,27 +439,6 @@ export default function Layout({ children }: { children: ReactNode }) {
               ))}
             </nav>
 
-            <p className="mt-4 px-5 text-[11px] font-medium uppercase tracking-wide text-white/40">
-              Client Acquisition
-            </p>
-            <nav className="flex flex-col gap-0.5 px-3 pt-1.5">
-              {ACQUISITION_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  className={({ isActive }) =>
-                    clsx(
-                      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
-                    )
-                  }
-                >
-                  <Icon size={17} strokeWidth={2} />
-                  {label}
-                </NavLink>
-              ))}
-            </nav>
-
             <div className="mt-4 flex items-center justify-between px-5">
               <button
                 onClick={() => setClientListExpanded((v) => !v)}
@@ -523,6 +503,35 @@ export default function Layout({ children }: { children: ReactNode }) {
               >
                 <ClientAvatarStack clients={clients} />
               </button>
+            )}
+
+            <button
+              onClick={() => setAcquisitionExpanded((v) => !v)}
+              aria-expanded={acquisitionExpanded}
+              aria-label={acquisitionExpanded ? 'Collapse client acquisition' : 'Expand client acquisition'}
+              className="mt-4 flex items-center gap-1 px-5 text-[11px] font-medium uppercase tracking-wide text-white/40 hover:text-white/70"
+            >
+              Client Acquisition
+              <ChevronDown size={12} className={clsx('transition-transform', acquisitionExpanded && 'rotate-180')} />
+            </button>
+            {acquisitionExpanded && (
+              <nav className="flex flex-col gap-0.5 px-3 pt-1.5">
+                {ACQUISITION_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    className={({ isActive }) =>
+                      clsx(
+                        'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                        isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                      )
+                    }
+                  >
+                    <Icon size={17} strokeWidth={2} />
+                    {label}
+                  </NavLink>
+                ))}
+              </nav>
             )}
           </div>
         )}
