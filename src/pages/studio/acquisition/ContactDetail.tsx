@@ -120,8 +120,8 @@ export default function AcquisitionContactDetail() {
                 <p className="mt-0.5 truncate text-ink-primary">{lead.contactEmail || '—'}</p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Platform</p>
-                <p className="mt-0.5 text-ink-primary">{lead.platform || '—'}</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Mobile</p>
+                <p className="mt-0.5 text-ink-primary">{lead.phone || '—'}</p>
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Country</p>

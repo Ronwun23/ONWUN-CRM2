@@ -146,7 +146,7 @@ interface AppContextValue {
   addLead: (input: {
     companyName: string
     website?: string
-    platform?: string
+    phone?: string
     contactName?: string
     contactEmail?: string
     country?: string
