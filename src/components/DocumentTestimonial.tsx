@@ -3,6 +3,7 @@ import type { KeyboardEvent } from 'react'
 import { Quote, Send, Trash2 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useViewMode } from '@/context/ViewModeContext'
+import { confirmAction } from '@/lib/confirm'
 import type { Client, ClientDocument } from '@/types'
 
 function formatTestimonialDate(iso: string): string {
@@ -35,8 +36,8 @@ export default function DocumentTestimonial({ client, doc }: { client: Client; d
     }
   }
 
-  const handleRemove = () => {
-    if (!window.confirm('Remove this testimonial?')) return
+  const handleRemove = async () => {
+    if (!(await confirmAction('Remove this testimonial?', { confirmLabel: 'Remove', destructive: true }))) return
     removeDocumentTestimonial(client.id, doc.id)
   }
 

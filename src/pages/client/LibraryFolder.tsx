@@ -8,6 +8,7 @@ import { useViewMode } from '@/context/ViewModeContext'
 import Drawer from '@/components/Drawer'
 import LibraryFileForm from '@/components/LibraryFileForm'
 import { formatDate } from '@/lib/format'
+import { confirmAction } from '@/lib/confirm'
 import type { LibraryFileType } from '@/types'
 
 const FILE_TYPE_ICON: Record<LibraryFileType, LucideIcon> = {
@@ -36,8 +37,12 @@ export default function ClientLibraryFolder() {
   const folder = client.library.find((f) => f.id === folderId)
   if (!folder) return <Navigate to={`/clients/${client.id}/library`} replace />
 
-  const handleRemove = (fileId: string, title: string) => {
-    if (!window.confirm(`Remove "${title}"? This can't be undone.`)) return
+  const handleRemove = async (fileId: string, title: string) => {
+    const confirmed = await confirmAction(`Remove "${title}"? This can't be undone.`, {
+      confirmLabel: 'Remove',
+      destructive: true,
+    })
+    if (!confirmed) return
     removeLibraryFile(client.id, folder.id, fileId)
   }
 

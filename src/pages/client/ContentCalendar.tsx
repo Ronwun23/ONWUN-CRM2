@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { format, parse } from 'date-fns'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
@@ -7,24 +8,35 @@ import { FullScreenCalendar } from '@/components/ui/fullscreen-calendar'
 import type { CalendarData, CalendarEvent } from '@/components/ui/fullscreen-calendar'
 import { DatePicker } from '@/components/ui/date-picker'
 import { TimePicker } from '@/components/ui/time-picker'
+import { Select } from '@/components/ui/select'
 import { toDisplayDate, formatCivilDate } from '@/lib/civilDate'
+import { CONTENT_EVENT_TYPE_LABEL, REEL_DURATION_LABEL } from '@/lib/labels'
+import { confirmAction } from '@/lib/confirm'
+import { eventDisplayTitle } from '@/lib/contentEvent'
+import type { ContentEventType, ReelDuration } from '@/types'
+
+const CONTENT_TYPE_OPTIONS: ContentEventType[] = ['shoot_day', 'reel', 'static', 'story', 'carousel']
+const REEL_DURATION_OPTIONS: ReelDuration[] = ['0_5', '5_10', '10_20', '20_plus']
 
 function formatEventTime(time: string): string {
   return format(parse(time, 'HH:mm', new Date()), 'h:mm a')
 }
 
-// For now this is a straight copy of the studio-wide Calendar page, scoped
-// to this one client's own events — a starting point for a proper content
-// scheduling layout later.
+// Unlike the studio-wide Calendar, double-clicking into a day here opens a
+// dedicated page for that day's content (like clicking into a document) —
+// there's more to plan per day than a single title/time/notes trio. A
+// single click still just selects the day, and "Add task" opens a quick
+// side panel rather than jumping straight into that page.
 export default function ClientContentCalendar() {
   const client = useClientOutlet()
-  const { addClientEvent, removeClientEvent, updateClientEventNotes } = useApp()
+  const { addClientEvent, removeClientEvent } = useApp()
+  const navigate = useNavigate()
   const [showAdd, setShowAdd] = useState(false)
-  const [title, setTitle] = useState('')
+  const [contentType, setContentType] = useState<ContentEventType | ''>('')
+  const [duration, setDuration] = useState<ReelDuration | ''>('')
+  const [amount, setAmount] = useState('')
   const [date, setDate] = useState<string | undefined>(undefined)
   const [time, setTime] = useState('')
-  const [notesEvent, setNotesEvent] = useState<CalendarEvent | null>(null)
-  const [notesText, setNotesText] = useState('')
 
   const calendarData = useMemo<CalendarData[]>(() => {
     const byDay = new Map<string, CalendarData>()
@@ -45,33 +57,42 @@ export default function ClientContentCalendar() {
     return [...byDay.values()]
   }, [client.events])
 
+  const goToDay = (day: Date) => {
+    navigate(`/clients/${client.id}/content-calendar/${formatCivilDate(day)}`)
+  }
+
   const handleNewEvent = (day: Date) => {
     setDate(formatCivilDate(day))
+    setContentType('')
+    setDuration('')
+    setAmount('')
+    setTime('')
     setShowAdd(true)
   }
 
-  const handleRemoveEvent = (event: CalendarEvent) => {
+  const handleRemoveEvent = async (event: CalendarEvent) => {
     const when = event.time ? ` at ${event.time}` : ''
-    if (window.confirm(`Remove "${event.name}"${when} from the calendar?`)) {
-      removeClientEvent(client.id, event.id)
-    }
-  }
-
-  const handleOpenNotes = (event: CalendarEvent) => {
-    setNotesEvent(event)
-    setNotesText(event.notes ?? '')
-  }
-
-  const handleSaveNotes = () => {
-    if (!notesEvent) return
-    updateClientEventNotes(client.id, notesEvent.id, notesText.trim())
-    setNotesEvent(null)
+    const confirmed = await confirmAction(`Remove "${event.name}"${when} from the calendar?`, {
+      confirmLabel: 'Remove',
+      destructive: true,
+    })
+    if (confirmed) removeClientEvent(client.id, event.id)
   }
 
   const handleAdd = () => {
-    if (!title.trim() || !date) return
-    addClientEvent(client.id, { id: `content-event-${Date.now()}`, title: title.trim(), date, time: time || undefined })
-    setTitle('')
+    if (!contentType || !date) return
+    addClientEvent(client.id, {
+      id: `content-event-${Date.now()}`,
+      title: eventDisplayTitle(contentType, duration, amount),
+      date,
+      time: time || undefined,
+      contentType,
+      duration: contentType === 'reel' ? duration || undefined : undefined,
+      amount: contentType !== 'reel' && amount ? Number(amount) : undefined,
+    })
+    setContentType('')
+    setDuration('')
+    setAmount('')
     setDate(undefined)
     setTime('')
     setShowAdd(false)
@@ -87,64 +108,72 @@ export default function ClientContentCalendar() {
       <div className="flex h-[75vh] min-h-[560px] flex-col overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
         <FullScreenCalendar
           data={calendarData}
+          newEventLabel="Add task"
           onNewEvent={handleNewEvent}
+          onDayClick={goToDay}
           onRemoveEvent={handleRemoveEvent}
-          onOpenNotes={handleOpenNotes}
+          onOpenNotes={(event) => {
+            const source = client.events.find((e) => e.id === event.id)
+            if (source) goToDay(toDisplayDate(source.date))
+          }}
         />
       </div>
 
-      <Drawer open={showAdd} onClose={() => setShowAdd(false)} title="Add an event">
+      <Drawer open={showAdd} onClose={() => setShowAdd(false)} title="Add task">
         <div className="flex flex-col gap-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Event</label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              autoComplete="off"
-              data-1p-ignore
-              data-lpignore="true"
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Type</label>
+            <Select
+              value={contentType}
+              onChange={(v) => {
+                setContentType(v as ContentEventType)
+                setDuration('')
+                setAmount('')
+              }}
+              options={CONTENT_TYPE_OPTIONS.map((t) => ({ value: t, label: CONTENT_EVENT_TYPE_LABEL[t] }))}
+              placeholder="Select…"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          {contentType === 'reel' && (
             <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Date</label>
-              <DatePicker value={date} onChange={setDate} placeholder="Select date" />
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Duration</label>
+              <Select
+                value={duration}
+                onChange={(v) => setDuration(v as ReelDuration)}
+                options={REEL_DURATION_OPTIONS.map((d) => ({ value: d, label: REEL_DURATION_LABEL[d] }))}
+                placeholder="Select…"
+              />
             </div>
+          )}
+          {contentType && contentType !== 'reel' && (
             <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">
-                Time <span className="normal-case text-ink-muted/70">(optional)</span>
-              </label>
-              <TimePicker value={time} onChange={setTime} />
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Amount</label>
+              <input
+                type="number"
+                min={1}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Number of posts"
+                className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
             </div>
+          )}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Date</label>
+            <DatePicker value={date} onChange={setDate} placeholder="Select date" />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">
+              Time <span className="normal-case text-ink-muted/70">(optional)</span>
+            </label>
+            <TimePicker value={time} onChange={setTime} />
           </div>
           <button
             onClick={handleAdd}
-            className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
+            disabled={!contentType || !date}
+            className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Add event
-          </button>
-        </div>
-      </Drawer>
-
-      <Drawer open={!!notesEvent} onClose={() => setNotesEvent(null)} title={notesEvent ? `Notes — ${notesEvent.name}` : 'Notes'}>
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Notes</label>
-            <textarea
-              value={notesText}
-              onChange={(e) => setNotesText(e.target.value)}
-              placeholder="Add details, links, or anything the team should know…"
-              rows={6}
-              className="w-full resize-none rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              autoFocus
-            />
-          </div>
-          <button
-            onClick={handleSaveNotes}
-            className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
-          >
-            Save notes
+            Add task
           </button>
         </div>
       </Drawer>

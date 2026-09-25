@@ -33,6 +33,7 @@ import ClientAvatarStack from '@/components/ClientAvatarStack'
 import Drawer from '@/components/Drawer'
 import ClientForm from '@/components/ClientForm'
 import SearchPalette from '@/components/SearchPalette'
+import { confirmAction } from '@/lib/confirm'
 import { fileToLogoDataUrl } from '@/lib/image'
 
 /** Bottom-left "who's managing this" switcher — lets Ro or Niall flip
@@ -122,6 +123,14 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
               {account.id === activeAccount.id && <Check size={13} className="shrink-0 text-brand-400" />}
             </button>
           ))}
+          <Link
+            to="/settings"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2.5 border-t border-white/10 px-3 py-2.5 text-left text-white/70 hover:bg-white/[0.06]"
+          >
+            <Settings size={13} className="shrink-0" />
+            <span className="text-xs font-medium">Settings</span>
+          </Link>
           <button
             onClick={() => {
               setOpen(false)
@@ -275,12 +284,14 @@ export default function Layout({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [lockedToClient])
 
-  const handleRemoveClient = (e: MouseEvent, name: string, id: string) => {
+  const handleRemoveClient = async (e: MouseEvent, name: string, id: string) => {
     e.preventDefault()
     e.stopPropagation()
-    if (window.confirm(`Remove "${name}"? This deletes all their tasks, documents, and workshop answers — it can't be undone.`)) {
-      removeClient(id)
-    }
+    const confirmed = await confirmAction(
+      `Remove "${name}"? This deletes all their tasks, documents, and workshop answers — it can't be undone.`,
+      { confirmLabel: 'Remove', destructive: true }
+    )
+    if (confirmed) removeClient(id)
   }
 
   if (isImmersiveSession) {

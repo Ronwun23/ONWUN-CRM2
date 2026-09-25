@@ -110,12 +110,26 @@ export interface BrandAsset {
   addedAt: string
 }
 
+export type ContentEventType = 'shoot_day' | 'reel' | 'static' | 'story' | 'carousel'
+export type ReelDuration = '0_5' | '5_10' | '10_20' | '20_plus'
+
 export interface ClientEvent {
   id: string
   title: string
   date: string
   time?: string
   notes?: string
+  contentType?: ContentEventType
+  // Only meaningful when contentType is 'reel'.
+  duration?: ReelDuration
+  // Only meaningful when contentType is set and isn't 'reel' — how many
+  // posts of that type are planned for the day.
+  amount?: number
+  // A single attached PNG or MP4 for this task — a moodboard frame, a raw
+  // clip, whatever the team needs to see alongside the plan.
+  fileUrl?: string
+  fileName?: string
+  fileKind?: 'png' | 'mp4'
 }
 
 export interface WorkshopQuestion {

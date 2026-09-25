@@ -8,6 +8,7 @@ import HomePage from '@/pages/Home'
 import StudioUpdates from '@/pages/studio/Updates'
 import StudioTasks from '@/pages/studio/Tasks'
 import StudioCalendar from '@/pages/studio/Calendar'
+import StudioSettings from '@/pages/studio/Settings'
 import ClientLayout from '@/pages/client/ClientLayout'
 import ClientDashboard from '@/pages/client/Dashboard'
 import ClientUpdates from '@/pages/client/Updates'
@@ -18,17 +19,26 @@ import ClientLibrary from '@/pages/client/Library'
 import ClientLibraryFolder from '@/pages/client/LibraryFolder'
 import ClientBrandHub from '@/pages/client/BrandHub'
 import ClientContentCalendar from '@/pages/client/ContentCalendar'
+import ClientContentDay from '@/pages/client/ContentDay'
 import ClientSettings from '@/pages/client/ClientSettings'
 import DiscoveryLayout from '@/pages/client/discovery/DiscoveryLayout'
 import DiscoveryDashboard from '@/pages/client/discovery/DiscoveryDashboard'
 import DiscoveryAnswers from '@/pages/client/discovery/DiscoveryAnswers'
 import DiscoveryStrategy from '@/pages/client/discovery/DiscoveryStrategy'
 import DiscoverySession from '@/pages/client/discovery/DiscoverySession'
+import McpConnect from '@/pages/McpConnect'
 
 export default function App() {
   const { clientsLoading, clients } = useApp()
   const { profile } = useAuth()
   const location = useLocation()
+
+  // Full-screen, no sidebar — same treatment as the login page gets, and
+  // for the same reason: it's a bridge screen, not a normal in-app page.
+  // Checked first so it doesn't wait on client data it doesn't need.
+  if (location.pathname === '/mcp-connect') {
+    return <McpConnect />
+  }
 
   if (clientsLoading) {
     return (
@@ -75,6 +85,7 @@ export default function App() {
           <Route path="/updates" element={<StudioUpdates />} />
           <Route path="/tasks" element={<StudioTasks />} />
           <Route path="/calendar" element={<StudioCalendar />} />
+          <Route path="/settings" element={<StudioSettings />} />
           <Route path="/clients/:clientId" element={<ClientLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<ClientDashboard />} />
@@ -92,6 +103,7 @@ export default function App() {
             <Route path="discovery/session" element={<DiscoverySession />} />
             <Route path="brand-hub" element={<ClientBrandHub />} />
             <Route path="content-calendar" element={<ClientContentCalendar />} />
+            <Route path="content-calendar/:date" element={<ClientContentDay />} />
             <Route path="settings" element={<ClientSettings />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

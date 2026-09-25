@@ -6,6 +6,7 @@ import { AppProvider } from '@/context/AppContext'
 import { AuthProvider } from '@/context/AuthContext'
 import AuthGate from '@/components/AuthGate'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import ConfirmDialogHost from '@/components/ConfirmDialogHost'
 import './index.css'
 
 const rootFallback = (
@@ -31,6 +32,7 @@ createRoot(document.getElementById('root')!).render(
             </AppProvider>
           </AuthGate>
         </AuthProvider>
+        <ConfirmDialogHost />
       </BrowserRouter>
     </ErrorBoundary>
   </StrictMode>

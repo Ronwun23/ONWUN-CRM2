@@ -13,6 +13,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import FullscreenViewer from '@/components/FullscreenViewer'
 import Spinner from '@/components/Spinner'
 import { getSignedDocumentUrl } from '@/lib/api/documents'
+import { confirmAction } from '@/lib/confirm'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_STATUS_TONE, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
 import { formatDate } from '@/lib/format'
 import { figmaEmbedSrc, isFigmaUrl, isPdfDataUrl, isStoragePath } from '@/lib/embed'
@@ -89,8 +90,12 @@ export default function DocumentDetail() {
     <DocumentComments client={client} doc={doc} pageLabel={pageLabel} />
   )
 
-  const handleRemove = () => {
-    if (!window.confirm(`Remove "${doc.title}"? This can't be undone.`)) return
+  const handleRemove = async () => {
+    const confirmed = await confirmAction(`Remove "${doc.title}"? This can't be undone.`, {
+      confirmLabel: 'Remove',
+      destructive: true,
+    })
+    if (!confirmed) return
     removeDocument(client.id, doc.id)
     navigate(`/clients/${client.id}/documents`)
   }
