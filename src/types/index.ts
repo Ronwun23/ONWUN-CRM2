@@ -234,6 +234,61 @@ export interface Client {
   workshop: WorkshopState
 }
 
+export type LeadStatus =
+  | 'new'
+  | 'contacted'
+  | 'wants_video'
+  | 'video_sent'
+  | 'call_booked'
+  | 'live_conversation'
+  | 'not_now'
+  | 'suppressed'
+  | 'converted'
+
+export type SequenceStepType = 'email_1' | 'call_1' | 'email_2' | 'call_2' | 'call_3' | 'email_3'
+
+export type TouchKind = 'email_sent' | 'call_made' | 'reply_received' | 'outcome_set'
+
+export interface SequenceStep {
+  id: string
+  stepType: SequenceStepType
+  dueDate: string
+  done: boolean
+  doneAt?: string
+}
+
+export interface Touch {
+  id: string
+  kind: TouchKind
+  note?: string
+  createdAt: string
+}
+
+export interface Lead {
+  id: string
+  companyName: string
+  website?: string
+  platform?: string
+  contactName?: string
+  contactEmail?: string
+  country?: string
+  // AI's reasoning for the fit (Phase 3) — blank for manually-added leads.
+  whyFits?: string
+  // "What you noticed" — a genuine observation written by whoever's
+  // reaching out, used to personalize the first email.
+  noticedNote?: string
+  status: LeadStatus
+  owner: string
+  // Set when status is 'not_now' — the lead resurfaces in the queue on
+  // this date instead of staying invisible forever.
+  notNowUntil?: string
+  convertedClientId?: string
+  createdAt: string
+  updatedAt: string
+  steps: SequenceStep[]
+  touches: Touch[]
+}
+
 export interface TeamMember {
   id: string
   name: string

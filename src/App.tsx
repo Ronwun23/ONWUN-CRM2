@@ -9,6 +9,11 @@ import StudioUpdates from '@/pages/studio/Updates'
 import StudioTasks from '@/pages/studio/Tasks'
 import StudioCalendar from '@/pages/studio/Calendar'
 import StudioSettings from '@/pages/studio/Settings'
+import AcquisitionSetup from '@/pages/studio/acquisition/Setup'
+import AcquisitionFindCompanies from '@/pages/studio/acquisition/FindCompanies'
+import AcquisitionContacts from '@/pages/studio/acquisition/Contacts'
+import AcquisitionContactDetail from '@/pages/studio/acquisition/ContactDetail'
+import AcquisitionToday from '@/pages/studio/acquisition/Today'
 import ClientLayout from '@/pages/client/ClientLayout'
 import ClientDashboard from '@/pages/client/Dashboard'
 import ClientUpdates from '@/pages/client/Updates'
@@ -86,6 +91,11 @@ export default function App() {
           <Route path="/tasks" element={<StudioTasks />} />
           <Route path="/calendar" element={<StudioCalendar />} />
           <Route path="/settings" element={<StudioSettings />} />
+          <Route path="/acquisition/setup" element={<AcquisitionSetup />} />
+          <Route path="/acquisition/find" element={<AcquisitionFindCompanies />} />
+          <Route path="/acquisition/contacts" element={<AcquisitionContacts />} />
+          <Route path="/acquisition/contacts/:leadId" element={<AcquisitionContactDetail />} />
+          <Route path="/acquisition/today" element={<AcquisitionToday />} />
           <Route path="/clients/:clientId" element={<ClientLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<ClientDashboard />} />

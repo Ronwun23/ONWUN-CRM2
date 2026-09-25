@@ -1,5 +1,5 @@
 import type { PillTone } from '@/components/Pill'
-import type { ClientStatus, ContentEventType, DocumentStatus, DocumentType, ReelDuration } from '@/types'
+import type { ClientStatus, ContentEventType, DocumentStatus, DocumentType, LeadStatus, ReelDuration } from '@/types'
 
 export const DOCUMENT_STATUS_LABEL: Record<DocumentStatus, string> = {
   with_client: 'With the client',
@@ -57,4 +57,16 @@ export const REEL_DURATION_LABEL: Record<ReelDuration, string> = {
   '5_10': '5-10 secs',
   '10_20': '10-20 secs',
   '20_plus': '20 secs +',
+}
+
+export const LEAD_STATUS_TONE: Record<LeadStatus, PillTone> = {
+  new: 'neutral',
+  contacted: 'brand',
+  wants_video: 'brand',
+  video_sent: 'brand',
+  call_booked: 'good',
+  live_conversation: 'good',
+  not_now: 'warning',
+  suppressed: 'critical',
+  converted: 'good',
 }

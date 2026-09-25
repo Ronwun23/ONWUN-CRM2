@@ -8,6 +8,8 @@ import type {
   ClientTask,
   DocumentComment,
   DocumentTestimonial,
+  Lead,
+  LeadStatus,
   LibraryFile,
   LibraryFolder,
   StrategyDraft,
@@ -31,6 +33,17 @@ import { fetchUpdatesForClient, fetchStudioUpdates, insertUpdate, deleteUpdateRo
 import { fetchLibraryForClient, insertFolder, deleteFolderRow, insertFile, deleteFileRow } from '@/lib/api/library'
 import { fetchBrandAssetsForClient, insertBrandAsset } from '@/lib/api/brandAssets'
 import { fetchEventsForClient, fetchStudioEvents, insertEvent, deleteEventRow, updateEventRow } from '@/lib/api/events'
+import {
+  fetchLeads,
+  insertLead,
+  updateLeadRow,
+  insertSequenceSteps,
+  updateSequenceStepRow,
+  insertTouch,
+  insertSuppressedContact,
+} from '@/lib/api/leads'
+import { buildSequence, notNowResurfaceDate, LEAD_STATUS_LABEL } from '@/lib/leadOutcomes'
+import { createBlankClient } from '@/data/clients'
 import { subscribeToRealtimeUpdates } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
 
@@ -129,6 +142,21 @@ interface AppContextValue {
   updateStudioEventNotes: (eventId: string, notes: string) => void
   activeAccount: StudioAccount
   setActiveAccount: (accountId: string) => void
+  leads: Lead[]
+  addLead: (input: {
+    companyName: string
+    website?: string
+    platform?: string
+    contactName?: string
+    contactEmail?: string
+    country?: string
+    whyFits?: string
+    noticedNote?: string
+    owner: string
+  }) => Promise<Lead>
+  markLeadDoneSentIt: (leadId: string) => Promise<void>
+  setLeadOutcome: (leadId: string, outcome: LeadStatus) => Promise<void>
+  convertLeadToClient: (leadId: string, input: { projectName: string; dueDate: string }) => Promise<Client>
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -171,11 +199,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     clientsRef.current = clients
   }, [clients])
 
+  // Cold outreach leads — studio-wide, no client_id, loaded upfront just
+  // like studio tasks/updates/events since the dataset stays small.
+  const [leads, setLeads] = useState<Lead[]>([])
+  const leadsRef = useRef<Lead[]>([])
   useEffect(() => {
-    withRetry(() => Promise.all([fetchClients(), fetchStudioTasks(), fetchStudioUpdates(), fetchStudioEvents()]))
-      .then(([loadedClients, studioTasks, studioUpdates, studioEvents]) => {
+    leadsRef.current = leads
+  }, [leads])
+
+  useEffect(() => {
+    withRetry(() =>
+      Promise.all([fetchClients(), fetchStudioTasks(), fetchStudioUpdates(), fetchStudioEvents(), fetchLeads()])
+    )
+      .then(([loadedClients, studioTasks, studioUpdates, studioEvents, loadedLeads]) => {
         setClients(loadedClients)
         setStudio((prev) => ({ ...prev, tasks: studioTasks, updates: studioUpdates, events: studioEvents }))
+        setLeads(loadedLeads)
       })
       .catch((err) => console.error('Failed to load clients from Supabase:', err))
       .finally(() => setClientsLoading(false))
@@ -739,6 +778,111 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const addLead = useCallback(async (input: Parameters<AppContextValue['addLead']>[0]) => {
+    const created = await insertLead(input)
+    setLeads((prev) => [created, ...prev])
+    return created
+  }, [])
+
+  // The single "Done, sent it" action: the first time it's clicked for a
+  // lead, it generates the whole six-step follow-up plan (anchored to
+  // today) and marks step one done; every time after that, it marks
+  // whichever step is next due as done. Either way it logs a touch.
+  const markLeadDoneSentIt = useCallback(async (leadId: string) => {
+    const lead = leadsRef.current.find((l) => l.id === leadId)
+    if (!lead) return
+    const nowIso = new Date().toISOString()
+
+    if (lead.steps.length === 0) {
+      const plan = buildSequence(new Date())
+      const steps = await insertSequenceSteps(leadId, plan)
+      const firstStep = steps[0]
+      await updateSequenceStepRow(firstStep.id, { done: true, done_at: nowIso })
+      const touch = await insertTouch(leadId, 'email_sent')
+      if (lead.status === 'new') await updateLeadRow(leadId, { status: 'contacted' })
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.id === leadId
+            ? {
+                ...l,
+                status: l.status === 'new' ? 'contacted' : l.status,
+                steps: steps.map((s) => (s.id === firstStep.id ? { ...s, done: true, doneAt: nowIso } : s)),
+                touches: [touch, ...l.touches],
+              }
+            : l
+        )
+      )
+      return
+    }
+
+    const nextStep = lead.steps.find((s) => !s.done)
+    if (!nextStep) return
+    await updateSequenceStepRow(nextStep.id, { done: true, done_at: nowIso })
+    const touch = await insertTouch(leadId, nextStep.stepType.startsWith('call') ? 'call_made' : 'email_sent')
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === leadId
+          ? {
+              ...l,
+              steps: l.steps.map((s) => (s.id === nextStep.id ? { ...s, done: true, doneAt: nowIso } : s)),
+              touches: [touch, ...l.touches],
+            }
+          : l
+      )
+    )
+  }, [])
+
+  const setLeadOutcome = useCallback(async (leadId: string, outcome: LeadStatus) => {
+    const lead = leadsRef.current.find((l) => l.id === leadId)
+    if (!lead) return
+    const notNowUntil = outcome === 'not_now' ? notNowResurfaceDate() : undefined
+
+    await updateLeadRow(leadId, { status: outcome, not_now_until: notNowUntil ?? null })
+    if (outcome === 'suppressed' && lead.contactEmail) {
+      await insertSuppressedContact(lead.contactEmail, lead.companyName)
+    }
+    const touch = await insertTouch(leadId, 'outcome_set', LEAD_STATUS_LABEL[outcome])
+
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, status: outcome, notNowUntil, touches: [touch, ...l.touches] } : l))
+    )
+  }, [])
+
+  const convertLeadToClient = useCallback(
+    async (leadId: string, input: { projectName: string; dueDate: string }) => {
+      const lead = leadsRef.current.find((l) => l.id === leadId)
+      if (!lead) throw new Error('Lead not found')
+
+      const created = await addClient(
+        createBlankClient({
+          name: lead.companyName,
+          projectName: input.projectName,
+          owner: lead.owner,
+          dueDate: input.dueDate,
+          email: lead.contactEmail,
+        })
+      )
+
+      const context = [lead.noticedNote, lead.whyFits].filter(Boolean).join('\n\n')
+      if (context) {
+        await addUpdate(created.id, {
+          id: `update-${Date.now()}`,
+          text: `Converted from a cold outreach lead.\n\n${context}`,
+          date: new Date().toISOString(),
+          author: activeAccount.name,
+          authorType: 'agency',
+        })
+      }
+
+      await updateLeadRow(leadId, { status: 'converted', converted_client_id: Number(created.id) })
+      setLeads((prev) =>
+        prev.map((l) => (l.id === leadId ? { ...l, status: 'converted', convertedClientId: created.id } : l))
+      )
+      return created
+    },
+    [addClient, addUpdate, activeAccount]
+  )
+
   const value = useMemo(
     () => ({
       clients,
@@ -789,6 +933,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateStudioEventNotes,
       activeAccount,
       setActiveAccount,
+      leads,
+      addLead,
+      markLeadDoneSentIt,
+      setLeadOutcome,
+      convertLeadToClient,
     }),
     [
       clients,
@@ -839,6 +988,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateStudioEventNotes,
       activeAccount,
       setActiveAccount,
+      leads,
+      addLead,
+      markLeadDoneSentIt,
+      setLeadOutcome,
+      convertLeadToClient,
     ]
   )
 
