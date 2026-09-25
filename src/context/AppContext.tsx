@@ -108,7 +108,7 @@ interface AppContextValue {
   updateClientEventFile: (
     clientId: string,
     eventId: string,
-    file: { fileUrl?: string; fileName?: string; fileKind?: 'png' | 'mp4' }
+    file: { fileUrl?: string; fileName?: string; fileKind?: 'png' | 'jpg' | 'mp4' }
   ) => void
   saveWorkshopAnswer: (clientId: string, questionId: string, answer: string) => void
   setWorkshopPosition: (clientId: string, phaseIndex: number, screen: WorkshopScreen, questionIndex: number) => void
@@ -616,7 +616,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const updateClientEventFile = useCallback(
-    (clientId: string, eventId: string, file: { fileUrl?: string; fileName?: string; fileKind?: 'png' | 'mp4' }) => {
+    (clientId: string, eventId: string, file: { fileUrl?: string; fileName?: string; fileKind?: 'png' | 'jpg' | 'mp4' }) => {
       updateClient(clientId, (c) => ({
         ...c,
         events: c.events.map((e) => (e.id === eventId ? { ...e, ...file } : e)),
