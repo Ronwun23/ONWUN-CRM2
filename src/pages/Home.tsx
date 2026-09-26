@@ -15,6 +15,7 @@ import { formatDate, formatDueDate, formatRelativeDate } from '@/lib/format'
 import { toDisplayDate, todayCivil } from '@/lib/civilDate'
 import { confirmAction } from '@/lib/confirm'
 import { PHASE_LABELS } from '@/types'
+import { Search } from '@/components/ui/search'
 
 function formatEventDate(civilOrIso: string): string {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(toDisplayDate(civilOrIso))
@@ -118,6 +119,9 @@ export default function HomePage() {
         <h1 className="text-xl font-semibold text-ink-primary">Home</h1>
         <p className="text-sm text-ink-secondary">Everything across every client, at a glance</p>
       </div>
+
+      {/* Temporary — just here to try out the new Search component. */}
+      <Search />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total clients" value={String(stats.totalClients)} icon={Users} />
