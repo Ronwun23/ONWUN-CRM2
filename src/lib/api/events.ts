@@ -3,7 +3,7 @@ import type { ClientEvent } from '@/types'
 
 // client_id is nullable: an event with no client is a studio-wide event,
 // same dual-scope pattern as `tasks` and `updates`.
-interface EventRow {
+export interface EventRow {
   id: number
   client_id: number | null
   title: string
@@ -18,7 +18,7 @@ interface EventRow {
   file_kind: string | null
 }
 
-function rowToEvent(row: EventRow): ClientEvent {
+export function rowToEvent(row: EventRow): ClientEvent {
   return {
     id: String(row.id),
     title: row.title,

@@ -7,6 +7,8 @@ import { rowToTask } from '@/lib/api/tasks'
 import type { TaskRow } from '@/lib/api/tasks'
 import { rowToUpdate } from '@/lib/api/updates'
 import type { UpdateRow } from '@/lib/api/updates'
+import { rowToEvent } from '@/lib/api/events'
+import type { EventRow } from '@/lib/api/events'
 import type { Client } from '@/types'
 import type { StudioState } from '@/context/AppContext'
 import { toastManager } from '@/components/ui/toast'
@@ -32,15 +34,18 @@ interface RealtimeHandlers {
   currentAuthorName: string | null
 }
 
-// Pushes changes to documents (+ their comments), tasks and updates to
-// every open tab the moment someone else saves — no more "you have to
-// refresh to see what the client just posted." Requires those four tables
-// to be added to Supabase's `supabase_realtime` publication (SQL Editor):
+// Pushes changes to documents (+ their comments), tasks, updates and
+// events to every open tab the moment someone else saves — no more "you
+// have to refresh to see what the client just posted" (or, for events,
+// what api/calendly-sync.ts just synced server-side). Requires those five
+// tables to be added to Supabase's `supabase_realtime` publication (SQL
+// Editor):
 //
 //   alter publication supabase_realtime add table documents;
 //   alter publication supabase_realtime add table document_comments;
 //   alter publication supabase_realtime add table tasks;
 //   alter publication supabase_realtime add table updates;
+//   alter publication supabase_realtime add table events;
 //
 // Realtime enforces the same RLS SELECT policies already in place for
 // these tables, so a client account only ever receives rows it could
@@ -138,11 +143,33 @@ export function subscribeToRealtimeUpdates({ setClients, setStudio, isClientLoad
     setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, updates: upsert(c.updates, entry) } : c)))
   }
 
+  const handleEventChange = (payload: RealtimePostgresChangesPayload<EventRow>) => {
+    if (payload.eventType === 'DELETE') {
+      const id = String(payload.old.id)
+      setStudio((prev) => ({ ...prev, events: prev.events.filter((e) => e.id !== id) }))
+      setClients((prev) => prev.map((c) => ({ ...c, events: c.events.filter((e) => e.id !== id) })))
+      return
+    }
+    const row = payload.new
+    const event = rowToEvent(row)
+    if (payload.eventType === 'INSERT') {
+      toastManager.add({ type: 'info', title: 'New event on the calendar', description: event.title })
+    }
+    if (row.client_id === null) {
+      setStudio((prev) => ({ ...prev, events: upsert(prev.events, event) }))
+      return
+    }
+    const clientId = String(row.client_id)
+    if (!isClientLoaded(clientId)) return
+    setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, events: upsert(c.events, event) } : c)))
+  }
+
   return supabase
     .channel('app-live-updates')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, handleDocumentChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'document_comments' }, handleCommentChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, handleTaskChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'updates' }, handleUpdateChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, handleEventChange)
     .subscribe()
 }
