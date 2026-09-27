@@ -289,6 +289,22 @@ export interface Lead {
   touches: Touch[]
 }
 
+// The outreach brief — one per studio — that drives AI-drafted emails
+// and (Phase 3) the company search. Only niche and countries are
+// required; everything else sharpens the draft without blocking it.
+export interface AcquisitionProfile {
+  id: string
+  niche: string
+  countries: string
+  whoExactly?: string
+  whatWeSell?: string
+  price?: string
+  callDays?: string
+  pastWorkWhat?: string
+  pastWorkWhy?: string
+  updatedAt: string
+}
+
 export interface TeamMember {
   id: string
   name: string

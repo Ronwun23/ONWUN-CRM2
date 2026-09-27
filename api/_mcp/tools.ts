@@ -124,7 +124,11 @@ export function registerTools(server: McpServer, supabase: SupabaseClient) {
       if (owner) query = query.eq('owner', owner)
       const { data, error } = await query
       if (error) return errorResult(error.message)
-      return textResult(data)
+      // The `platform` column now holds a phone number (see
+      // src/lib/api/leads.ts) — relabel at this boundary so an MCP
+      // client sees the field for what it actually is.
+      const renamed = (data ?? []).map(({ platform, ...rest }) => ({ ...rest, phone: platform }))
+      return textResult(renamed)
     }
   )
 
@@ -136,7 +140,7 @@ export function registerTools(server: McpServer, supabase: SupabaseClient) {
       inputSchema: {
         companyName: z.string(),
         website: z.string().optional(),
-        platform: z.string().optional(),
+        phone: z.string().optional(),
         contactName: z.string().optional(),
         contactEmail: z.string().optional(),
         country: z.string().optional(),
@@ -144,13 +148,15 @@ export function registerTools(server: McpServer, supabase: SupabaseClient) {
         owner: z.string().describe("e.g. 'ro' or 'niall'"),
       },
     },
-    async ({ companyName, website, platform, contactName, contactEmail, country, noticedNote, owner }) => {
+    async ({ companyName, website, phone, contactName, contactEmail, country, noticedNote, owner }) => {
       const { data, error } = await supabase
         .from('leads')
         .insert({
           company_name: companyName,
           website: website ?? null,
-          platform: platform ?? null,
+          // `platform` is the DB column name — repurposed to hold a
+          // phone number, see src/lib/api/leads.ts for why.
+          platform: phone ?? null,
           contact_name: contactName ?? null,
           contact_email: contactEmail ?? null,
           country: country ?? null,
@@ -161,7 +167,8 @@ export function registerTools(server: McpServer, supabase: SupabaseClient) {
         .select()
         .single()
       if (error) return errorResult(error.message)
-      return textResult(data)
+      const { platform, ...rest } = data as Record<string, unknown> & { platform: string | null }
+      return textResult({ ...rest, phone: platform })
     }
   )
 

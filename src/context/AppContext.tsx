@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type {
+  AcquisitionProfile,
   BrandAsset,
   Client,
   ClientDocument,
@@ -42,6 +43,7 @@ import {
   insertTouch,
   insertSuppressedContact,
 } from '@/lib/api/leads'
+import { fetchAcquisitionProfile, saveAcquisitionProfile as saveAcquisitionProfileRow } from '@/lib/api/acquisitionProfile'
 import { buildSequence, notNowResurfaceDate, LEAD_STATUS_LABEL } from '@/lib/leadOutcomes'
 import { createBlankClient } from '@/data/clients'
 import { subscribeToRealtimeUpdates } from '@/lib/realtime'
@@ -157,6 +159,8 @@ interface AppContextValue {
   markLeadDoneSentIt: (leadId: string) => Promise<void>
   setLeadOutcome: (leadId: string, outcome: LeadStatus) => Promise<void>
   convertLeadToClient: (leadId: string, input: { projectName: string; dueDate: string }) => Promise<Client>
+  acquisitionProfile: AcquisitionProfile | null
+  saveAcquisitionProfile: (input: Omit<AcquisitionProfile, 'id' | 'updatedAt'>) => Promise<void>
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -207,14 +211,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     leadsRef.current = leads
   }, [leads])
 
+  // The outreach brief (Setup) — a singleton, null until someone's saved
+  // it at least once.
+  const [acquisitionProfile, setAcquisitionProfile] = useState<AcquisitionProfile | null>(null)
+
   useEffect(() => {
     withRetry(() =>
-      Promise.all([fetchClients(), fetchStudioTasks(), fetchStudioUpdates(), fetchStudioEvents(), fetchLeads()])
+      Promise.all([
+        fetchClients(),
+        fetchStudioTasks(),
+        fetchStudioUpdates(),
+        fetchStudioEvents(),
+        fetchLeads(),
+        fetchAcquisitionProfile(),
+      ])
     )
-      .then(([loadedClients, studioTasks, studioUpdates, studioEvents, loadedLeads]) => {
+      .then(([loadedClients, studioTasks, studioUpdates, studioEvents, loadedLeads, loadedProfile]) => {
         setClients(loadedClients)
         setStudio((prev) => ({ ...prev, tasks: studioTasks, updates: studioUpdates, events: studioEvents }))
         setLeads(loadedLeads)
+        setAcquisitionProfile(loadedProfile)
       })
       .catch((err) => console.error('Failed to load clients from Supabase:', err))
       .finally(() => setClientsLoading(false))
@@ -883,6 +899,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [addClient, addUpdate, activeAccount]
   )
 
+  const saveAcquisitionProfile = useCallback(
+    async (input: Omit<AcquisitionProfile, 'id' | 'updatedAt'>) => {
+      const saved = await saveAcquisitionProfileRow(acquisitionProfile?.id, input)
+      setAcquisitionProfile(saved)
+    },
+    [acquisitionProfile?.id]
+  )
+
   const value = useMemo(
     () => ({
       clients,
@@ -938,6 +962,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markLeadDoneSentIt,
       setLeadOutcome,
       convertLeadToClient,
+      acquisitionProfile,
+      saveAcquisitionProfile,
     }),
     [
       clients,
@@ -993,6 +1019,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markLeadDoneSentIt,
       setLeadOutcome,
       convertLeadToClient,
+      acquisitionProfile,
+      saveAcquisitionProfile,
     ]
   )
 
