@@ -163,20 +163,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     research = await callAnthropic(apiKey, {
       model: MODEL,
-      max_tokens: 1536,
+      max_tokens: 1024,
       system:
-        'You are researching real companies for a UK branding studio\'s cold outreach, using web search. Only include ' +
-        'companies you actually found via search — real websites, and a contact email only if genuinely publicly ' +
-        'listed (e.g. on a contact or about page). Never invent a company, website, or email. Note the platform a ' +
-        "site runs on (e.g. Shopify, WordPress, Webflow) if it's identifiable. Run at most 3 searches total, then " +
-        'stop and report back — aim for 4-5 good candidates, not exhaustive coverage. Keep notes on each one brief.',
+        'You are researching real companies for a UK branding studio\'s cold outreach. Run exactly ONE web search ' +
+        '(one query, broad enough to surface several candidates at once) then stop searching immediately and report ' +
+        'back based on those results alone — do not run a second search under any circumstances. Only include ' +
+        'companies actually in those results — real websites, and a contact email only if genuinely visible in the ' +
+        "search results. Never invent a company, website, or email. Note the platform if it's obvious. 3-4 " +
+        'candidates, one brief line each.',
       messages: [
         {
           role: 'user',
           content: `Studio brief:\n${briefLines(profile).join('\n')}\n\nSearching in: ${country.trim()}\n\n${suppressedNote}`,
         },
       ],
-      tools: [{ type: 'web_search_20260209', name: 'web_search' }],
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 1 }],
     })
   } catch (err) {
     console.error('Anthropic research call failed:', err)
