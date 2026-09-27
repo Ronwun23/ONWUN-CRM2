@@ -163,12 +163,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     research = await callAnthropic(apiKey, {
       model: MODEL,
-      max_tokens: 4096,
+      max_tokens: 1536,
       system:
         'You are researching real companies for a UK branding studio\'s cold outreach, using web search. Only include ' +
         'companies you actually found via search — real websites, and a contact email only if genuinely publicly ' +
         'listed (e.g. on a contact or about page). Never invent a company, website, or email. Note the platform a ' +
-        "site runs on (e.g. Shopify, WordPress, Webflow) if it's identifiable. Aim for 5-8 good candidates.",
+        "site runs on (e.g. Shopify, WordPress, Webflow) if it's identifiable. Run at most 3 searches total, then " +
+        'stop and report back — aim for 4-5 good candidates, not exhaustive coverage. Keep notes on each one brief.',
       messages: [
         {
           role: 'user',
