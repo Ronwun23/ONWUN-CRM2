@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Check, Mail, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Mail, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import Card from '@/components/Card'
 import Drawer from '@/components/Drawer'
@@ -11,6 +11,7 @@ import { MemberAvatar, memberName } from '@/components/Avatar'
 import { confirmAction } from '@/lib/confirm'
 import { formatDate } from '@/lib/format'
 import { LEAD_STATUS_TONE } from '@/lib/labels'
+import { draftOutreachEmail } from '@/lib/api/outreachEmail'
 import {
   LEAD_STATUS_LABEL,
   SEQUENCE_STEP_LABEL,
@@ -27,9 +28,17 @@ const PROJECT_TYPES = ['Brand Identity', 'Website', 'Social Media Management', '
 export default function AcquisitionContactDetail() {
   const { leadId } = useParams<{ leadId: string }>()
   const navigate = useNavigate()
-  const { leads, markLeadDoneSentIt, setLeadOutcome, convertLeadToClient } = useApp()
+  const { leads, acquisitionProfile, markLeadDoneSentIt, setLeadOutcome, convertLeadToClient } = useApp()
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
+  // The AI draft's shared body and its 4 opening lines, kept separately
+  // from the editable `body` above so "try another opening" can always
+  // rebuild cleanly — see cycleOpening.
+  const [aiBody, setAiBody] = useState('')
+  const [openings, setOpenings] = useState<string[]>([])
+  const [openingIndex, setOpeningIndex] = useState(0)
+  const [drafting, setDrafting] = useState(false)
+  const [draftError, setDraftError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [showConvert, setShowConvert] = useState(false)
   const [projectName, setProjectName] = useState(PROJECT_TYPES[0])
@@ -50,6 +59,39 @@ export default function AcquisitionContactDetail() {
     } finally {
       setSending(false)
     }
+  }
+
+  const handleDraft = async () => {
+    setDrafting(true)
+    setDraftError(null)
+    try {
+      const draft = await draftOutreachEmail({
+        companyName: lead.companyName,
+        contactName: lead.contactName,
+        noticedNote: lead.noticedNote,
+        whyFits: lead.whyFits,
+      })
+      setSubject(draft.subject)
+      setOpenings(draft.openings)
+      setAiBody(draft.body)
+      setOpeningIndex(0)
+      setBody(`${draft.openings[0]}\n\n${draft.body}`)
+    } catch (err) {
+      setDraftError(err instanceof Error ? err.message : 'Could not draft the email.')
+    } finally {
+      setDrafting(false)
+    }
+  }
+
+  const cycleOpening = () => {
+    if (openings.length === 0) return
+    const next = (openingIndex + 1) % openings.length
+    setOpeningIndex(next)
+    setBody(`${openings[next]}\n\n${aiBody}`)
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard?.writeText(body).catch(() => {})
   }
 
   const handleOutcome = async (outcome: LeadStatus) => {
@@ -137,8 +179,36 @@ export default function AcquisitionContactDetail() {
           </Card>
 
           {live && (
-            <Card title="Email" subtitle="Written manually for now — AI drafts land in a later phase.">
+            <Card title="Email" subtitle="Drafted from your Setup brief and what you noticed — edit freely before sending.">
               <div className="flex flex-col gap-3">
+                {!acquisitionProfile && (
+                  <p className="text-xs text-status-warning">
+                    <Link to="/acquisition/setup" className="underline">
+                      Fill in Setup
+                    </Link>{' '}
+                    to draft with AI — you can still write the email manually below.
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleDraft}
+                    disabled={drafting || !acquisitionProfile}
+                    className="flex items-center gap-1.5 rounded-lg border border-brand-500 px-3.5 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Sparkles size={14} />
+                    {drafting ? 'Drafting…' : openings.length > 0 ? 'Draft again' : 'Draft with AI'}
+                  </button>
+                  {openings.length > 0 && (
+                    <button
+                      onClick={cycleOpening}
+                      className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-medium text-ink-primary hover:bg-surface-sunken"
+                    >
+                      <RefreshCw size={14} />
+                      Try another opening, {openingIndex + 1} of {openings.length}
+                    </button>
+                  )}
+                </div>
+                {draftError && <p className="text-xs text-status-critical">{draftError}</p>}
                 <input
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
@@ -154,6 +224,14 @@ export default function AcquisitionContactDetail() {
                   className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 />
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleCopy}
+                    disabled={!body}
+                    className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-semibold text-ink-primary hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Copy size={14} />
+                    Copy
+                  </button>
                   <a
                     href={gmailUrl}
                     target="_blank"
