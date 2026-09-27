@@ -50,7 +50,9 @@ function rowToLead(row: LeadRow): Omit<Lead, 'steps' | 'touches'> {
     id: String(row.id),
     companyName: row.company_name,
     website: row.website ?? undefined,
-    platform: row.platform ?? undefined,
+    // The `platform` column now holds a phone number — kept the DB column
+    // name as-is to avoid a migration, renamed at this boundary instead.
+    phone: row.platform ?? undefined,
     contactName: row.contact_name ?? undefined,
     contactEmail: row.contact_email ?? undefined,
     country: row.country ?? undefined,
@@ -116,7 +118,7 @@ export async function fetchLeads(): Promise<Lead[]> {
 export async function insertLead(lead: {
   companyName: string
   website?: string
-  platform?: string
+  phone?: string
   contactName?: string
   contactEmail?: string
   country?: string
@@ -129,7 +131,7 @@ export async function insertLead(lead: {
     .insert({
       company_name: lead.companyName,
       website: lead.website ?? null,
-      platform: lead.platform ?? null,
+      platform: lead.phone ?? null,
       contact_name: lead.contactName ?? null,
       contact_email: lead.contactEmail ?? null,
       country: lead.country ?? null,
