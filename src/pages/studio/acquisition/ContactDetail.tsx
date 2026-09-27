@@ -48,10 +48,11 @@ export default function AcquisitionContactDetail() {
   const lead = leads.find((l) => l.id === leadId)
   if (!lead) return <Navigate to="/acquisition/contacts" replace />
 
-  // Onwun's own mail is hosted on Microsoft 365, not Gmail — this is
-  // Outlook on the web's documented compose deep link, opens with the
-  // account already signed into outlook.office.com in the browser.
-  const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(
+  // Onwun's mail is hosted on Microsoft 365, on the newer unified
+  // outlook.cloud.microsoft web app (not the older outlook.office.com,
+  // which redirects here anyway and drops the compose query params in
+  // the process) — same deep-link shape, just the current domain.
+  const outlookUrl = `https://outlook.cloud.microsoft/mail/deeplink/compose?to=${encodeURIComponent(
     lead.contactEmail ?? ''
   )}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 
