@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Calendar, CalendarClock, Check, Copy, MessageSquare, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { toastManager } from '@/components/ui/toast'
+import { Button } from '@/components/ui/button'
 
 // Slack/Google Calendar aren't wired to anything real yet — every button
 // there is a deliberate dead end, not a silent no-op. Claude is real:
@@ -143,6 +145,40 @@ function CalendlyConnectorRow() {
   )
 }
 
+// Temporary — a click-to-fire panel so the new toast component (@base-ui/react)
+// can actually be seen and tried out. Remove once it's either adopted for real
+// somewhere or the test is done.
+function ToastTestPanel() {
+  const fire = (type: 'success' | 'error' | 'warning' | 'info' | 'loading') => {
+    const titles = {
+      success: 'Client saved',
+      error: 'Could not save changes',
+      warning: 'This lead is missing a contact email',
+      info: 'Sync running in the background',
+      loading: 'Drafting email…',
+    }
+    toastManager.add({
+      type,
+      title: titles[type],
+      description: type === 'error' ? 'Check your connection and try again.' : undefined,
+      timeout: type === 'loading' ? 0 : 5000,
+    })
+  }
+
+  return (
+    <div className="rounded-xl border border-black/[0.06] bg-white px-4 py-3.5">
+      <p className="mb-3 text-sm font-medium text-ink-primary">Toast test panel</p>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => fire('success')} size="sm" variant="secondary">Success</Button>
+        <Button onClick={() => fire('error')} size="sm" variant="secondary">Error</Button>
+        <Button onClick={() => fire('warning')} size="sm" variant="secondary">Warning</Button>
+        <Button onClick={() => fire('info')} size="sm" variant="secondary">Info</Button>
+        <Button onClick={() => fire('loading')} size="sm" variant="secondary">Loading</Button>
+      </div>
+    </div>
+  )
+}
+
 export default function StudioSettings() {
   return (
     <div className="flex flex-col gap-8 pb-8">
@@ -170,6 +206,12 @@ export default function StudioSettings() {
             <ConnectorRow key={c.id} connector={c} />
           ))}
         </div>
+      </div>
+
+      <div>
+        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-muted">Testing</p>
+        <p className="mb-3 text-sm text-ink-secondary">Temporary — try out the new toast component.</p>
+        <ToastTestPanel />
       </div>
     </div>
   )

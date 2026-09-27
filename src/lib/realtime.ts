@@ -9,6 +9,7 @@ import { rowToUpdate } from '@/lib/api/updates'
 import type { UpdateRow } from '@/lib/api/updates'
 import type { Client } from '@/types'
 import type { StudioState } from '@/context/AppContext'
+import { toastManager } from '@/components/ui/toast'
 
 type SetClients = Dispatch<SetStateAction<Client[]>>
 type SetStudio = Dispatch<SetStateAction<StudioState>>
@@ -25,6 +26,10 @@ interface RealtimeHandlers {
   setClients: SetClients
   setStudio: SetStudio
   isClientLoaded: (clientId: string) => boolean
+  // Used only to skip toasting the viewer's own writes echoed back over the
+  // websocket — there's no user id on these rows to match against, just a
+  // free-text author/assignee name, so this is a best-effort comparison.
+  currentAuthorName: string | null
 }
 
 // Pushes changes to documents (+ their comments), tasks and updates to
@@ -45,7 +50,8 @@ interface RealtimeHandlers {
 // publishes full old-row data with REPLICA IDENTITY FULL, which isn't set
 // here) — so deletes are applied by id across every list that could hold
 // it, rather than by looking up which client/document it belonged to.
-export function subscribeToRealtimeUpdates({ setClients, setStudio, isClientLoaded }: RealtimeHandlers): RealtimeChannel {
+export function subscribeToRealtimeUpdates({ setClients, setStudio, isClientLoaded, currentAuthorName }: RealtimeHandlers): RealtimeChannel {
+  void currentAuthorName // unused while the self-filter below is temporarily disabled
   const handleDocumentChange = (payload: RealtimePostgresChangesPayload<DocumentRow>) => {
     if (payload.eventType === 'DELETE') {
       const id = String(payload.old.id)
@@ -96,6 +102,9 @@ export function subscribeToRealtimeUpdates({ setClients, setStudio, isClientLoad
     }
     const row = payload.new
     const task = rowToTask(row)
+    if (payload.eventType === 'INSERT') {
+      toastManager.add({ type: 'info', title: 'New task', description: task.title })
+    }
     if (row.client_id === null) {
       setStudio((prev) => ({ ...prev, tasks: upsert(prev.tasks, task) }))
       return
@@ -114,6 +123,12 @@ export function subscribeToRealtimeUpdates({ setClients, setStudio, isClientLoad
     }
     const row = payload.new
     const entry = rowToUpdate(row)
+    // Self-filter (`entry.author !== currentAuthorName`) temporarily
+    // disabled so it toasts on your own posts too, for testing — re-add
+    // that condition once done trying it out.
+    if (payload.eventType === 'INSERT') {
+      toastManager.add({ type: 'info', title: `New update from ${entry.author}`, description: entry.text })
+    }
     if (row.client_id === null) {
       setStudio((prev) => ({ ...prev, updates: upsert(prev.updates, entry) }))
       return

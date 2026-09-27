@@ -58,6 +58,22 @@ export default {
         xl: '12px',
         '2xl': '16px',
       },
+      keyframes: {
+        // A quick flash when a toast's content is upserted in place
+        // (e.g. a progress toast going loading -> success) rather than a
+        // fresh toast stacking on top of it.
+        'toast-pulse': {
+          '0%': { transform: 'scale(1)' },
+          '30%': { transform: 'scale(1.015)' },
+          '100%': { transform: 'scale(1)' },
+        },
+      },
+      animation: {
+        'toast-error-even': 'toast-pulse 0.4s ease-out',
+        'toast-error-odd': 'toast-pulse 0.4s ease-out',
+        'toast-success-even': 'toast-pulse 0.4s ease-out',
+        'toast-success-odd': 'toast-pulse 0.4s ease-out',
+      },
     },
   },
   plugins: [],

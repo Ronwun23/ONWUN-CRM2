@@ -284,15 +284,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // needed to see them. See src/lib/realtime.ts for the required Supabase
   // publication setup.
   useEffect(() => {
+    const currentAuthorName =
+      (STUDIO_ACCOUNTS.find((a) => a.id === studio.activeAccountId) ?? STUDIO_ACCOUNTS[STUDIO_ACCOUNTS.length - 1]).name
     const channel = subscribeToRealtimeUpdates({
       setClients,
       setStudio,
       isClientLoaded: (clientId) => loadedClientIdsRef.current.has(clientId),
+      currentAuthorName,
     })
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studio.activeAccountId])
 
   useEffect(() => {
     try {
