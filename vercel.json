@@ -5,5 +5,8 @@
     { "source": "/.well-known/oauth-protected-resource/api/mcp", "destination": "/api/well-known?type=resource" },
     { "source": "/((?!assets/|api/).*)", "destination": "/index.html" }
   ],
-  "crons": [{ "path": "/api/calendly-sync", "schedule": "0 6 * * *" }]
+  "crons": [{ "path": "/api/calendly-sync", "schedule": "0 6 * * *" }],
+  "functions": {
+    "api/find-companies.ts": { "maxDuration": 60 }
+  }
 }
