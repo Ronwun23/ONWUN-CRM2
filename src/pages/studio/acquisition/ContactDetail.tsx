@@ -238,8 +238,6 @@ export default function AcquisitionContactDetail() {
                   </button>
                   <a
                     href={outlookUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-semibold text-ink-primary hover:bg-surface-sunken"
                   >
                     <Mail size={14} />
