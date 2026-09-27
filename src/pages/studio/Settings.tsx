@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Calendar, CalendarClock, Check, Copy, MessageSquare, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-// Slack/Google Calendar/Calendly aren't wired to anything real yet — every
-// button there is a deliberate dead end, not a silent no-op. Claude is
-// real: paste the URL into Claude's own connector settings to connect
-// your own account — see api/mcp.ts and api/_mcp/store.ts.
+// Slack/Google Calendar aren't wired to anything real yet — every button
+// there is a deliberate dead end, not a silent no-op. Claude is real:
+// paste the URL into Claude's own connector settings to connect your own
+// account — see api/mcp.ts and api/_mcp/store.ts. Calendly is real too —
+// see api/calendly-sync.ts and CalendlyConnectorRow below.
 interface Connector {
   id: string
   name: string
@@ -25,12 +26,6 @@ const STUDIO_CONNECTORS: Connector[] = [
     name: 'Google Calendar',
     description: 'Sync studio and client events both ways.',
     icon: Calendar,
-  },
-  {
-    id: 'calendly',
-    name: 'Calendly',
-    description: 'Pull booked meetings into the studio calendar automatically.',
-    icon: CalendarClock,
   },
 ]
 
@@ -99,6 +94,55 @@ function ConnectorRow({ connector }: { connector: Connector }) {
   )
 }
 
+// Real, unlike the rest of STUDIO_CONNECTORS — pulls from Calendly right
+// now via api/calendly-sync.ts, plus runs automatically every 30 minutes
+// via the Vercel Cron job in vercel.json.
+function CalendlyConnectorRow() {
+  const [syncing, setSyncing] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+
+  const handleSync = async () => {
+    setSyncing(true)
+    setResult(null)
+    try {
+      const res = await fetch('/api/calendly-sync', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || 'Sync failed')
+      setResult(`Synced ${data.synced} meeting${data.synced === 1 ? '' : 's'}.`)
+    } catch (err) {
+      setResult(err instanceof Error ? err.message : 'Sync failed')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-black/[0.06] bg-white px-4 py-3.5">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-ink-secondary">
+            <CalendarClock size={17} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-ink-primary">Calendly</p>
+            <p className="truncate text-xs text-ink-muted">
+              Pull booked meetings into the studio calendar automatically.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="shrink-0 rounded-lg border border-black/[0.10] bg-white px-3 py-1.5 text-xs font-medium text-ink-secondary hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {syncing ? 'Syncing…' : 'Sync now'}
+        </button>
+      </div>
+      {result && <p className="mt-2 border-t border-black/[0.06] pt-2 text-xs text-ink-muted">{result}</p>}
+    </div>
+  )
+}
+
 export default function StudioSettings() {
   return (
     <div className="flex flex-col gap-8 pb-8">
@@ -121,6 +165,7 @@ export default function StudioSettings() {
         <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-muted">Studio</p>
         <p className="mb-3 text-sm text-ink-secondary">What the studio connects to, for everyone on it.</p>
         <div className="flex flex-col gap-2">
+          <CalendlyConnectorRow />
           {STUDIO_CONNECTORS.map((c) => (
             <ConnectorRow key={c.id} connector={c} />
           ))}
