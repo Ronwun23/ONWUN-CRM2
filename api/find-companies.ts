@@ -97,7 +97,7 @@ async function callAnthropic(apiKey: string, body: Record<string, unknown>): Pro
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'POST' && req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' })
     return
   }
@@ -111,6 +111,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const isAgency = await verifyAgencyUser(authHeader.slice('Bearer '.length))
   if (!isAgency) {
     res.status(403).json({ error: 'Not authorized' })
+    return
+  }
+
+  // GET is just the usage meter — lets the page show it on load without
+  // spending anything. Sharing this file with the POST search below
+  // keeps us under Vercel Hobby's 12-serverless-function cap; the two
+  // were split out for clarity, not because they need to be separate.
+  if (req.method === 'GET') {
+    res.status(200).json({ tokensUsed: await getTokensUsedThisMonth(), budget: monthlyTokenBudget() })
     return
   }
 

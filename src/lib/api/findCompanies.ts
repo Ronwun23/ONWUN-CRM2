@@ -21,8 +21,10 @@ async function authHeader(): Promise<string> {
   return `Bearer ${session.access_token}`
 }
 
+// GET on the same endpoint as the search below — see the comment in
+// api/find-companies.ts for why they share one file.
 export async function fetchAcquisitionUsage(): Promise<UsageMeter> {
-  const res = await fetch('/api/acquisition-usage', {
+  const res = await fetch('/api/find-companies', {
     headers: { authorization: await authHeader() },
   })
   if (!res.ok) throw new Error(`Failed to load usage (${res.status})`)
