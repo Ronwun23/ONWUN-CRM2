@@ -48,9 +48,12 @@ export default function AcquisitionContactDetail() {
   const lead = leads.find((l) => l.id === leadId)
   if (!lead) return <Navigate to="/acquisition/contacts" replace />
 
-  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+  // Onwun's own mail is hosted on Microsoft 365, not Gmail — this is
+  // Outlook on the web's documented compose deep link, opens with the
+  // account already signed into outlook.office.com in the browser.
+  const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(
     lead.contactEmail ?? ''
-  )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  )}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 
   const handleDoneSentIt = async () => {
     setSending(true)
@@ -233,13 +236,13 @@ export default function AcquisitionContactDetail() {
                     Copy
                   </button>
                   <a
-                    href={gmailUrl}
+                    href={outlookUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-semibold text-ink-primary hover:bg-surface-sunken"
                   >
                     <Mail size={14} />
-                    Open in Gmail
+                    Open in Outlook
                   </a>
                   <button
                     onClick={handleDoneSentIt}
