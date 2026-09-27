@@ -1,4 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { verifyAgencyUser } from './_shared/verifyAgencyUser'
+import { fetchAcquisitionProfileRow, briefLines } from './_shared/acquisitionProfile'
 
 // Drafts a first cold-outreach email from the studio's brief (Setup) and
 // a genuine observation about one specific lead, using Claude — same
@@ -41,51 +43,6 @@ const SYSTEM_PROMPT =
   'only lightly), a low-pressure call to action, and a short, clear line making it easy to opt out of hearing from ' +
   'them again. No subject-line clickbait.'
 
-async function verifyAgencyUser(accessToken: string): Promise<boolean> {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!supabaseUrl || !anonKey || !serviceKey) return false
-
-  const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { Authorization: `Bearer ${accessToken}`, apikey: anonKey },
-  })
-  if (!userRes.ok) return false
-  const user = (await userRes.json()) as { id?: string }
-  if (!user.id) return false
-
-  const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${user.id}&select=role`, {
-    headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
-  })
-  if (!profileRes.ok) return false
-  const profiles = (await profileRes.json()) as { role?: string }[]
-  return profiles[0]?.role === 'agency'
-}
-
-interface AcquisitionProfileRow {
-  niche: string
-  countries: string
-  who_exactly: string | null
-  what_we_sell: string | null
-  price: string | null
-  call_days: string | null
-  past_work_what: string | null
-  past_work_why: string | null
-}
-
-async function fetchAcquisitionProfile(): Promise<AcquisitionProfileRow | null> {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!supabaseUrl || !serviceKey) return null
-
-  const res = await fetch(`${supabaseUrl}/rest/v1/acquisition_profile?select=*&order=id.asc&limit=1`, {
-    headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
-  })
-  if (!res.ok) return null
-  const rows = (await res.json()) as AcquisitionProfileRow[]
-  return rows[0] ?? null
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
@@ -115,31 +72,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const profile = await fetchAcquisitionProfile()
+  const profile = await fetchAcquisitionProfileRow()
   if (!profile) {
     res.status(400).json({ error: 'Fill in the Setup brief before drafting an email' })
     return
   }
-
-  const briefLines = [
-    `Niche we target: ${profile.niche}`,
-    `Countries: ${profile.countries}`,
-    profile.who_exactly && `Who exactly: ${profile.who_exactly}`,
-    profile.what_we_sell && `What we sell: ${profile.what_we_sell}`,
-    profile.price && `Price: ${profile.price}`,
-    profile.call_days && `Days we take calls: ${profile.call_days}`,
-    profile.past_work_what && `Past work in this niche — what we did: ${profile.past_work_what}`,
-    profile.past_work_why && `Past work in this niche — why it was valuable: ${profile.past_work_why}`,
-  ].filter(Boolean)
 
   const leadLines = [
     `Company: ${companyName.trim()}`,
     contactName?.trim() && `Contact name: ${contactName.trim()}`,
     noticedNote?.trim() && `What the sender noticed about them: ${noticedNote.trim()}`,
     whyFits?.trim() && `Why this lead fits the brief: ${whyFits.trim()}`,
-  ].filter(Boolean)
+  ].filter((line): line is string => Boolean(line))
 
-  const userContent = `Studio brief:\n${briefLines.join('\n')}\n\nThis lead:\n${leadLines.join('\n')}`
+  const userContent = `Studio brief:\n${briefLines(profile).join('\n')}\n\nThis lead:\n${leadLines.join('\n')}`
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {

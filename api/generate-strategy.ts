@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { FLAT_WORKSHOP_QUESTIONS } from '../src/data/workshopTemplate'
+import { verifyAgencyUser } from './_shared/verifyAgencyUser'
 
 // Turns a completed discovery workshop into a first-draft brand strategy
 // using Claude, instead of the old deterministic template
@@ -120,27 +121,6 @@ const SYSTEM_PROMPT =
   'If the answers genuinely don\'t give you enough to work with for a field, write exactly "Further discovery required." for ' +
   'that field rather than guessing or padding it out. Write in clear, confident, jargon-free language — the kind a real ' +
   'strategist would put in front of a paying client, not marketing fluff.'
-
-async function verifyAgencyUser(accessToken: string): Promise<boolean> {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!supabaseUrl || !anonKey || !serviceKey) return false
-
-  const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { Authorization: `Bearer ${accessToken}`, apikey: anonKey },
-  })
-  if (!userRes.ok) return false
-  const user = (await userRes.json()) as { id?: string }
-  if (!user.id) return false
-
-  const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${user.id}&select=role`, {
-    headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
-  })
-  if (!profileRes.ok) return false
-  const profiles = (await profileRes.json()) as { role?: string }[]
-  return profiles[0]?.role === 'agency'
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
