@@ -5,5 +5,5 @@
     { "source": "/.well-known/oauth-protected-resource/api/mcp", "destination": "/api/well-known-oauth-protected-resource" },
     { "source": "/((?!assets/|api/).*)", "destination": "/index.html" }
   ],
-  "crons": [{ "path": "/api/calendly-sync", "schedule": "*/30 * * * *" }]
+  "crons": [{ "path": "/api/calendly-sync", "schedule": "0 6 * * *" }]
 }
