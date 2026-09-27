@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { verifyAgencyUser } from './_shared/verifyAgencyUser'
-import { fetchAcquisitionProfileRow, briefLines } from './_shared/acquisitionProfile'
-import { getTokensUsedThisMonth, addTokensUsed, monthlyTokenBudget } from './_shared/aiUsage'
+import { verifyAgencyUser } from './_shared/verifyAgencyUser.js'
+import { fetchAcquisitionProfileRow, briefLines } from './_shared/acquisitionProfile.js'
+import { getTokensUsedThisMonth, addTokensUsed, monthlyTokenBudget } from './_shared/aiUsage.js'
 
 // Finds real companies matching the studio's brief for one country,
 // using Claude's web search. Two Anthropic calls rather than one:

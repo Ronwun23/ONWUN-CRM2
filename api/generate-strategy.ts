@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { FLAT_WORKSHOP_QUESTIONS } from '../src/data/workshopTemplate'
-import { verifyAgencyUser } from './_shared/verifyAgencyUser'
+import { verifyAgencyUser } from './_shared/verifyAgencyUser.js'
 
 // Turns a completed discovery workshop into a first-draft brand strategy
 // using Claude, instead of the old deterministic template

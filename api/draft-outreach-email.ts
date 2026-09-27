@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { verifyAgencyUser } from './_shared/verifyAgencyUser'
-import { fetchAcquisitionProfileRow, briefLines } from './_shared/acquisitionProfile'
+import { verifyAgencyUser } from './_shared/verifyAgencyUser.js'
+import { fetchAcquisitionProfileRow, briefLines } from './_shared/acquisitionProfile.js'
 
 // Drafts a first cold-outreach email from the studio's brief (Setup) and
 // a genuine observation about one specific lead, using Claude — same
