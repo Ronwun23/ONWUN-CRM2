@@ -48,13 +48,16 @@ export default function AcquisitionContactDetail() {
   const lead = leads.find((l) => l.id === leadId)
   if (!lead) return <Navigate to="/acquisition/contacts" replace />
 
-  // Onwun's mail is hosted on Microsoft 365, on the newer unified
-  // outlook.cloud.microsoft web app (not the older outlook.office.com,
-  // which redirects here anyway and drops the compose query params in
-  // the process) — same deep-link shape, just the current domain.
-  const outlookUrl = `https://outlook.cloud.microsoft/mail/deeplink/compose?to=${encodeURIComponent(
-    lead.contactEmail ?? ''
-  )}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  // Neither of Microsoft's own web compose deep links (outlook.office.com,
+  // outlook.cloud.microsoft) reliably opened a visible compose window —
+  // both silently created a background draft instead. mailto: is an
+  // OS/browser-level standard rather than a specific webmail's URL
+  // scheme, so it isn't at the mercy of Microsoft changing that scheme
+  // again; it opens whatever mail app (web or desktop) is actually
+  // registered as the default handler.
+  // The "to" address is part of the mailto: scheme itself, not a query
+  // param — encodeURIComponent would wrongly escape its own @ as %40.
+  const outlookUrl = `mailto:${lead.contactEmail ?? ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 
   const handleDoneSentIt = async () => {
     setSending(true)
@@ -243,7 +246,7 @@ export default function AcquisitionContactDetail() {
                     className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-semibold text-ink-primary hover:bg-surface-sunken"
                   >
                     <Mail size={14} />
-                    Open in Outlook
+                    Open in Mail
                   </a>
                   <button
                     onClick={handleDoneSentIt}
