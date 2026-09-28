@@ -253,18 +253,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         fetchStudioEvents(),
         fetchLeads(),
         fetchAcquisitionProfile(),
-        fetchDeals(),
       ])
     )
-      .then(([loadedClients, studioTasks, studioUpdates, studioEvents, loadedLeads, loadedProfile, loadedDeals]) => {
+      .then(([loadedClients, studioTasks, studioUpdates, studioEvents, loadedLeads, loadedProfile]) => {
         setClients(loadedClients)
         setStudio((prev) => ({ ...prev, tasks: studioTasks, updates: studioUpdates, events: studioEvents }))
         setLeads(loadedLeads)
         setAcquisitionProfile(loadedProfile)
-        setDeals(loadedDeals)
       })
       .catch((err) => console.error('Failed to load clients from Supabase:', err))
       .finally(() => setClientsLoading(false))
+
+    // Kept out of the bundle above deliberately — a brand new table (or
+    // any future one added the same way) failing to load should never be
+    // able to take the entire app's data down with it.
+    fetchDeals()
+      .then(setDeals)
+      .catch((err) => console.error('Failed to load deals from Supabase:', err))
   }, [])
 
   // Loads one client's documents/tasks/updates/library/brand assets/events
