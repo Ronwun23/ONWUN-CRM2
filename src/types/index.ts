@@ -54,6 +54,12 @@ export interface DocumentTestimonial {
   createdAt: string
 }
 
+export interface DocumentSignature {
+  authorName: string
+  signatureData: string
+  createdAt: string
+}
+
 export interface ClientDocument {
   id: string
   title: string
@@ -64,6 +70,8 @@ export interface ClientDocument {
   updatedAt: string
   comments: DocumentComment[]
   testimonial?: DocumentTestimonial
+  agencySignature?: DocumentSignature
+  clientSignature?: DocumentSignature
 }
 
 export interface ClientTask {
