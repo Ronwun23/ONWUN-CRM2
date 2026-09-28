@@ -7,7 +7,8 @@ export default {
       colors: {
         // Onwun brand: electric violet primary, sand + slate neutrals (2026 brand guidelines).
         surface: {
-          page: '#e3e5e2',
+          // 2026 makeover — was #e3e5e2.
+          page: '#f8f8f8',
           card: '#ffffff',
           sunken: '#d1d3ce',
           // New (2026 makeover) light sidebar — see src/components/Layout.tsx.

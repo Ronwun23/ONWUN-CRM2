@@ -118,9 +118,9 @@ export default function HomePage() {
         </div>
         <button
           onClick={() => setShowAddClient(true)}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-black px-3.5 py-2 text-sm font-semibold text-white hover:bg-black/85"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
         >
-          <Plus size={14} />
+          <Plus size={12} />
           New client
         </button>
       </div>
