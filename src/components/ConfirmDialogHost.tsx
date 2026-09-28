@@ -48,7 +48,7 @@ export default function ConfirmDialogHost() {
         // by default.
         if (e.target === dialogRef.current) settle(false)
       }}
-      className="m-auto max-w-sm rounded-xl border border-black/[0.08] bg-white p-0 shadow-pop backdrop:bg-black/40"
+      className="m-auto max-w-sm rounded-xl border border-black/[0.08] bg-white p-0 shadow-pop"
     >
       {pending && (
         <div className="p-5">
