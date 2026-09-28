@@ -94,7 +94,7 @@ export default function StudioCalendar() {
         <p className="text-sm text-ink-secondary">Studio events — shoots, launches, team days</p>
       </div>
 
-      <div className="flex h-[75vh] min-h-[560px] flex-col overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
+      <div className="flex flex-col overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
         <FullScreenCalendar
           data={calendarData}
           onNewEvent={handleNewEvent}
