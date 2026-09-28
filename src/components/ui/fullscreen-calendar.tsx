@@ -92,7 +92,7 @@ export function FullScreenCalendar({
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* Calendar Header */}
       <div className="flex flex-col space-y-4 p-4 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none">
         <div className="flex flex-auto">
@@ -158,7 +158,7 @@ export function FullScreenCalendar({
       </div>
 
       {/* Calendar Grid */}
-      <div className="lg:flex lg:flex-auto lg:flex-col">
+      <div className="lg:flex lg:min-h-0 lg:flex-auto lg:flex-col">
         {/* Week Days Header */}
         <div className="grid grid-cols-7 border border-black/[0.08] text-center text-xs font-semibold leading-6 text-ink-secondary lg:flex-none">
           <div className="border-r border-black/[0.08] py-2.5">Sun</div>
@@ -171,9 +171,9 @@ export function FullScreenCalendar({
         </div>
 
         {/* Calendar Days */}
-        <div className="flex text-xs leading-6 lg:flex-auto">
+        <div className="flex text-xs leading-6 lg:min-h-0 lg:flex-auto">
           <div
-            className="hidden w-full border-x border-black/[0.08] lg:grid lg:grid-cols-7"
+            className="hidden w-full min-h-0 border-x border-black/[0.08] lg:grid lg:grid-cols-7"
             style={{ gridTemplateRows: `repeat(${weekCount}, minmax(0, 1fr))` }}
           >
             {days.map((day, dayIdx) =>
