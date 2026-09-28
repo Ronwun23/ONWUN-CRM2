@@ -179,6 +179,7 @@ export default function AcquisitionPipeline() {
   const [priority, setPriority] = useState<DealPriority>('medium')
   const [contact, setContact] = useState<{ id: string; name: string; country?: string } | null>(null)
   const [saving, setSaving] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   const countries = useMemo(() => {
     const set = new Set(deals.map((d) => d.contactCountry).filter((c): c is string => !!c))
@@ -237,6 +238,7 @@ export default function AcquisitionPipeline() {
   const handleCreate = async () => {
     if (!title.trim() || !contact) return
     setSaving(true)
+    setCreateError(null)
     try {
       await addDeal({
         title: title.trim(),
@@ -250,6 +252,9 @@ export default function AcquisitionPipeline() {
       })
       resetForm()
       setShowNewDeal(false)
+    } catch (err) {
+      console.error('Failed to save deal to Supabase:', err)
+      setCreateError("Couldn't save this deal — try again.")
     } finally {
       setSaving(false)
     }
@@ -326,6 +331,7 @@ export default function AcquisitionPipeline() {
             onClear={() => setContact(null)}
           />
         </div>
+        {createError && <p className="text-xs text-status-critical">{createError}</p>}
         <div className="mt-1 flex items-center justify-end gap-2">
           <button
             onClick={() => setShowNewDeal(false)}
