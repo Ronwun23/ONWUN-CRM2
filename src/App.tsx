@@ -13,6 +13,7 @@ import AcquisitionSetup from '@/pages/studio/acquisition/Setup'
 import AcquisitionFindCompanies from '@/pages/studio/acquisition/FindCompanies'
 import AcquisitionContacts from '@/pages/studio/acquisition/Contacts'
 import AcquisitionContactDetail from '@/pages/studio/acquisition/ContactDetail'
+import AcquisitionPipeline from '@/pages/studio/acquisition/Pipeline'
 import AcquisitionToday from '@/pages/studio/acquisition/Today'
 import ClientLayout from '@/pages/client/ClientLayout'
 import ClientDashboard from '@/pages/client/Dashboard'
@@ -95,6 +96,7 @@ export default function App() {
           <Route path="/acquisition/find" element={<AcquisitionFindCompanies />} />
           <Route path="/acquisition/contacts" element={<AcquisitionContacts />} />
           <Route path="/acquisition/contacts/:leadId" element={<AcquisitionContactDetail />} />
+          <Route path="/acquisition/pipeline" element={<AcquisitionPipeline />} />
           <Route path="/acquisition/today" element={<AcquisitionToday />} />
           <Route path="/clients/:clientId" element={<ClientLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
