@@ -10,6 +10,8 @@ export default {
           page: '#e3e5e2',
           card: '#ffffff',
           sunken: '#d1d3ce',
+          // New (2026 makeover) light sidebar — see src/components/Layout.tsx.
+          sidebar: '#f5f1ef',
         },
         ink: {
           primary: '#000000',
