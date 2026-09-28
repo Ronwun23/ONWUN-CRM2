@@ -42,6 +42,7 @@ export default function AcquisitionContacts() {
   const [noticedNote, setNoticedNote] = useState('')
   const [owner, setOwner] = useState(activeAccount.id)
   const [saving, setSaving] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('added')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -62,6 +63,7 @@ export default function AcquisitionContacts() {
   const handleAdd = async () => {
     if (!companyName.trim()) return
     setSaving(true)
+    setAddError(null)
     try {
       await addLead({
         companyName: companyName.trim(),
@@ -78,6 +80,9 @@ export default function AcquisitionContacts() {
       setShowAdd(false)
       setJustAdded(true)
       setTimeout(() => setJustAdded(false), 3000)
+    } catch (err) {
+      console.error('Failed to save contact to Supabase:', err)
+      setAddError("Couldn't save this contact — try again.")
     } finally {
       setSaving(false)
     }
@@ -309,6 +314,7 @@ export default function AcquisitionContacts() {
               className={inputClass}
             />
           </div>
+          {addError && <p className="text-xs text-status-critical">{addError}</p>}
           <div className="mt-1 flex items-center justify-end gap-2">
             <button
               onClick={() => setShowAdd(false)}
