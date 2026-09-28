@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { format, parse } from 'date-fns'
 import { useApp } from '@/context/AppContext'
 import Drawer from '@/components/Drawer'
@@ -23,6 +23,19 @@ export default function StudioCalendar() {
   const [notesText, setNotesText] = useState('')
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
+
+  // Calendly's free plan has no webhooks, and Vercel Hobby's cron can only
+  // run once a day — so instead of relying on either for freshness, quietly
+  // sync in the background whenever this page is actually open: once on
+  // arrival, then every 5 minutes for as long as it stays open. No toast
+  // here on purpose — the realtime `events` subscription already toasts
+  // when a synced booking actually lands (see src/lib/realtime.ts).
+  useEffect(() => {
+    const sync = () => fetch('/api/calendly-sync', { method: 'POST' }).catch(() => {})
+    sync()
+    const interval = setInterval(sync, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   const calendarData = useMemo<CalendarData[]>(() => {
     const byDay = new Map<string, CalendarData>()
