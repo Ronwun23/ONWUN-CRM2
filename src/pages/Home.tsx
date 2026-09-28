@@ -12,6 +12,7 @@ import { phaseStatus, overallProgress, currentPhaseKey } from '@/lib/progress'
 import { formatDueDate, formatDate } from '@/lib/format'
 import { toDisplayDate, todayCivil } from '@/lib/civilDate'
 import { CLIENT_STATUS_LABEL, CLIENT_STATUS_TONE } from '@/lib/labels'
+import { resolveMember } from '@/data/team'
 import clsx from 'clsx'
 
 function sameDay(a: Date, b: Date): boolean {
@@ -62,13 +63,21 @@ export default function HomePage() {
     clients.forEach((c) => ensureClientDataLoaded(c.id))
   }, [clients, ensureClientDataLoaded])
 
-  const stats = useMemo(
-    () => ({
+  const stats = useMemo(() => {
+    // "you" = whoever's switched in via the account switcher (Ro/Niall),
+    // matching the greeting above — not a fixed demo user.
+    const waitingOnMeTasks = clients.flatMap((c) =>
+      c.tasks.filter((t) => !t.done && resolveMember(t.assignee).name === activeAccount.name)
+    )
+    const waitingOnMeDocs = clients.flatMap((c) => c.documents.filter((d) => d.status === 'with_you'))
+    const unpaidInvoices = clients.flatMap((c) => c.documents.filter((d) => d.type === 'invoice' && d.status === 'unpaid'))
+    return {
       totalClients: clients.length,
       activeProjects: clients.filter((c) => c.status === 'active').length,
-    }),
-    [clients]
-  )
+      waitingOnMe: waitingOnMeTasks.length + waitingOnMeDocs.length,
+      unpaidCount: unpaidInvoices.length,
+    }
+  }, [clients, activeAccount])
 
   const todaysTasks = useMemo(() => {
     const clientTasks = clients.flatMap((c) =>
@@ -157,6 +166,21 @@ export default function HomePage() {
         <div className="flex-1 px-5 py-3.5">
           <p className="text-xs text-ink-muted">Active projects</p>
           <p className="mt-1 text-2xl font-semibold text-ink-primary">{stats.activeProjects}</p>
+        </div>
+        <div className="flex-1 px-5 py-3.5">
+          <p className="text-xs text-ink-muted">Waiting on you</p>
+          <p className="mt-1 text-2xl font-semibold text-ink-primary">{stats.waitingOnMe}</p>
+        </div>
+        <div className="flex-1 px-5 py-3.5">
+          <p className="text-xs text-ink-muted">Unpaid</p>
+          <div className="mt-1 flex items-center gap-2">
+            <p className="text-2xl font-semibold text-ink-primary">{stats.unpaidCount}</p>
+            {stats.unpaidCount > 0 && (
+              <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-xs text-ink-muted">
+                {stats.unpaidCount === 1 ? 'invoice' : 'invoices'}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
