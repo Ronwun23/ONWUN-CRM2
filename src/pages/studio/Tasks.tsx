@@ -46,9 +46,9 @@ export default function StudioTasks() {
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+          className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600"
         >
-          <Plus size={16} />
+          <Plus size={12} />
           Add task
         </button>
       </div>
