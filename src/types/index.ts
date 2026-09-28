@@ -300,6 +300,27 @@ export interface Lead {
   touches: Touch[]
 }
 
+export type DealStage = 'new' | 'contacted' | 'qualified' | 'proposal' | 'won' | 'lost'
+
+export type DealPriority = 'high' | 'medium' | 'low'
+
+// A tracked opportunity against a contact — its stage is dragged by hand
+// (Kanban-style), separate from a Lead's own outreach-sequence `status`
+// which automation drives.
+export interface Deal {
+  id: string
+  title: string
+  value?: number
+  currency: string
+  stage: DealStage
+  priority: DealPriority
+  contactId?: string
+  contactName?: string
+  contactCountry?: string
+  createdAt: string
+  updatedAt: string
+}
+
 // The outreach brief — one per studio — that drives AI-drafted emails
 // and (Phase 3) the company search. Only niche and countries are
 // required; everything else sharpens the draft without blocking it.

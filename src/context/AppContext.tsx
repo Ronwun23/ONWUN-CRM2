@@ -7,6 +7,9 @@ import type {
   ClientDocument,
   ClientEvent,
   ClientTask,
+  Deal,
+  DealPriority,
+  DealStage,
   DocumentComment,
   DocumentSignature,
   DocumentTestimonial,
@@ -45,6 +48,7 @@ import {
   insertTouch,
   insertSuppressedContact,
 } from '@/lib/api/leads'
+import { fetchDeals, insertDeal, updateDealRow, deleteDealRow } from '@/lib/api/deals'
 import { fetchAcquisitionProfile, saveAcquisitionProfile as saveAcquisitionProfileRow } from '@/lib/api/acquisitionProfile'
 import { buildSequence, notNowResurfaceDate, LEAD_STATUS_LABEL } from '@/lib/leadOutcomes'
 import { createBlankClient } from '@/data/clients'
@@ -170,6 +174,19 @@ interface AppContextValue {
   convertLeadToClient: (leadId: string, input: { projectName: string; dueDate: string }) => Promise<Client>
   acquisitionProfile: AcquisitionProfile | null
   saveAcquisitionProfile: (input: Omit<AcquisitionProfile, 'id' | 'updatedAt'>) => Promise<void>
+  deals: Deal[]
+  addDeal: (input: {
+    title: string
+    value?: number
+    currency: string
+    stage: DealStage
+    priority: DealPriority
+    contactId?: string
+    contactName?: string
+    contactCountry?: string
+  }) => Promise<Deal>
+  updateDealStage: (dealId: string, stage: DealStage) => void
+  removeDeal: (dealId: string) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -220,6 +237,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     leadsRef.current = leads
   }, [leads])
 
+  // Sales pipeline deals — studio-wide, same loading approach as leads.
+  const [deals, setDeals] = useState<Deal[]>([])
+
   // The outreach brief (Setup) — a singleton, null until someone's saved
   // it at least once.
   const [acquisitionProfile, setAcquisitionProfile] = useState<AcquisitionProfile | null>(null)
@@ -243,6 +263,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       })
       .catch((err) => console.error('Failed to load clients from Supabase:', err))
       .finally(() => setClientsLoading(false))
+
+    // Kept out of the bundle above deliberately — a brand new table (or
+    // any future one added the same way) failing to load should never be
+    // able to take the entire app's data down with it.
+    fetchDeals()
+      .then(setDeals)
+      .catch((err) => console.error('Failed to load deals from Supabase:', err))
   }, [])
 
   // Loads one client's documents/tasks/updates/library/brand assets/events
@@ -965,6 +992,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [acquisitionProfile?.id]
   )
 
+  const addDeal = useCallback(async (input: Parameters<AppContextValue['addDeal']>[0]) => {
+    const created = await insertDeal(input)
+    setDeals((prev) => [created, ...prev])
+    return created
+  }, [])
+
+  const updateDealStage = useCallback((dealId: string, stage: DealStage) => {
+    setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, stage } : d)))
+    updateDealRow(dealId, { stage }).catch((err) => console.error('Failed to save deal to Supabase:', err))
+  }, [])
+
+  const removeDeal = useCallback((dealId: string) => {
+    setDeals((prev) => prev.filter((d) => d.id !== dealId))
+    deleteDealRow(dealId).catch((err) => console.error('Failed to delete deal from Supabase:', err))
+  }, [])
+
   const value = useMemo(
     () => ({
       clients,
@@ -1023,6 +1066,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       convertLeadToClient,
       acquisitionProfile,
       saveAcquisitionProfile,
+      deals,
+      addDeal,
+      updateDealStage,
+      removeDeal,
     }),
     [
       clients,
@@ -1081,6 +1128,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       convertLeadToClient,
       acquisitionProfile,
       saveAcquisitionProfile,
+      deals,
+      addDeal,
+      updateDealStage,
+      removeDeal,
     ]
   )
 

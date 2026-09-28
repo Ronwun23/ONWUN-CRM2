@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronsUpDown,
   FileText,
+  GitBranch,
   LayoutDashboard,
   ListTodo,
   LogOut,
@@ -230,6 +231,7 @@ const ACQUISITION_NAV_ITEMS = [
   { to: '/acquisition/setup', label: 'Setup', icon: Target },
   { to: '/acquisition/find', label: 'Find companies', icon: Search },
   { to: '/acquisition/contacts', label: 'Contacts', icon: Users },
+  { to: '/acquisition/pipeline', label: 'Pipeline', icon: GitBranch },
   { to: '/acquisition/today', label: 'Today', icon: ListTodo },
 ]
 
