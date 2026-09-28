@@ -158,20 +158,20 @@ export default function HomePage() {
         </button>
       </div>
 
-      <div className="flex divide-x divide-black/[0.06] overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
-        <div className="flex-1 px-5 py-3.5">
+      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
           <p className="text-xs text-ink-muted">Clients</p>
           <p className="mt-1 text-2xl font-semibold text-ink-primary">{stats.totalClients}</p>
         </div>
-        <div className="flex-1 px-5 py-3.5">
+        <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
           <p className="text-xs text-ink-muted">Active projects</p>
           <p className="mt-1 text-2xl font-semibold text-ink-primary">{stats.activeProjects}</p>
         </div>
-        <div className="flex-1 px-5 py-3.5">
+        <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
           <p className="text-xs text-ink-muted">Waiting on you</p>
           <p className="mt-1 text-2xl font-semibold text-ink-primary">{stats.waitingOnMe}</p>
         </div>
-        <div className="flex-1 px-5 py-3.5">
+        <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
           <p className="text-xs text-ink-muted">Unpaid</p>
           <div className="mt-1 flex items-center gap-2">
             <p className="text-2xl font-semibold text-ink-primary">{stats.unpaidCount}</p>
