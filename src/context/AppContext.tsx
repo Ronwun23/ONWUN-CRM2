@@ -34,7 +34,7 @@ import {
   deleteDocumentRow,
   insertComment,
 } from '@/lib/api/documents'
-import { fetchTasksForClient, fetchStudioTasks, insertTask, updateTaskRow } from '@/lib/api/tasks'
+import { fetchTasksForClient, fetchStudioTasks, insertTask, updateTaskRow, deleteTaskRow } from '@/lib/api/tasks'
 import { fetchUpdatesForClient, fetchStudioUpdates, insertUpdate, deleteUpdateRow } from '@/lib/api/updates'
 import { fetchLibraryForClient, insertFolder, deleteFolderRow, insertFile, deleteFileRow } from '@/lib/api/library'
 import { fetchBrandAssetsForClient, insertBrandAsset } from '@/lib/api/brandAssets'
@@ -110,6 +110,7 @@ interface AppContextValue {
   addStep: (clientId: string, phaseKey: string, title: string) => void
   toggleTask: (clientId: string, taskId: string) => void
   addTask: (clientId: string, task: ClientTask) => Promise<void>
+  removeTask: (clientId: string, taskId: string) => void
   addUpdate: (clientId: string, update: UpdateEntry) => Promise<void>
   removeUpdate: (clientId: string, updateId: string) => void
   addDocument: (clientId: string, doc: ClientDocument) => Promise<ClientDocument>
@@ -148,6 +149,7 @@ interface AppContextValue {
   studio: StudioState
   addStudioTask: (task: ClientTask) => Promise<void>
   toggleStudioTask: (taskId: string) => void
+  removeStudioTask: (taskId: string) => void
   addStudioUpdate: (update: UpdateEntry) => Promise<void>
   removeStudioUpdate: (updateId: string) => void
   addStudioEvent: (event: ClientEvent) => Promise<void>
@@ -359,6 +361,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }))
   }, [])
 
+  const removeStudioTask = useCallback((taskId: string) => {
+    setStudio((prev) => ({ ...prev, tasks: prev.tasks.filter((t) => t.id !== taskId) }))
+    deleteTaskRow(taskId).catch((err) => console.error('Failed to delete task from Supabase:', err))
+  }, [])
+
   const addStudioUpdate = useCallback(async (update: UpdateEntry) => {
     const created = await insertUpdate(null, update)
     setStudio((prev) => ({ ...prev, updates: [created, ...prev.updates] }))
@@ -498,6 +505,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return { ...t, done }
         }),
       }))
+    },
+    [updateClient]
+  )
+
+  const removeTask = useCallback(
+    (clientId: string, taskId: string) => {
+      updateClient(clientId, (c) => ({ ...c, tasks: c.tasks.filter((t) => t.id !== taskId) }))
+      deleteTaskRow(taskId).catch((err) => console.error('Failed to delete task from Supabase:', err))
     },
     [updateClient]
   )
@@ -1022,6 +1037,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStep,
       toggleTask,
       addTask,
+      removeTask,
       addUpdate,
       removeUpdate,
       addDocument,
@@ -1051,6 +1067,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       studio,
       addStudioTask,
       toggleStudioTask,
+      removeStudioTask,
       addStudioUpdate,
       removeStudioUpdate,
       addStudioEvent,
@@ -1084,6 +1101,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStep,
       toggleTask,
       addTask,
+      removeTask,
       addUpdate,
       removeUpdate,
       addDocument,
@@ -1113,6 +1131,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       studio,
       addStudioTask,
       toggleStudioTask,
+      removeStudioTask,
       addStudioUpdate,
       removeStudioUpdate,
       addStudioEvent,

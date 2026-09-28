@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Calendar, Check, Plus, Search } from 'lucide-react'
+import { Calendar, Check, Plus, Search, Trash2 } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { STUDIO_ACCOUNTS, resolveMember } from '@/data/team'
@@ -9,6 +9,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Select } from '@/components/ui/select'
 import { formatDueDate } from '@/lib/format'
 import { toDisplayDate } from '@/lib/civilDate'
+import { confirmAction } from '@/lib/confirm'
 import type { ClientTask } from '@/types'
 
 type StatusFilter = 'all' | 'todo' | 'done'
@@ -37,7 +38,18 @@ function DueDatePill({ dueDate }: { dueDate: string }) {
 }
 
 export default function StudioTasks() {
-  const { clients, studio, toggleStudioTask, toggleTask, addStudioTask, addTask, activeAccount, ensureClientDataLoaded } = useApp()
+  const {
+    clients,
+    studio,
+    toggleStudioTask,
+    toggleTask,
+    addStudioTask,
+    addTask,
+    removeStudioTask,
+    removeTask,
+    activeAccount,
+    ensureClientDataLoaded,
+  } = useApp()
   const [showAdd, setShowAdd] = useState(false)
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState<string | undefined>(undefined)
@@ -76,6 +88,13 @@ export default function StudioTasks() {
   const handleToggle = (row: Row) => {
     if (row.clientId) toggleTask(row.clientId, row.id)
     else toggleStudioTask(row.id)
+  }
+
+  const handleRemove = async (row: Row) => {
+    const confirmed = await confirmAction(`Delete "${row.title}"?`, { confirmLabel: 'Delete', destructive: true })
+    if (!confirmed) return
+    if (row.clientId) removeTask(row.clientId, row.id)
+    else removeStudioTask(row.id)
   }
 
   const handleAdd = async () => {
@@ -163,18 +182,19 @@ export default function StudioTasks() {
               <th className="px-3.5 py-2.5 font-medium">Client</th>
               <th className="px-3.5 py-2.5 font-medium">Assignee</th>
               <th className="px-3.5 py-2.5 font-medium">Due date</th>
+              <th className="w-10 px-3.5 py-2.5"></th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3.5 py-6 text-center text-sm text-ink-muted">
+                <td colSpan={6} className="px-3.5 py-6 text-center text-sm text-ink-muted">
                   Nothing here.
                 </td>
               </tr>
             )}
             {filtered.map((row) => (
-              <tr key={row.id} className="border-b border-black/[0.04] last:border-b-0 hover:bg-surface-sunken/40">
+              <tr key={row.id} className="group border-b border-black/[0.04] last:border-b-0 hover:bg-surface-sunken/40">
                 <td className="px-3.5 py-2.5">
                   <button
                     onClick={() => handleToggle(row)}
@@ -202,6 +222,15 @@ export default function StudioTasks() {
                 </td>
                 <td className="px-3.5 py-2.5">
                   <DueDatePill dueDate={row.dueDate} />
+                </td>
+                <td className="px-3.5 py-2.5">
+                  <button
+                    onClick={() => handleRemove(row)}
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-ink-muted opacity-0 hover:bg-[#fbecec] hover:text-status-critical group-hover:opacity-100"
+                    aria-label={`Delete ${row.title}`}
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 </td>
               </tr>
             ))}
