@@ -230,7 +230,7 @@ export default function HomePage() {
                     onClick={() => navigate('/calendar')}
                     className="flex w-full items-center gap-2.5 py-2 text-left hover:bg-surface-sunken/40"
                   >
-                    <div className="flex w-8 shrink-0 flex-col items-center">
+                    <div className="flex w-9 shrink-0 flex-col items-center rounded-lg border border-black/[0.08] py-1">
                       <span className="text-sm font-semibold leading-tight text-ink-primary">{day.getDate()}</span>
                       <span className="text-[10px] uppercase leading-tight text-ink-muted">
                         {new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(day)}
