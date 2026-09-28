@@ -72,6 +72,10 @@ export function FullScreenCalendar({
     start: startOfWeek(firstDayCurrentMonth),
     end: endOfWeek(endOfMonth(firstDayCurrentMonth)),
   })
+  // A month spans 5 weeks most of the time, but 6 whenever the 1st falls
+  // late enough in its starting week — hardcoding 5 rows cropped that 6th
+  // week clean off the bottom of the fixed-height calendar.
+  const weekCount = days.length / 7
 
   function previousMonth() {
     const firstDayNextMonth = add(firstDayCurrentMonth, { months: -1 })
@@ -168,7 +172,10 @@ export function FullScreenCalendar({
 
         {/* Calendar Days */}
         <div className="flex text-xs leading-6 lg:flex-auto">
-          <div className="hidden w-full border-x border-black/[0.08] lg:grid lg:grid-cols-7 lg:grid-rows-5">
+          <div
+            className="hidden w-full border-x border-black/[0.08] lg:grid lg:grid-cols-7"
+            style={{ gridTemplateRows: `repeat(${weekCount}, minmax(0, 1fr))` }}
+          >
             {days.map((day, dayIdx) =>
               !isDesktop ? (
                 <button
@@ -307,7 +314,10 @@ export function FullScreenCalendar({
             )}
           </div>
 
-          <div className="isolate grid w-full grid-cols-7 grid-rows-5 border-x border-black/[0.08] lg:hidden">
+          <div
+            className="isolate grid w-full grid-cols-7 border-x border-black/[0.08] lg:hidden"
+            style={{ gridTemplateRows: `repeat(${weekCount}, minmax(0, 1fr))` }}
+          >
             {days.map((day, dayIdx) => (
               <button
                 onClick={() => {
