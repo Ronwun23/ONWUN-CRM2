@@ -342,7 +342,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       >
         <div className="flex h-full w-60 flex-col">
         {lockedToClient ? (
-          <div className="flex items-center justify-between gap-2.5 border-b border-black/[0.06] px-5 py-5">
+          <div className="flex items-center justify-between gap-2.5 border-b border-black/[0.06] px-5 py-4">
             <div className="flex items-center gap-2.5">
               <StudioLogo editable={false} />
               <div>
@@ -360,7 +360,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-2.5 border-b border-black/[0.06] px-5 py-5">
+          <div className="flex items-center justify-between gap-2.5 border-b border-black/[0.06] px-5 py-4">
             <div className="flex items-center gap-2.5">
               <StudioLogo editable={!isClientView} />
               <Link to="/">
@@ -383,7 +383,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div className="px-3 pt-3">
             <button
               onClick={openSearch}
-              className="flex w-full items-center gap-2.5 rounded-lg border border-black/[0.08] bg-white px-3 py-2 text-left text-sm text-ink-muted shadow-card transition-colors hover:text-ink-secondary"
+              className="flex w-full items-center gap-2.5 rounded-lg border border-black/[0.08] bg-white px-3 py-1.5 text-left text-sm text-ink-muted shadow-card transition-colors hover:text-ink-secondary"
             >
               <Search size={15} />
               <span className="flex-1">Search</span>
@@ -445,7 +445,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     )
                   }
                 >
-                  <Icon size={17} strokeWidth={2} />
+                  <Icon size={16} strokeWidth={2} />
                   <span className="flex-1">{label}</span>
                   {label === 'Tasks' && hasStudioTaskDueSoon && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ink-primary" />}
                 </NavLink>
@@ -539,7 +539,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                       )
                     }
                   >
-                    <Icon size={17} strokeWidth={2} />
+                    <Icon size={16} strokeWidth={2} />
                     {label}
                   </NavLink>
                 ))}

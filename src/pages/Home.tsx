@@ -112,68 +112,68 @@ export default function HomePage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm text-ink-muted">{formatHeaderDate(new Date())}</p>
-          <h1 className="mt-0.5 text-3xl font-normal text-ink-primary">
+          <h1 className="mt-0.5 text-2xl font-normal text-ink-primary">
             {greeting()}, {activeAccount.name}
           </h1>
         </div>
         <button
           onClick={() => setShowAddClient(true)}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-black/85"
-        >
-          <Plus size={15} />
-          New client
-        </button>
-      </div>
-
-      <div className="flex flex-wrap gap-2.5">
-        <button
-          onClick={() => setShowAddClient(true)}
-          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-1.5 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-black px-3.5 py-2 text-sm font-semibold text-white hover:bg-black/85"
         >
           <Plus size={14} />
           New client
         </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setShowAddClient(true)}
+          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3 py-1.5 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
+        >
+          <Plus size={13} />
+          New client
+        </button>
         <button
           onClick={() => navigate('/calendar')}
-          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-1.5 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
+          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3 py-1.5 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
         >
-          <Calendar size={14} />
+          <Calendar size={13} />
           Add event
         </button>
         <button
           onClick={() => navigate('/tasks')}
-          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-1.5 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
+          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3 py-1.5 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
         >
-          <ListTodo size={14} />
+          <ListTodo size={13} />
           Open tasks
         </button>
       </div>
 
       <div className="flex divide-x divide-black/[0.06] overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
-        <div className="flex-1 px-6 py-4">
-          <p className="text-sm text-ink-muted">Clients</p>
-          <p className="mt-1 text-3xl font-semibold text-ink-primary">{stats.totalClients}</p>
+        <div className="flex-1 px-5 py-3.5">
+          <p className="text-xs text-ink-muted">Clients</p>
+          <p className="mt-1 text-2xl font-semibold text-ink-primary">{stats.totalClients}</p>
         </div>
-        <div className="flex-1 px-6 py-4">
-          <p className="text-sm text-ink-muted">Active projects</p>
-          <p className="mt-1 text-3xl font-semibold text-ink-primary">{stats.activeProjects}</p>
+        <div className="flex-1 px-5 py-3.5">
+          <p className="text-xs text-ink-muted">Active projects</p>
+          <p className="mt-1 text-2xl font-semibold text-ink-primary">{stats.activeProjects}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-black/[0.06] bg-white p-4 shadow-card">
-          <div className="mb-3 flex items-center justify-between">
+        <div className="rounded-xl border border-black/[0.06] bg-white p-3.5 shadow-card">
+          <div className="mb-2.5 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-ink-primary">Today</h3>
           </div>
           {todaysTasks.length === 0 && todaysEvents.length === 0 && (
-            <p className="py-4 text-sm text-ink-muted">Nothing due today.</p>
+            <p className="py-3 text-sm text-ink-muted">Nothing due today.</p>
           )}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             {todaysTasks.map((task) => (
               <button
                 key={task.id}
                 onClick={() => navigate(task.clientId ? `/clients/${task.clientId}/tasks` : '/tasks')}
-                className="flex flex-col items-start gap-0.5 rounded-lg border border-black/[0.06] bg-surface-sunken/40 px-3.5 py-2.5 text-left hover:bg-surface-sunken/70"
+                className="flex flex-col items-start gap-0.5 rounded-lg border border-black/[0.06] bg-surface-sunken/40 px-3 py-2 text-left hover:bg-surface-sunken/70"
               >
                 <p className="text-sm font-medium text-ink-primary">{task.title}</p>
                 <p className="text-xs text-ink-muted">{task.clientName}</p>
@@ -183,7 +183,7 @@ export default function HomePage() {
               <button
                 key={event.id}
                 onClick={() => navigate('/calendar')}
-                className="flex flex-col items-start gap-0.5 rounded-lg border border-black/[0.06] bg-surface-sunken/40 px-3.5 py-2.5 text-left hover:bg-surface-sunken/70"
+                className="flex flex-col items-start gap-0.5 rounded-lg border border-black/[0.06] bg-surface-sunken/40 px-3 py-2 text-left hover:bg-surface-sunken/70"
               >
                 <p className="text-sm font-medium text-ink-primary">{event.title}</p>
                 <p className="text-xs text-ink-muted">{event.time ?? 'All day'}</p>
@@ -192,11 +192,11 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-black/[0.06] bg-white p-4 shadow-card">
-          <div className="mb-3 flex items-center justify-between">
+        <div className="rounded-xl border border-black/[0.06] bg-white p-3.5 shadow-card">
+          <div className="mb-2.5 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-ink-primary">Upcoming events</h3>
           </div>
-          {upcomingEvents.length === 0 && <p className="py-4 text-sm text-ink-muted">Nothing on the calendar yet.</p>}
+          {upcomingEvents.length === 0 && <p className="py-3 text-sm text-ink-muted">Nothing on the calendar yet.</p>}
           <ul className="flex flex-col divide-y divide-black/[0.05]">
             {upcomingEvents.map((event) => {
               const day = toDisplayDate(event.date)
@@ -204,9 +204,9 @@ export default function HomePage() {
                 <li key={event.id}>
                   <button
                     onClick={() => navigate('/calendar')}
-                    className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-surface-sunken/40"
+                    className="flex w-full items-center gap-2.5 py-2 text-left hover:bg-surface-sunken/40"
                   >
-                    <div className="flex w-9 shrink-0 flex-col items-center">
+                    <div className="flex w-8 shrink-0 flex-col items-center">
                       <span className="text-sm font-semibold leading-tight text-ink-primary">{day.getDate()}</span>
                       <span className="text-[10px] uppercase leading-tight text-ink-muted">
                         {new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(day)}
@@ -215,7 +215,7 @@ export default function HomePage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm text-ink-primary">{event.title}</p>
                     </div>
-                    {event.time && <span className="shrink-0 rounded bg-surface-sunken px-2 py-1 text-xs text-ink-muted">{event.time}</span>}
+                    {event.time && <span className="shrink-0 rounded bg-surface-sunken px-1.5 py-0.5 text-xs text-ink-muted">{event.time}</span>}
                   </button>
                 </li>
               )
@@ -225,19 +225,19 @@ export default function HomePage() {
       </div>
 
       <div className="rounded-xl border border-black/[0.06] bg-white shadow-card">
-        <div className="flex items-center gap-2 px-4 py-4">
+        <div className="flex items-center gap-2 px-3.5 py-3">
           <h3 className="text-sm font-semibold text-ink-primary">Clients</h3>
           <span className="text-sm text-ink-muted">{clients.length}</span>
         </div>
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-y border-black/[0.06] text-xs uppercase tracking-wide text-ink-muted">
-              <th className="px-4 py-2.5 font-medium">Client</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
-              <th className="px-4 py-2.5 font-medium">Phase</th>
-              <th className="px-4 py-2.5 font-medium">Progress</th>
-              <th className="px-4 py-2.5 font-medium">Owner</th>
-              <th className="px-4 py-2.5 font-medium">Due</th>
+              <th className="px-3.5 py-2 font-medium">Client</th>
+              <th className="px-3.5 py-2 font-medium">Status</th>
+              <th className="px-3.5 py-2 font-medium">Phase</th>
+              <th className="px-3.5 py-2 font-medium">Progress</th>
+              <th className="px-3.5 py-2 font-medium">Owner</th>
+              <th className="px-3.5 py-2 font-medium">Due</th>
             </tr>
           </thead>
           <tbody>
@@ -250,20 +250,20 @@ export default function HomePage() {
                   onClick={() => navigate(`/clients/${client.id}/dashboard`)}
                   className="cursor-pointer border-b border-black/[0.04] last:border-b-0 hover:bg-surface-sunken/40"
                 >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={32} />
+                  <td className="px-3.5 py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={28} />
                       <div>
                         <p className="font-medium text-ink-primary">{client.name}</p>
                         <p className="text-xs text-ink-muted">{client.projectName}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3.5 py-2.5">
                     <Pill tone={CLIENT_STATUS_TONE[client.status]}>{CLIENT_STATUS_LABEL[client.status]}</Pill>
                   </td>
-                  <td className="px-4 py-3 text-ink-secondary">{PHASE_LABELS[currentPhaseKey(client)]}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3.5 py-2.5 text-ink-secondary">{PHASE_LABELS[currentPhaseKey(client)]}</td>
+                  <td className="px-3.5 py-2.5">
                     <div className="flex items-center gap-2">
                       <PhaseSegments client={client} />
                       <span className="text-xs tabular-nums text-ink-muted">
@@ -271,10 +271,10 @@ export default function HomePage() {
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <MemberAvatar memberId={client.owner} size={22} />
+                  <td className="px-3.5 py-2.5">
+                    <MemberAvatar memberId={client.owner} size={20} />
                   </td>
-                  <td className="px-4 py-3 text-ink-secondary">{formatDate(client.dueDate)}</td>
+                  <td className="px-3.5 py-2.5 text-ink-secondary">{formatDate(client.dueDate)}</td>
                 </tr>
               )
             })}
