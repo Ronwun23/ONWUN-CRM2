@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { storagePathFrom, toStoragePath } from '@/lib/embed'
-import type { ClientDocument, DocumentComment } from '@/types'
+import type { ClientDocument, DocumentComment, DocumentSignature } from '@/types'
 
 const DOCUMENTS_BUCKET = 'documents'
 
@@ -17,6 +17,12 @@ export interface DocumentRow {
   testimonial_author_name: string | null
   testimonial_author_type: string | null
   testimonial_created_at: string | null
+  agency_signature_data: string | null
+  agency_signature_author_name: string | null
+  agency_signature_created_at: string | null
+  client_signature_data: string | null
+  client_signature_author_name: string | null
+  client_signature_created_at: string | null
 }
 
 export interface CommentRow {
@@ -40,6 +46,15 @@ export function rowToComment(row: CommentRow): DocumentComment {
   }
 }
 
+function rowToSignature(
+  data: string | null,
+  authorName: string | null,
+  createdAt: string | null
+): DocumentSignature | undefined {
+  if (!data) return undefined
+  return { signatureData: data, authorName: authorName ?? '', createdAt: createdAt ?? '' }
+}
+
 export function rowToDocument(row: DocumentRow, comments: DocumentComment[]): ClientDocument {
   return {
     id: String(row.id),
@@ -58,6 +73,8 @@ export function rowToDocument(row: DocumentRow, comments: DocumentComment[]): Cl
           createdAt: row.testimonial_created_at ?? row.updated_at,
         }
       : undefined,
+    agencySignature: rowToSignature(row.agency_signature_data, row.agency_signature_author_name, row.agency_signature_created_at),
+    clientSignature: rowToSignature(row.client_signature_data, row.client_signature_author_name, row.client_signature_created_at),
   }
 }
 
@@ -74,6 +91,12 @@ function documentToRow(clientId: string, doc: ClientDocument) {
     testimonial_author_name: doc.testimonial?.authorName ?? null,
     testimonial_author_type: doc.testimonial?.authorType ?? null,
     testimonial_created_at: doc.testimonial?.createdAt ?? null,
+    agency_signature_data: doc.agencySignature?.signatureData ?? null,
+    agency_signature_author_name: doc.agencySignature?.authorName ?? null,
+    agency_signature_created_at: doc.agencySignature?.createdAt ?? null,
+    client_signature_data: doc.clientSignature?.signatureData ?? null,
+    client_signature_author_name: doc.clientSignature?.authorName ?? null,
+    client_signature_created_at: doc.clientSignature?.createdAt ?? null,
   }
 }
 

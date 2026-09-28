@@ -91,7 +91,8 @@ export default function ClientForm({ existing, onDone }: { existing?: Client; on
       const created = await addClient(client)
       onDone()
       navigate(`/clients/${created.id}/dashboard`)
-    } catch {
+    } catch (err) {
+      console.error('Failed to save client to Supabase:', err)
       setCreateError("Couldn't save this client — try again.")
     } finally {
       setCreating(false)

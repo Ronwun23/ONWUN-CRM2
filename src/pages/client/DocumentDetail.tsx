@@ -9,6 +9,7 @@ import Drawer from '@/components/Drawer'
 import DocumentForm from '@/components/DocumentForm'
 import DocumentComments from '@/components/DocumentComments'
 import DocumentTestimonial from '@/components/DocumentTestimonial'
+import ContractSignaturePanel from '@/components/ContractSignaturePanel'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import FullscreenViewer from '@/components/FullscreenViewer'
 import Spinner from '@/components/Spinner'
@@ -84,8 +85,11 @@ export default function DocumentDetail() {
   const pdfSrc = doc.url && isStoragePath(doc.url) ? resolvedPdfUrl : doc.url
 
   const isOffboarding = doc.type === 'offboarding'
+  const isContract = doc.type === 'contract'
   const sidePanel = isOffboarding ? (
     <DocumentTestimonial client={client} doc={doc} />
+  ) : isContract ? (
+    <ContractSignaturePanel client={client} doc={doc} />
   ) : (
     <DocumentComments client={client} doc={doc} pageLabel={pageLabel} />
   )

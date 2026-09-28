@@ -8,8 +8,10 @@ import type {
   ClientEvent,
   ClientTask,
   DocumentComment,
+  DocumentSignature,
   DocumentTestimonial,
   Lead,
+  LeadSource,
   LeadStatus,
   LibraryFile,
   LibraryFolder,
@@ -112,6 +114,12 @@ interface AppContextValue {
   addDocumentComment: (clientId: string, docId: string, comment: DocumentComment) => void
   setDocumentTestimonial: (clientId: string, docId: string, testimonial: DocumentTestimonial) => void
   removeDocumentTestimonial: (clientId: string, docId: string) => void
+  setDocumentSignature: (
+    clientId: string,
+    docId: string,
+    party: 'agency' | 'client',
+    signature: DocumentSignature
+  ) => void
   addLibraryFolder: (clientId: string, folder: LibraryFolder) => Promise<LibraryFolder>
   removeLibraryFolder: (clientId: string, folderId: string) => void
   addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => Promise<LibraryFile>
@@ -152,6 +160,7 @@ interface AppContextValue {
     contactName?: string
     contactEmail?: string
     country?: string
+    source?: LeadSource
     whyFits?: string
     noticedNote?: string
     owner: string
@@ -597,6 +606,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const setDocumentSignature = useCallback(
+    (clientId: string, docId: string, party: 'agency' | 'client', signature: DocumentSignature) => {
+      let bothSigned = false
+      updateClient(clientId, (c) => {
+        const doc = c.documents.find((d) => d.id === docId)
+        if (!doc) return c
+        bothSigned = party === 'agency' ? !!doc.clientSignature : !!doc.agencySignature
+        const patch =
+          party === 'agency' ? { agencySignature: signature } : { clientSignature: signature }
+        const updateEntry: UpdateEntry = {
+          id: `update-signature-${docId}-${signature.createdAt}`,
+          text: `${signature.authorName} signed "${doc.title}".`,
+          date: signature.createdAt,
+          author: signature.authorName,
+          authorType: party,
+          docId,
+          docTitle: doc.title,
+        }
+        insertUpdate(clientId, updateEntry).catch((err) => console.error('Failed to save update to Supabase:', err))
+        return {
+          ...c,
+          documents: c.documents.map((d) =>
+            d.id === docId ? { ...d, ...patch, status: bothSigned ? 'signed' : d.status } : d
+          ),
+          updates: [updateEntry, ...c.updates],
+        }
+      })
+      syncDocumentFields(docId, {
+        ...(party === 'agency'
+          ? {
+              agency_signature_data: signature.signatureData,
+              agency_signature_author_name: signature.authorName,
+              agency_signature_created_at: signature.createdAt,
+            }
+          : {
+              client_signature_data: signature.signatureData,
+              client_signature_author_name: signature.authorName,
+              client_signature_created_at: signature.createdAt,
+            }),
+        ...(bothSigned ? { status: 'signed' } : {}),
+      })
+    },
+    [updateClient]
+  )
+
   const addLibraryFolder = useCallback(async (clientId: string, folder: LibraryFolder) => {
     const created = await insertFolder(clientId, folder)
     setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, library: [...c.library, created] } : c)))
@@ -933,6 +987,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addDocumentComment,
       setDocumentTestimonial,
       removeDocumentTestimonial,
+      setDocumentSignature,
       addLibraryFolder,
       removeLibraryFolder,
       addLibraryFile,
@@ -990,6 +1045,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addDocumentComment,
       setDocumentTestimonial,
       removeDocumentTestimonial,
+      setDocumentSignature,
       addLibraryFolder,
       removeLibraryFolder,
       addLibraryFile,

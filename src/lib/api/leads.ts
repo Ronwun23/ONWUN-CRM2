@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Lead, LeadStatus, SequenceStep, SequenceStepType, Touch, TouchKind } from '@/types'
+import type { Lead, LeadSource, LeadStatus, SequenceStep, SequenceStepType, Touch, TouchKind } from '@/types'
 import { SEQUENCE_STEP_ORDER, type SequenceStepPlan } from '@/lib/leadOutcomes'
 
 // Postgres/PostgREST doesn't guarantee a bulk insert's returned rows are in
@@ -17,6 +17,7 @@ interface LeadRow {
   contact_name: string | null
   contact_email: string | null
   country: string | null
+  source: string | null
   why_fits: string | null
   noticed_note: string | null
   status: string
@@ -56,6 +57,7 @@ function rowToLead(row: LeadRow): Omit<Lead, 'steps' | 'touches'> {
     contactName: row.contact_name ?? undefined,
     contactEmail: row.contact_email ?? undefined,
     country: row.country ?? undefined,
+    source: (row.source as LeadSource) ?? undefined,
     whyFits: row.why_fits ?? undefined,
     noticedNote: row.noticed_note ?? undefined,
     status: row.status as LeadStatus,
@@ -122,6 +124,7 @@ export async function insertLead(lead: {
   contactName?: string
   contactEmail?: string
   country?: string
+  source?: LeadSource
   whyFits?: string
   noticedNote?: string
   owner: string
@@ -135,6 +138,7 @@ export async function insertLead(lead: {
       contact_name: lead.contactName ?? null,
       contact_email: lead.contactEmail ?? null,
       country: lead.country ?? null,
+      source: lead.source ?? null,
       why_fits: lead.whyFits ?? null,
       noticed_note: lead.noticedNote ?? null,
       status: 'new',

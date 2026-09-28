@@ -1,6 +1,8 @@
+import { useContext } from 'react'
 import * as RadixSelect from '@radix-ui/react-select'
 import { Check, ChevronDown } from 'lucide-react'
 import clsx from 'clsx'
+import { ModalContainerContext } from '@/components/Modal'
 
 /**
  * A custom-rendered select (Radix UI), not the OS-native <select> — avoids
@@ -27,6 +29,7 @@ export function Select({
   className?: string
 }) {
   const selected = options.find((o) => o.value === value)
+  const dialogContainer = useContext(ModalContainerContext)
 
   return (
     <RadixSelect.Root value={value} onValueChange={onChange}>
@@ -42,7 +45,10 @@ export function Select({
           <ChevronDown size={14} className="shrink-0 text-ink-muted" />
         </RadixSelect.Icon>
       </RadixSelect.Trigger>
-      <RadixSelect.Portal>
+      {/* Inside a native <dialog>, everything portalled to document.body
+          (Radix's default) is inert and unclickable — target the dialog
+          itself when this select is rendered inside one. */}
+      <RadixSelect.Portal container={dialogContainer ?? undefined}>
         <RadixSelect.Content
           position="popper"
           sideOffset={6}
