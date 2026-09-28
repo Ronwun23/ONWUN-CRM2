@@ -10,6 +10,7 @@ import type {
   DocumentComment,
   DocumentTestimonial,
   Lead,
+  LeadSource,
   LeadStatus,
   LibraryFile,
   LibraryFolder,
@@ -152,6 +153,7 @@ interface AppContextValue {
     contactName?: string
     contactEmail?: string
     country?: string
+    source?: LeadSource
     whyFits?: string
     noticedNote?: string
     owner: string

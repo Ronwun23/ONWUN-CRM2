@@ -245,6 +245,8 @@ export type LeadStatus =
   | 'suppressed'
   | 'converted'
 
+export type LeadSource = 'ads' | 'referral' | 'website' | 'existing_client' | 'other'
+
 export type SequenceStepType = 'email_1' | 'call_1' | 'email_2' | 'call_2' | 'call_3' | 'email_3'
 
 export type TouchKind = 'email_sent' | 'call_made' | 'reply_received' | 'outcome_set'
@@ -272,6 +274,7 @@ export interface Lead {
   contactName?: string
   contactEmail?: string
   country?: string
+  source?: LeadSource
   // AI's reasoning for the fit (Phase 3) — blank for manually-added leads.
   whyFits?: string
   // "What you noticed" — a genuine observation written by whoever's

@@ -1,6 +1,12 @@
-import { useEffect, useRef } from 'react'
+import { createContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { X } from 'lucide-react'
+
+// A native <dialog> opened with showModal() makes everything outside it
+// inert, including anything a Radix Portal (e.g. <Select>) renders into
+// document.body by default — the dropdown opens but nothing inside it is
+// clickable. Anything portalling needs to target this dialog node instead.
+export const ModalContainerContext = createContext<HTMLElement | null>(null)
 
 // Centered dialog, built on the native <dialog> element — same approach as
 // ConfirmDialogHost, so it gets a real backdrop, focus trap and Escape-to-
@@ -19,27 +25,26 @@ export default function Modal({
   subtitle?: string
   children: ReactNode
 }) {
-  const dialogRef = useRef<HTMLDialogElement>(null)
+  const [dialogNode, setDialogNode] = useState<HTMLDialogElement | null>(null)
 
   useEffect(() => {
-    const dialog = dialogRef.current
-    if (!dialog) return
+    if (!dialogNode) return
     if (open) {
-      if (!dialog.open) dialog.showModal()
-    } else if (dialog.open) {
-      dialog.close()
+      if (!dialogNode.open) dialogNode.showModal()
+    } else if (dialogNode.open) {
+      dialogNode.close()
     }
-  }, [open])
+  }, [open, dialogNode])
 
   return (
     <dialog
-      ref={dialogRef}
+      ref={setDialogNode}
       onCancel={(e) => {
         e.preventDefault()
         onClose()
       }}
       onClick={(e) => {
-        if (e.target === dialogRef.current) onClose()
+        if (e.target === dialogNode) onClose()
       }}
       className="m-auto w-full max-w-xl rounded-xl border border-black/[0.08] bg-white p-0 shadow-pop backdrop:bg-black/40"
     >
@@ -56,7 +61,9 @@ export default function Modal({
           <X size={16} />
         </button>
       </div>
-      <div className="max-h-[90vh] overflow-y-auto p-6">{children}</div>
+      <div className="max-h-[90vh] overflow-y-auto p-6">
+        <ModalContainerContext.Provider value={dialogNode}>{children}</ModalContainerContext.Provider>
+      </div>
     </dialog>
   )
 }

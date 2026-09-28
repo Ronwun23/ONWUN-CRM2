@@ -1,16 +1,33 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpDown, ChevronRight, Search, UserPlus, Users } from 'lucide-react'
+import { ArrowUpDown, Search, UserPlus } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { STUDIO_ACCOUNTS } from '@/data/team'
 import Modal from '@/components/Modal'
+import Pill from '@/components/Pill'
 import { Select } from '@/components/ui/select'
 import { memberName } from '@/components/Avatar'
+import { LEAD_SOURCE_LABEL, LEAD_SOURCE_TONE } from '@/lib/labels'
+import type { LeadSource } from '@/types'
 
 const inputClass =
   'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
 const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted'
+
+const SOURCE_OPTIONS: { value: LeadSource; label: string }[] = [
+  { value: 'ads', label: 'Ads' },
+  { value: 'referral', label: 'Referral' },
+  { value: 'website', label: 'Website' },
+  { value: 'existing_client', label: 'Existing client' },
+  { value: 'other', label: 'Other' },
+]
+
+function formatAdded(iso: string): string {
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso))
+}
+
+type SortKey = 'name' | 'added'
 
 export default function AcquisitionContacts() {
   const { leads, addLead, activeAccount } = useApp()
@@ -21,11 +38,13 @@ export default function AcquisitionContacts() {
   const [contactName, setContactName] = useState('')
   const [contactEmail, setContactEmail] = useState('')
   const [country, setCountry] = useState('')
+  const [source, setSource] = useState<LeadSource>('other')
   const [noticedNote, setNoticedNote] = useState('')
   const [owner, setOwner] = useState(activeAccount.id)
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [sortKey, setSortKey] = useState<SortKey>('added')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [justAdded, setJustAdded] = useState(false)
 
   const resetForm = () => {
@@ -35,6 +54,7 @@ export default function AcquisitionContacts() {
     setContactName('')
     setContactEmail('')
     setCountry('')
+    setSource('other')
     setNoticedNote('')
     setOwner(activeAccount.id)
   }
@@ -50,6 +70,7 @@ export default function AcquisitionContacts() {
         contactName: contactName.trim() || undefined,
         contactEmail: contactEmail.trim() || undefined,
         country: country.trim() || undefined,
+        source,
         noticedNote: noticedNote.trim() || undefined,
         owner,
       })
@@ -62,6 +83,15 @@ export default function AcquisitionContacts() {
     }
   }
 
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDir(key === 'added' ? 'desc' : 'asc')
+    }
+  }
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     const list = q
@@ -70,11 +100,15 @@ export default function AcquisitionContacts() {
         )
       : leads
     return [...list].sort((a, b) => {
+      if (sortKey === 'added') {
+        const diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        return sortDir === 'asc' ? diff : -diff
+      }
       const an = (a.contactName || a.companyName).toLowerCase()
       const bn = (b.contactName || b.companyName).toLowerCase()
       return sortDir === 'asc' ? an.localeCompare(bn) : bn.localeCompare(an)
     })
-  }, [leads, search, sortDir])
+  }, [leads, search, sortKey, sortDir])
 
   return (
     <div className="flex flex-col gap-4">
@@ -98,24 +132,15 @@ export default function AcquisitionContacts() {
 
       {justAdded && <p className="-mt-1 text-sm font-medium text-brand-600">Contact added.</p>}
 
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, company, or email"
-            className="w-full rounded-lg border border-black/[0.10] py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-            autoComplete="off"
-          />
-        </div>
-        <button
-          onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-black/[0.10] bg-white px-3 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
-        >
-          <ArrowUpDown size={14} />
-          Name
-        </button>
+      <div className="relative">
+        <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name, email, or company"
+          className="w-full rounded-lg border border-black/[0.10] py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          autoComplete="off"
+        />
       </div>
 
       {filtered.length === 0 ? (
@@ -124,27 +149,53 @@ export default function AcquisitionContacts() {
         </p>
       ) : (
         <div className="overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
-          {filtered.map((lead, i) => (
-            <Link
-              key={lead.id}
-              to={`/acquisition/contacts/${lead.id}`}
-              className={clsx(
-                'flex items-center gap-3 px-4 py-3.5 hover:bg-surface-sunken/60',
-                i > 0 && 'border-t border-black/[0.05]'
-              )}
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-ink-secondary">
-                <Users size={16} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-ink-primary">{lead.contactName || lead.companyName}</p>
-                <p className="truncate text-xs text-ink-muted">
-                  {[lead.companyName, lead.contactEmail].filter(Boolean).join(' · ')}
-                </p>
-              </div>
-              <ChevronRight size={16} className="shrink-0 text-ink-muted" />
-            </Link>
-          ))}
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-black/[0.06] text-xs font-medium uppercase tracking-wide text-ink-muted">
+                <th className="px-4 py-3">
+                  <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:text-ink-secondary">
+                    Name
+                    {sortKey === 'name' && <ArrowUpDown size={12} />}
+                  </button>
+                </th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Phone</th>
+                <th className="px-4 py-3">Company</th>
+                <th className="px-4 py-3">Source</th>
+                <th className="px-4 py-3">
+                  <button onClick={() => toggleSort('added')} className="flex items-center gap-1 hover:text-ink-secondary">
+                    Added
+                    {sortKey === 'added' && <ArrowUpDown size={12} />}
+                  </button>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((lead, i) => (
+                <tr key={lead.id} className={clsx(i > 0 && 'border-t border-black/[0.05]')}>
+                  <td className="p-0">
+                    <Link
+                      to={`/acquisition/contacts/${lead.id}`}
+                      className="block px-4 py-3.5 font-semibold text-ink-primary hover:underline"
+                    >
+                      {lead.contactName || lead.companyName}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3.5 text-ink-secondary">{lead.contactEmail || '—'}</td>
+                  <td className="px-4 py-3.5 text-ink-secondary">{lead.phone || '—'}</td>
+                  <td className="px-4 py-3.5 text-ink-secondary">{lead.companyName || '—'}</td>
+                  <td className="px-4 py-3.5">
+                    {lead.source ? (
+                      <Pill tone={LEAD_SOURCE_TONE[lead.source]}>{LEAD_SOURCE_LABEL[lead.source]}</Pill>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td className="px-4 py-3.5 text-ink-secondary">{formatAdded(lead.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -239,6 +290,14 @@ export default function AcquisitionContacts() {
                 options={STUDIO_ACCOUNTS.map((a) => ({ value: a.id, label: memberName(a.id) }))}
               />
             </div>
+          </div>
+          <div>
+            <label className={labelClass}>Source</label>
+            <Select
+              value={source}
+              onChange={(v) => setSource(v as LeadSource)}
+              options={SOURCE_OPTIONS}
+            />
           </div>
           <div>
             <label className={labelClass}>Notes</label>
