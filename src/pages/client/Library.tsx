@@ -34,15 +34,15 @@ export default function ClientLibrary() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-ink-primary">Library</h1>
+          <h1 className="text-lg font-semibold text-ink-primary">Library</h1>
           <p className="text-sm text-ink-secondary">Individual brand assets, organised so you can grab exactly what you need.</p>
         </div>
         {!isClientView && (
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+            className="flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
           >
-            <Plus size={16} />
+            <Plus size={12} />
             New folder
           </button>
         )}
@@ -56,12 +56,12 @@ export default function ClientLibrary() {
             <Link
               key={folder.id}
               to={`/clients/${client.id}/library/${folder.id}`}
-              className="rounded-xl border border-black/[0.06] bg-white p-4 text-left shadow-card transition-shadow hover:shadow-pop"
+              className="rounded-xl border border-black/[0.06] bg-white p-3.5 text-left shadow-card transition-shadow hover:shadow-pop"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-sunken text-ink-secondary">
-                <Icon size={16} />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-sunken text-ink-secondary">
+                <Icon size={15} />
               </div>
-              <p className="mt-3 text-sm font-medium text-ink-primary">{folder.name}</p>
+              <p className="mt-2.5 text-sm font-medium text-ink-primary">{folder.name}</p>
               <p className="text-xs text-ink-muted">
                 {folder.files.length === 0 ? 'Empty' : `${folder.files.length} file${folder.files.length === 1 ? '' : 's'}`}
               </p>
@@ -79,7 +79,7 @@ export default function ClientLibrary() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Icons, Photography"
-              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
               autoComplete="off"
               data-1p-ignore
               data-lpignore="true"
@@ -87,7 +87,7 @@ export default function ClientLibrary() {
           </div>
           <button
             type="submit"
-            className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
+            className="mt-2 rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-black/85"
           >
             Create folder
           </button>
