@@ -132,6 +132,7 @@ interface AppContextValue {
   addBrandAsset: (clientId: string, asset: BrandAsset) => Promise<BrandAsset>
   addClientEvent: (clientId: string, event: ClientEvent) => Promise<ClientEvent>
   removeClientEvent: (clientId: string, eventId: string) => void
+  updateClientEventSchedule: (clientId: string, eventId: string, patch: { date?: string; time?: string }) => void
   updateClientEventNotes: (clientId: string, eventId: string, notes: string) => void
   updateClientEventFile: (
     clientId: string,
@@ -155,7 +156,7 @@ interface AppContextValue {
   addStudioEvent: (event: ClientEvent) => Promise<void>
   removeStudioEvent: (eventId: string) => void
   setStudioLogo: (url: string | undefined) => void
-  updateStudioEventNotes: (eventId: string, notes: string) => void
+  updateStudioEvent: (eventId: string, patch: Partial<ClientEvent>) => void
   activeAccount: StudioAccount
   setActiveAccount: (accountId: string) => void
   leads: Lead[]
@@ -390,14 +391,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setStudio((prev) => ({ ...prev, logoUrl: url }))
   }, [])
 
-  const updateStudioEventNotes = useCallback((eventId: string, notes: string) => {
+  // General patch — covers reschedule (drag), notes, and the category/color/
+  // tags editor. Only the touched fields hit Supabase.
+  const updateStudioEvent = useCallback((eventId: string, patch: Partial<ClientEvent>) => {
     setStudio((prev) => ({
       ...prev,
-      events: prev.events.map((e) => (e.id === eventId ? { ...e, notes: notes || undefined } : e)),
+      events: prev.events.map((e) => (e.id === eventId ? { ...e, ...patch } : e)),
     }))
-    updateEventRow(eventId, { notes: notes || null }).catch((err) =>
-      console.error('Failed to save event notes to Supabase:', err)
-    )
+    const row: Record<string, unknown> = {}
+    if ('title' in patch) row.title = patch.title
+    if ('date' in patch) row.date = patch.date
+    if ('time' in patch) row.time = patch.time || null
+    if ('notes' in patch) row.notes = patch.notes || null
+    if ('category' in patch) row.category = patch.category || null
+    if ('color' in patch) row.color = patch.color || null
+    if ('tags' in patch) row.tags = patch.tags?.length ? patch.tags : null
+    updateEventRow(eventId, row).catch((err) => console.error('Failed to save event to Supabase:', err))
   }, [])
 
   const activeAccount =
@@ -757,6 +766,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  // Drag-to-reschedule on the Content Calendar — mirrors updateStudioEvent's
+  // reasoning: date/time only, since that's all a rescheduled event needs.
+  const updateClientEventSchedule = useCallback(
+    (clientId: string, eventId: string, patch: { date?: string; time?: string }) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        events: c.events.map((e) => (e.id === eventId ? { ...e, ...patch } : e)),
+      }))
+      const row: Record<string, unknown> = {}
+      if (patch.date !== undefined) row.date = patch.date
+      if (patch.time !== undefined) row.time = patch.time || null
+      updateEventRow(eventId, row).catch((err) => console.error('Failed to reschedule event in Supabase:', err))
+    },
+    [updateClient]
+  )
+
   const updateClientEventNotes = useCallback(
     (clientId: string, eventId: string, notes: string) => {
       updateClient(clientId, (c) => ({
@@ -1054,6 +1079,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addBrandAsset,
       addClientEvent,
       removeClientEvent,
+      updateClientEventSchedule,
       updateClientEventNotes,
       updateClientEventFile,
       saveWorkshopAnswer,
@@ -1073,7 +1099,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioEvent,
       removeStudioEvent,
       setStudioLogo,
-      updateStudioEventNotes,
+      updateStudioEvent,
       activeAccount,
       setActiveAccount,
       leads,
@@ -1118,6 +1144,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addBrandAsset,
       addClientEvent,
       removeClientEvent,
+      updateClientEventSchedule,
       updateClientEventNotes,
       updateClientEventFile,
       saveWorkshopAnswer,
@@ -1137,7 +1164,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStudioEvent,
       removeStudioEvent,
       setStudioLogo,
-      updateStudioEventNotes,
+      updateStudioEvent,
       activeAccount,
       setActiveAccount,
       leads,

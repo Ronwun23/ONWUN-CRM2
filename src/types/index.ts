@@ -127,6 +127,11 @@ export interface ClientEvent {
   date: string
   time?: string
   notes?: string
+  // Studio-calendar organization — distinct from contentType below, which is
+  // the client-facing content-deliverable type on the Content Calendar.
+  category?: string
+  color?: string
+  tags?: string[]
   contentType?: ContentEventType
   // Only meaningful when contentType is 'reel'.
   duration?: ReelDuration

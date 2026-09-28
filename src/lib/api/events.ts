@@ -10,6 +10,9 @@ export interface EventRow {
   date: string
   time: string | null
   notes: string | null
+  category: string | null
+  color: string | null
+  tags: string[] | null
   content_type: string | null
   duration: string | null
   amount: number | null
@@ -25,6 +28,9 @@ export function rowToEvent(row: EventRow): ClientEvent {
     date: row.date,
     time: row.time ?? undefined,
     notes: row.notes ?? undefined,
+    category: row.category ?? undefined,
+    color: row.color ?? undefined,
+    tags: row.tags ?? undefined,
     contentType: (row.content_type as ClientEvent['contentType']) ?? undefined,
     duration: (row.duration as ClientEvent['duration']) ?? undefined,
     amount: row.amount ?? undefined,
@@ -41,6 +47,9 @@ function eventToRow(clientId: string | null, event: ClientEvent) {
     date: event.date,
     time: event.time ?? null,
     notes: event.notes ?? null,
+    category: event.category ?? null,
+    color: event.color ?? null,
+    tags: event.tags ?? null,
     content_type: event.contentType ?? null,
     duration: event.duration ?? null,
     amount: event.amount ?? null,
