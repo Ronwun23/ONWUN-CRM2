@@ -318,11 +318,11 @@ export default function Layout({ children }: { children: ReactNode }) {
   }
 
   if (isImmersiveSession) {
-    return <div className="h-screen w-full overflow-y-auto bg-surface-page text-ink-primary">{children}</div>
+    return <div className="bg-dot-grid h-screen w-full overflow-y-auto bg-surface-page text-ink-primary">{children}</div>
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-surface-page text-ink-primary">
+    <div className="bg-dot-grid flex h-screen w-full overflow-hidden bg-surface-page text-ink-primary">
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}

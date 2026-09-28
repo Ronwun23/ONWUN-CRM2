@@ -30,3 +30,11 @@ body {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* Very subtle dot-grid texture on the page canvas — monochrome to match
+   the app's palette (not the pink of the reference this was requested
+   from). Applied alongside bg-surface-page, never on its own. */
+.bg-dot-grid {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
