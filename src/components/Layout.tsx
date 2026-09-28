@@ -419,7 +419,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                   to={`/clients/${client.id}/${to}`}
                   className={({ isActive }) =>
                     clsx(
-                      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                       isActive ? 'bg-black text-white' : 'text-ink-secondary hover:bg-black/[0.04] hover:text-ink-primary'
                     )
                   }
@@ -440,7 +440,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                   end={end}
                   className={({ isActive }) =>
                     clsx(
-                      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                       isActive ? 'bg-black text-white' : 'text-ink-secondary hover:bg-black/[0.04] hover:text-ink-primary'
                     )
                   }
@@ -534,7 +534,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     to={to}
                     className={({ isActive }) =>
                       clsx(
-                        'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                        'flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                         isActive ? 'bg-black text-white' : 'text-ink-secondary hover:bg-black/[0.04] hover:text-ink-primary'
                       )
                     }

@@ -4,12 +4,14 @@ import { Calendar, ListTodo, Plus } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import Drawer from '@/components/Drawer'
 import ClientForm from '@/components/ClientForm'
-import { ClientAvatar } from '@/components/Avatar'
-import { PHASES } from '@/types'
+import { ClientAvatar, MemberAvatar } from '@/components/Avatar'
+import Pill from '@/components/Pill'
+import { PHASES, PHASE_LABELS } from '@/types'
 import type { Client } from '@/types'
-import { phaseStatus, overallProgress } from '@/lib/progress'
-import { formatDueDate } from '@/lib/format'
+import { phaseStatus, overallProgress, currentPhaseKey } from '@/lib/progress'
+import { formatDueDate, formatDate } from '@/lib/format'
 import { toDisplayDate, todayCivil } from '@/lib/civilDate'
+import { CLIENT_STATUS_LABEL, CLIENT_STATUS_TONE } from '@/lib/labels'
 import clsx from 'clsx'
 
 function sameDay(a: Date, b: Date): boolean {
@@ -126,21 +128,21 @@ export default function HomePage() {
       <div className="flex flex-wrap gap-2.5">
         <button
           onClick={() => setShowAddClient(true)}
-          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-2 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
+          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-1.5 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
         >
           <Plus size={14} />
           New client
         </button>
         <button
           onClick={() => navigate('/calendar')}
-          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-2 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
+          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-1.5 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
         >
           <Calendar size={14} />
           Add event
         </button>
         <button
           onClick={() => navigate('/tasks')}
-          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-2 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
+          className="flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-3.5 py-1.5 text-sm font-medium text-ink-secondary shadow-card hover:bg-surface-sunken"
         >
           <ListTodo size={14} />
           Open tasks
@@ -227,29 +229,57 @@ export default function HomePage() {
           <h3 className="text-sm font-semibold text-ink-primary">Clients</h3>
           <span className="text-sm text-ink-muted">{clients.length}</span>
         </div>
-        <div className="flex flex-col divide-y divide-black/[0.05]">
-          {sortedClients.map((client) => {
-            const progress = overallProgress(client)
-            const doneCount = client.phases.filter((p) => phaseStatus(p) === 'done').length
-            return (
-              <button
-                key={client.id}
-                onClick={() => navigate(`/clients/${client.id}/dashboard`)}
-                className="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-sunken/40"
-              >
-                <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={32} />
-                <p className="flex-1 text-sm font-medium text-ink-primary">{client.name}</p>
-                <PhaseSegments client={client} />
-                <div className="hidden w-24 items-center sm:flex">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06]">
-                    <div className="h-full rounded-full bg-ink-primary" style={{ width: `${progress.percent}%` }} />
-                  </div>
-                </div>
-                <span className="w-8 shrink-0 text-right text-xs tabular-nums text-ink-muted">{doneCount}/{PHASES.length}</span>
-              </button>
-            )
-          })}
-        </div>
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-y border-black/[0.06] text-xs uppercase tracking-wide text-ink-muted">
+              <th className="px-4 py-2.5 font-medium">Client</th>
+              <th className="px-4 py-2.5 font-medium">Status</th>
+              <th className="px-4 py-2.5 font-medium">Phase</th>
+              <th className="px-4 py-2.5 font-medium">Progress</th>
+              <th className="px-4 py-2.5 font-medium">Owner</th>
+              <th className="px-4 py-2.5 font-medium">Due</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedClients.map((client) => {
+              const progress = overallProgress(client)
+              const doneCount = client.phases.filter((p) => phaseStatus(p) === 'done').length
+              return (
+                <tr
+                  key={client.id}
+                  onClick={() => navigate(`/clients/${client.id}/dashboard`)}
+                  className="cursor-pointer border-b border-black/[0.04] last:border-b-0 hover:bg-surface-sunken/40"
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={32} />
+                      <div>
+                        <p className="font-medium text-ink-primary">{client.name}</p>
+                        <p className="text-xs text-ink-muted">{client.projectName}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Pill tone={CLIENT_STATUS_TONE[client.status]}>{CLIENT_STATUS_LABEL[client.status]}</Pill>
+                  </td>
+                  <td className="px-4 py-3 text-ink-secondary">{PHASE_LABELS[currentPhaseKey(client)]}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <PhaseSegments client={client} />
+                      <span className="text-xs tabular-nums text-ink-muted">
+                        {doneCount}/{PHASES.length} · {progress.percent}%
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <MemberAvatar memberId={client.owner} size={22} />
+                  </td>
+                  <td className="px-4 py-3 text-ink-secondary">{formatDate(client.dueDate)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
 
       <Drawer open={showAddClient} onClose={() => setShowAddClient(false)} title="Add a client">
