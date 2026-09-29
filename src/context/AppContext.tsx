@@ -104,7 +104,10 @@ interface AppContextValue {
   updateClientProfile: (
     clientId: string,
     patch: Partial<
-      Pick<Client, 'name' | 'projectName' | 'owner' | 'dueDate' | 'avatarUrl' | 'color' | 'initials' | 'email' | 'phone'>
+      Pick<
+        Client,
+        'name' | 'projectName' | 'owner' | 'dueDate' | 'avatarUrl' | 'color' | 'initials' | 'email' | 'phone' | 'invoiceTotalValue'
+      >
     >
   ) => void
   toggleStep: (clientId: string, phaseKey: string, stepId: string) => void
@@ -460,6 +463,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         initials: patch.initials,
         email: patch.email,
         phone: patch.phone,
+        total_amount: patch.invoiceTotalValue,
       })
     },
     [updateClient]

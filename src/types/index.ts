@@ -254,6 +254,10 @@ export interface Client {
   brandHub: BrandAsset[]
   events: ClientEvent[]
   workshop: WorkshopState
+  // The full project/contract value, set once by the agency — shown
+  // alongside the Invoices page's Open total so both sides can see how
+  // much of the total has been invoiced so far.
+  invoiceTotalValue?: number
 }
 
 export type LeadStatus =

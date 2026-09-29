@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, PoundSterling, Plus } from 'lucide-react'
 import clsx from 'clsx'
+import { useApp } from '@/context/AppContext'
 import { useClientOutlet } from '@/lib/useClient'
 import { useViewMode } from '@/context/ViewModeContext'
 import Pill from '@/components/Pill'
 import type { PillTone } from '@/components/Pill'
 import Drawer from '@/components/Drawer'
+import Modal from '@/components/Modal'
 import DocumentForm from '@/components/DocumentForm'
 import { formatDate, formatFullCurrency } from '@/lib/format'
 import { todayCivil } from '@/lib/civilDate'
@@ -32,9 +34,22 @@ const TABS: { key: InvoiceState | 'all'; label: string }[] = [
 
 export default function ClientInvoices() {
   const client = useClientOutlet()
+  const { updateClientProfile } = useApp()
   const { isClientView } = useViewMode()
   const [showAdd, setShowAdd] = useState(false)
+  const [showTotal, setShowTotal] = useState(false)
+  const [totalInput, setTotalInput] = useState('')
   const [tab, setTab] = useState<InvoiceState | 'all'>('all')
+
+  const openTotalModal = () => {
+    setTotalInput(client.invoiceTotalValue != null ? String(client.invoiceTotalValue) : '')
+    setShowTotal(true)
+  }
+
+  const handleSaveTotal = () => {
+    updateClientProfile(client.id, { invoiceTotalValue: totalInput.trim() ? Number(totalInput) : undefined })
+    setShowTotal(false)
+  }
 
   const invoices = useMemo(() => client.documents.filter((d) => d.type === 'invoice'), [client.documents])
   const today = todayCivil()
@@ -81,13 +96,22 @@ export default function ClientInvoices() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-ink-primary">Invoices</h1>
         {!isClientView && (
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-black px-3.5 py-2 text-sm font-semibold text-white hover:bg-black/85"
-          >
-            <Plus size={14} />
-            New invoice
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={openTotalModal}
+              className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] bg-white px-3.5 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
+            >
+              <PoundSterling size={14} />
+              {client.invoiceTotalValue != null ? `Total: ${formatFullCurrency(client.invoiceTotalValue, 'GBP')}` : 'Total amount'}
+            </button>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-black px-3.5 py-2 text-sm font-semibold text-white hover:bg-black/85"
+            >
+              <Plus size={14} />
+              New invoice
+            </button>
+          </div>
         )}
       </div>
 
@@ -102,6 +126,9 @@ export default function ClientInvoices() {
               </Pill>
             )}
           </div>
+          {client.invoiceTotalValue != null && (
+            <p className="mt-1 text-xs text-ink-muted">of {formatFullCurrency(client.invoiceTotalValue, 'GBP')} total</p>
+          )}
         </div>
         <div className="rounded-xl border border-black/[0.06] bg-white p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Overdue</p>
@@ -191,6 +218,42 @@ export default function ClientInvoices() {
       <Drawer open={showAdd} onClose={() => setShowAdd(false)} title="New invoice">
         <DocumentForm clientId={client.id} initialType="invoice" onDone={() => setShowAdd(false)} />
       </Drawer>
+
+      <Modal
+        open={showTotal}
+        onClose={() => setShowTotal(false)}
+        title="Total amount"
+        subtitle="The full project value — shown next to Open so you and the client can see how much of it's been invoiced."
+      >
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Amount (£)</label>
+            <input
+              type="number"
+              value={totalInput}
+              onChange={(e) => setTotalInput(e.target.value)}
+              placeholder="20000"
+              autoFocus
+              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              autoComplete="off"
+            />
+          </div>
+          <div className="mt-1 flex items-center justify-end gap-2">
+            <button
+              onClick={() => setShowTotal(false)}
+              className="rounded-lg border border-black/[0.10] bg-white px-3.5 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveTotal}
+              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
