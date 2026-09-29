@@ -34,6 +34,7 @@ import DiscoveryAnswers from '@/pages/client/discovery/DiscoveryAnswers'
 import DiscoveryStrategy from '@/pages/client/discovery/DiscoveryStrategy'
 import DiscoverySession from '@/pages/client/discovery/DiscoverySession'
 import McpConnect from '@/pages/McpConnect'
+import SidebarTest from '@/pages/SidebarTest'
 
 export default function App() {
   const { clientsLoading, clients } = useApp()
@@ -45,6 +46,12 @@ export default function App() {
   // Checked first so it doesn't wait on client data it doesn't need.
   if (location.pathname === '/mcp-connect') {
     return <McpConnect />
+  }
+
+  // Sandbox page for trying the hover-expand sidebar pattern — not wired
+  // into the real app chrome, safe to remove once evaluated.
+  if (location.pathname === '/sidebar-test') {
+    return <SidebarTest />
   }
 
   if (clientsLoading) {
