@@ -72,6 +72,15 @@ export interface ClientDocument {
   testimonial?: DocumentTestimonial
   agencySignature?: DocumentSignature
   clientSignature?: DocumentSignature
+  // Only meaningful when type is 'invoice' — status's existing 'paid'/
+  // 'unpaid' values double as the invoice's payment state, so only
+  // approval needs a field of its own.
+  invoiceNumber?: string
+  billedToName?: string
+  issuedDate?: string
+  dueDate?: string
+  amount?: number
+  invoiceApproved?: boolean
 }
 
 export interface ClientTask {

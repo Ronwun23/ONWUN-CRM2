@@ -4,6 +4,7 @@ import { FileText, Upload, X } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { Select } from '@/components/ui/select'
+import { DatePicker } from '@/components/ui/date-picker'
 import { uploadDocumentFile } from '@/lib/api/documents'
 import { isStoragePath } from '@/lib/embed'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
@@ -37,20 +38,27 @@ const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide tex
 export default function DocumentForm({
   clientId,
   existing,
+  initialType,
   onDone,
 }: {
   clientId: string
   existing?: ClientDocument
+  initialType?: DocumentType
   onDone: () => void
 }) {
   const { addDocument, updateDocument } = useApp()
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [title, setTitle] = useState(existing?.title ?? '')
-  const [type, setType] = useState<DocumentType>(existing?.type ?? 'other')
+  const [type, setType] = useState<DocumentType>(existing?.type ?? initialType ?? 'other')
   const [status, setStatus] = useState<DocumentStatus>(existing?.status ?? 'draft')
   const [meta, setMeta] = useState(existing?.meta ?? '')
   const [url, setUrl] = useState(existing?.url ?? '')
+  const [invoiceNumber, setInvoiceNumber] = useState(existing?.invoiceNumber ?? '')
+  const [billedToName, setBilledToName] = useState(existing?.billedToName ?? '')
+  const [issuedDate, setIssuedDate] = useState(existing?.issuedDate)
+  const [dueDate, setDueDate] = useState(existing?.dueDate)
+  const [amount, setAmount] = useState(existing?.amount != null ? String(existing.amount) : '')
   const [source, setSource] = useState<Source>(isExistingPdf(existing?.url) ? 'pdf' : 'figma')
   const [pdfFileName, setPdfFileName] = useState(isExistingPdf(existing?.url) ? `${existing?.title}.pdf` : '')
   const [uploadingFile, setUploadingFile] = useState(false)
@@ -68,6 +76,15 @@ export default function DocumentForm({
       status,
       meta: meta.trim() || undefined,
       url: url.trim() || undefined,
+      ...(type === 'invoice'
+        ? {
+            invoiceNumber: invoiceNumber.trim() || undefined,
+            billedToName: billedToName.trim() || undefined,
+            issuedDate,
+            dueDate,
+            amount: amount.trim() ? Number(amount) : undefined,
+          }
+        : {}),
     }
 
     setSaving(true)
@@ -183,6 +200,54 @@ export default function DocumentForm({
           </button>
         </div>
       </div>
+
+      {type === 'invoice' && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Number</label>
+              <input
+                value={invoiceNumber}
+                onChange={(e) => setInvoiceNumber(e.target.value)}
+                placeholder="031"
+                className={inputClass}
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Billed to</label>
+              <input
+                value={billedToName}
+                onChange={(e) => setBilledToName(e.target.value)}
+                placeholder="Olivia Hart"
+                className={inputClass}
+                autoComplete="off"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={labelClass}>Issued</label>
+              <DatePicker value={issuedDate} onChange={setIssuedDate} />
+            </div>
+            <div>
+              <label className={labelClass}>Due</label>
+              <DatePicker value={dueDate} onChange={setDueDate} />
+            </div>
+            <div>
+              <label className={labelClass}>Amount</label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="4200"
+                className={inputClass}
+                autoComplete="off"
+              />
+            </div>
+          </div>
+        </>
+      )}
 
       {source === 'figma' ? (
         <div>
