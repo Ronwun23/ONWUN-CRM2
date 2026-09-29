@@ -10,6 +10,7 @@ import DocumentForm from '@/components/DocumentForm'
 import DocumentComments from '@/components/DocumentComments'
 import DocumentTestimonial from '@/components/DocumentTestimonial'
 import ContractSignaturePanel from '@/components/ContractSignaturePanel'
+import InvoiceStatusPanel from '@/components/InvoiceStatusPanel'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import FullscreenViewer from '@/components/FullscreenViewer'
 import Spinner from '@/components/Spinner'
@@ -86,13 +87,18 @@ export default function DocumentDetail() {
 
   const isOffboarding = doc.type === 'offboarding'
   const isContract = doc.type === 'contract'
+  const isInvoice = doc.type === 'invoice'
   const sidePanel = isOffboarding ? (
     <DocumentTestimonial client={client} doc={doc} />
   ) : isContract ? (
     <ContractSignaturePanel client={client} doc={doc} />
+  ) : isInvoice ? (
+    <InvoiceStatusPanel client={client} doc={doc} />
   ) : (
     <DocumentComments client={client} doc={doc} pageLabel={pageLabel} />
   )
+
+  const backTo = isInvoice ? `/clients/${client.id}/documents/invoices` : `/clients/${client.id}/documents`
 
   const handleRemove = async () => {
     const confirmed = await confirmAction(`Remove "${doc.title}"? This can't be undone.`, {
@@ -101,17 +107,14 @@ export default function DocumentDetail() {
     })
     if (!confirmed) return
     removeDocument(client.id, doc.id)
-    navigate(`/clients/${client.id}/documents`)
+    navigate(backTo)
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <Link
-        to={`/clients/${client.id}/documents`}
-        className="flex w-fit items-center gap-1.5 text-xs font-medium text-ink-muted hover:text-ink-primary"
-      >
+      <Link to={backTo} className="flex w-fit items-center gap-1.5 text-xs font-medium text-ink-muted hover:text-ink-primary">
         <ArrowLeft size={13} />
-        Documents
+        {isInvoice ? 'Invoices' : 'Documents'}
       </Link>
 
       <div className="flex items-start justify-between">

@@ -20,6 +20,7 @@ import ClientDashboard from '@/pages/client/Dashboard'
 import ClientUpdates from '@/pages/client/Updates'
 import ClientTasks from '@/pages/client/Tasks'
 import ClientDocuments from '@/pages/client/Documents'
+import ClientInvoices from '@/pages/client/Invoices'
 import DocumentDetail from '@/pages/client/DocumentDetail'
 import ClientLibrary from '@/pages/client/Library'
 import ClientLibraryFolder from '@/pages/client/LibraryFolder'
@@ -104,6 +105,7 @@ export default function App() {
             <Route path="updates" element={<ClientUpdates />} />
             <Route path="tasks" element={<ClientTasks />} />
             <Route path="documents" element={<ClientDocuments />} />
+            <Route path="documents/invoices" element={<ClientInvoices />} />
             <Route path="documents/:docId" element={<DocumentDetail />} />
             <Route path="library" element={<ClientLibrary />} />
             <Route path="library/:folderId" element={<ClientLibraryFolder />} />

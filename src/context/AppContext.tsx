@@ -12,6 +12,7 @@ import type {
   DealStage,
   DocumentComment,
   DocumentSignature,
+  DocumentStatus,
   DocumentTestimonial,
   Lead,
   LeadSource,
@@ -103,7 +104,10 @@ interface AppContextValue {
   updateClientProfile: (
     clientId: string,
     patch: Partial<
-      Pick<Client, 'name' | 'projectName' | 'owner' | 'dueDate' | 'avatarUrl' | 'color' | 'initials' | 'email' | 'phone'>
+      Pick<
+        Client,
+        'name' | 'projectName' | 'owner' | 'dueDate' | 'avatarUrl' | 'color' | 'initials' | 'email' | 'phone' | 'invoiceTotalValue'
+      >
     >
   ) => void
   toggleStep: (clientId: string, phaseKey: string, stepId: string) => void
@@ -125,6 +129,8 @@ interface AppContextValue {
     party: 'agency' | 'client',
     signature: DocumentSignature
   ) => void
+  setInvoiceApproval: (clientId: string, docId: string, approved: boolean) => void
+  setInvoicePaid: (clientId: string, docId: string, paid: boolean) => void
   addLibraryFolder: (clientId: string, folder: LibraryFolder) => Promise<LibraryFolder>
   removeLibraryFolder: (clientId: string, folderId: string) => void
   addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => Promise<LibraryFile>
@@ -457,6 +463,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         initials: patch.initials,
         email: patch.email,
         phone: patch.phone,
+        total_amount: patch.invoiceTotalValue,
       })
     },
     [updateClient]
@@ -565,6 +572,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         status: patch.status,
         meta: patch.meta ?? null,
         url: patch.url ?? null,
+        invoice_number: patch.invoiceNumber ?? null,
+        billed_to_name: patch.billedToName ?? null,
+        issued_date: patch.issuedDate ?? null,
+        due_date: patch.dueDate ?? null,
+        amount: patch.amount ?? null,
         updated_at: updatedAt,
       })
     },
@@ -698,6 +710,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }),
         ...(bothSigned ? { status: 'signed' } : {}),
       })
+    },
+    [updateClient]
+  )
+
+  // Surgical single-column updates, not routed through the generic
+  // updateDocument — that one's built for the full edit form and would
+  // null out meta/url on any partial patch that doesn't include them.
+  const setInvoiceApproval = useCallback(
+    (clientId: string, docId: string, approved: boolean) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        documents: c.documents.map((d) => (d.id === docId ? { ...d, invoiceApproved: approved } : d)),
+      }))
+      syncDocumentFields(docId, { invoice_approved: approved })
+    },
+    [updateClient]
+  )
+
+  const setInvoicePaid = useCallback(
+    (clientId: string, docId: string, paid: boolean) => {
+      const status: DocumentStatus = paid ? 'paid' : 'unpaid'
+      updateClient(clientId, (c) => ({
+        ...c,
+        documents: c.documents.map((d) => (d.id === docId ? { ...d, status } : d)),
+      }))
+      syncDocumentFields(docId, { status })
     },
     [updateClient]
   )
@@ -1072,6 +1110,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentTestimonial,
       removeDocumentTestimonial,
       setDocumentSignature,
+      setInvoiceApproval,
+      setInvoicePaid,
       addLibraryFolder,
       removeLibraryFolder,
       addLibraryFile,
@@ -1137,6 +1177,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentTestimonial,
       removeDocumentTestimonial,
       setDocumentSignature,
+      setInvoiceApproval,
+      setInvoicePaid,
       addLibraryFolder,
       removeLibraryFolder,
       addLibraryFile,

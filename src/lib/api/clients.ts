@@ -35,6 +35,7 @@ interface ClientRow {
   due_date: string
   phases: ProjectPhase[] | null
   workshop: WorkshopState | null
+  total_amount: number | null
 }
 
 function rowToClient(row: ClientRow): Client {
@@ -59,6 +60,7 @@ function rowToClient(row: ClientRow): Client {
     brandHub: [],
     events: [],
     workshop: row.workshop ?? emptyWorkshop(),
+    invoiceTotalValue: row.total_amount ?? undefined,
   }
 }
 
@@ -77,6 +79,7 @@ function clientToRow(client: Client) {
     due_date: client.dueDate,
     phases: client.phases,
     workshop: client.workshop,
+    total_amount: client.invoiceTotalValue ?? null,
   }
 }
 

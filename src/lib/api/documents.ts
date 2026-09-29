@@ -23,6 +23,12 @@ export interface DocumentRow {
   client_signature_data: string | null
   client_signature_author_name: string | null
   client_signature_created_at: string | null
+  invoice_number: string | null
+  billed_to_name: string | null
+  issued_date: string | null
+  due_date: string | null
+  amount: number | null
+  invoice_approved: boolean | null
 }
 
 export interface CommentRow {
@@ -75,6 +81,12 @@ export function rowToDocument(row: DocumentRow, comments: DocumentComment[]): Cl
       : undefined,
     agencySignature: rowToSignature(row.agency_signature_data, row.agency_signature_author_name, row.agency_signature_created_at),
     clientSignature: rowToSignature(row.client_signature_data, row.client_signature_author_name, row.client_signature_created_at),
+    invoiceNumber: row.invoice_number ?? undefined,
+    billedToName: row.billed_to_name ?? undefined,
+    issuedDate: row.issued_date ?? undefined,
+    dueDate: row.due_date ?? undefined,
+    amount: row.amount ?? undefined,
+    invoiceApproved: row.invoice_approved ?? undefined,
   }
 }
 
@@ -97,6 +109,12 @@ function documentToRow(clientId: string, doc: ClientDocument) {
     client_signature_data: doc.clientSignature?.signatureData ?? null,
     client_signature_author_name: doc.clientSignature?.authorName ?? null,
     client_signature_created_at: doc.clientSignature?.createdAt ?? null,
+    invoice_number: doc.invoiceNumber ?? null,
+    billed_to_name: doc.billedToName ?? null,
+    issued_date: doc.issuedDate ?? null,
+    due_date: doc.dueDate ?? null,
+    amount: doc.amount ?? null,
+    invoice_approved: doc.invoiceApproved ?? null,
   }
 }
 

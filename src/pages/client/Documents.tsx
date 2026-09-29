@@ -30,6 +30,9 @@ export default function ClientDocuments() {
   const { isClientView } = useViewMode()
   const [showAdd, setShowAdd] = useState(false)
 
+  const invoices = client.documents.filter((d) => d.type === 'invoice')
+  const otherDocs = client.documents.filter((d) => d.type !== 'invoice')
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -47,7 +50,23 @@ export default function ClientDocuments() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {client.documents.length === 0 && <p className="text-sm text-ink-muted">No documents yet.</p>}
-        {client.documents.map((doc) => {
+        {invoices.length > 0 && (
+          <Link
+            to={`/clients/${client.id}/documents/invoices`}
+            className="rounded-xl border border-black/[0.06] bg-white p-3.5 text-left shadow-card transition-shadow hover:shadow-pop"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-sunken text-ink-secondary">
+                <Receipt size={15} />
+              </div>
+            </div>
+            <p className="mt-2.5 text-sm font-medium text-ink-primary">Invoices</p>
+            <p className="text-xs text-ink-muted">
+              {invoices.length} invoice{invoices.length === 1 ? '' : 's'}
+            </p>
+          </Link>
+        )}
+        {otherDocs.map((doc) => {
           const Icon = TYPE_ICON[doc.type]
           return (
             <Link
