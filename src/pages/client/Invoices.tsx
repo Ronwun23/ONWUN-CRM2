@@ -95,7 +95,7 @@ export default function ClientInvoices() {
         <div className="rounded-xl border border-black/[0.06] bg-white p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Open</p>
           <div className="mt-1 flex items-center gap-2">
-            <p className="text-2xl font-bold text-ink-primary">{formatFullCurrency(stats.open)}</p>
+            <p className="text-2xl font-bold text-ink-primary">{formatFullCurrency(stats.open, 'GBP')}</p>
             {stats.openCount > 0 && (
               <Pill tone="neutral">
                 {stats.openCount} invoice{stats.openCount === 1 ? '' : 's'}
@@ -106,13 +106,13 @@ export default function ClientInvoices() {
         <div className="rounded-xl border border-black/[0.06] bg-white p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Overdue</p>
           <p className={clsx('mt-1 text-2xl font-bold', stats.overdue > 0 ? 'text-status-critical' : 'text-ink-primary')}>
-            {formatFullCurrency(stats.overdue)}
+            {formatFullCurrency(stats.overdue, 'GBP')}
           </p>
         </div>
         <div className="rounded-xl border border-black/[0.06] bg-white p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Paid</p>
           <div className="mt-1 flex items-center gap-2">
-            <p className="text-2xl font-bold text-ink-primary">{formatFullCurrency(stats.paid)}</p>
+            <p className="text-2xl font-bold text-ink-primary">{formatFullCurrency(stats.paid, 'GBP')}</p>
             {stats.paidCount > 0 && (
               <Pill tone="good">
                 {stats.paidCount} invoice{stats.paidCount === 1 ? '' : 's'}
@@ -178,7 +178,7 @@ export default function ClientInvoices() {
                       {doc.dueDate ? formatDate(doc.dueDate) : '—'}
                     </td>
                     <td className="px-4 py-3.5 text-right font-semibold text-ink-primary">
-                      {doc.amount != null ? formatFullCurrency(doc.amount) : '—'}
+                      {doc.amount != null ? formatFullCurrency(doc.amount, 'GBP') : '—'}
                     </td>
                   </tr>
                 )

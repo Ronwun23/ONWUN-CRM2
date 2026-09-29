@@ -50,7 +50,7 @@ export default function InvoiceStatusPanel({ client, doc }: { client: Client; do
           {doc.amount != null && (
             <div className="flex items-center justify-between border-t border-black/[0.06] pt-2.5">
               <span className="text-ink-muted">Amount</span>
-              <span className="font-semibold text-ink-primary">{formatFullCurrency(doc.amount)}</span>
+              <span className="font-semibold text-ink-primary">{formatFullCurrency(doc.amount, 'GBP')}</span>
             </div>
           )}
         </div>
