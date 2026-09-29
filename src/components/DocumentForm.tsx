@@ -96,7 +96,8 @@ export default function DocumentForm({
         await addDocument(clientId, { id: `doc-${Date.now()}`, updatedAt: new Date().toISOString(), comments: [], ...payload })
       }
       onDone()
-    } catch {
+    } catch (err) {
+      console.error('Failed to save document to Supabase:', err)
       setSaveError("Couldn't save this document — try again.")
     } finally {
       setSaving(false)
