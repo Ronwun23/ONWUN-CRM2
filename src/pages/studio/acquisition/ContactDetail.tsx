@@ -135,13 +135,13 @@ export default function AcquisitionContactDetail() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-ink-primary">{lead.companyName}</h1>
+          <h1 className="text-lg font-semibold text-ink-primary">{lead.companyName}</h1>
           {lead.website && (
             <a
               href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-brand-600 hover:text-brand-700"
+              className="text-sm text-ink-secondary hover:text-ink-primary hover:underline"
             >
               {lead.website}
             </a>
@@ -197,17 +197,17 @@ export default function AcquisitionContactDetail() {
                   <button
                     onClick={handleDraft}
                     disabled={drafting || !acquisitionProfile}
-                    className="flex items-center gap-1.5 rounded-lg border border-brand-500 px-3.5 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <Sparkles size={14} />
+                    <Sparkles size={12} />
                     {drafting ? 'Drafting…' : openings.length > 0 ? 'Draft again' : 'Draft with AI'}
                   </button>
                   {openings.length > 0 && (
                     <button
                       onClick={cycleOpening}
-                      className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-medium text-ink-primary hover:bg-surface-sunken"
+                      className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3 py-1.5 text-xs font-semibold text-ink-primary hover:bg-surface-sunken"
                     >
-                      <RefreshCw size={14} />
+                      <RefreshCw size={12} />
                       Try another opening, {openingIndex + 1} of {openings.length}
                     </button>
                   )}
@@ -217,7 +217,7 @@ export default function AcquisitionContactDetail() {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="Subject"
-                  className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                   autoComplete="off"
                 />
                 <textarea
@@ -225,30 +225,30 @@ export default function AcquisitionContactDetail() {
                   onChange={(e) => setBody(e.target.value)}
                   rows={8}
                   placeholder="Write the email…"
-                  className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                 />
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleCopy}
                     disabled={!body}
-                    className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-semibold text-ink-primary hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3 py-1.5 text-xs font-semibold text-ink-primary hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <Copy size={14} />
+                    <Copy size={12} />
                     Copy
                   </button>
                   <a
                     href={outlookUrl}
-                    className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-semibold text-ink-primary hover:bg-surface-sunken"
+                    className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3 py-1.5 text-xs font-semibold text-ink-primary hover:bg-surface-sunken"
                   >
-                    <Mail size={14} />
+                    <Mail size={12} />
                     Open in Outlook
                   </a>
                   <button
                     onClick={handleDoneSentIt}
                     disabled={sending}
-                    className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <Check size={14} />
+                    <Check size={12} />
                     {sending ? 'Saving…' : 'Done, sent it'}
                   </button>
                 </div>
@@ -262,7 +262,7 @@ export default function AcquisitionContactDetail() {
                 {escalation && (
                   <button
                     onClick={() => handleOutcome(escalation.outcome)}
-                    className="rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+                    className="rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
                   >
                     {escalation.label}
                   </button>
@@ -270,29 +270,29 @@ export default function AcquisitionContactDetail() {
                 {canAskAQuestion(lead.status) && (
                   <button
                     onClick={() => handleOutcome('live_conversation')}
-                    className="rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-medium text-ink-primary hover:bg-surface-sunken"
+                    className="rounded-lg border border-black/[0.10] px-3 py-1.5 text-xs font-semibold text-ink-primary hover:bg-surface-sunken"
                   >
                     Asked a question
                   </button>
                 )}
                 <button
                   onClick={() => handleOutcome('not_now')}
-                  className="rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
+                  className="rounded-lg border border-black/[0.10] px-3 py-1.5 text-xs font-semibold text-ink-secondary hover:bg-surface-sunken"
                 >
                   Not now
                 </button>
                 <button
                   onClick={() => handleOutcome('suppressed')}
-                  className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-medium text-status-critical hover:bg-[#fbecec]"
+                  className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3 py-1.5 text-xs font-semibold text-status-critical hover:bg-[#fbecec]"
                 >
-                  <Trash2 size={13} />
+                  <Trash2 size={12} />
                   Remove me, never contact
                 </button>
               </div>
               {canConvertToClient(lead.status) && (
                 <button
                   onClick={() => setShowConvert(true)}
-                  className="mt-3 w-full rounded-lg bg-status-good/90 px-3.5 py-2 text-sm font-semibold text-white hover:bg-status-good"
+                  className="mt-3 w-full rounded-lg bg-status-good/90 px-3 py-1.5 text-xs font-semibold text-white hover:bg-status-good"
                 >
                   Convert to client
                 </button>
@@ -313,7 +313,7 @@ export default function AcquisitionContactDetail() {
                   <span
                     className={
                       step.done
-                        ? 'flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white'
+                        ? 'flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-black text-white'
                         : 'h-4 w-4 shrink-0 rounded-full border border-black/20'
                     }
                   >
@@ -368,7 +368,7 @@ export default function AcquisitionContactDetail() {
           <button
             onClick={handleConvert}
             disabled={!dueDate || converting}
-            className="mt-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-2 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {converting ? 'Converting…' : 'Convert to client'}
           </button>
