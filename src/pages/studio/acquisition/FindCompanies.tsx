@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/select'
 import { fetchAcquisitionUsage, findCompanies, type CompanyResult } from '@/lib/api/findCompanies'
 
 const inputClass =
-  'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
+  'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black'
 
 export default function AcquisitionFindCompanies() {
   const { acquisitionProfile, addLead, activeAccount } = useApp()
@@ -84,12 +84,11 @@ export default function AcquisitionFindCompanies() {
     return (
       <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-ink-primary">Find companies</h1>
-          <p className="text-sm text-ink-secondary">AI-powered search for companies matching your brief</p>
+          <h1 className="text-lg font-semibold text-ink-primary">Find companies</h1>
         </div>
         <Card>
           <p className="text-sm text-ink-muted">
-            <Link to="/acquisition/setup" className="text-brand-600 underline">
+            <Link to="/acquisition/setup" className="text-ink-primary underline">
               Fill in Setup
             </Link>{' '}
             first — the search needs your niche and countries.
@@ -103,8 +102,7 @@ export default function AcquisitionFindCompanies() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-ink-primary">Find companies</h1>
-          <p className="text-sm text-ink-secondary">AI-powered search for companies matching your brief</p>
+          <h1 className="text-lg font-semibold text-ink-primary">Find companies</h1>
         </div>
         {tokensUsed !== null && (
           <div className="text-right">
@@ -126,9 +124,9 @@ export default function AcquisitionFindCompanies() {
           <button
             onClick={handleSearch}
             disabled={searching || !country || budgetReached}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <SearchIcon size={14} />
+            <SearchIcon size={12} />
             {searching ? 'Searching…' : 'Search'}
           </button>
         </div>
@@ -152,7 +150,7 @@ export default function AcquisitionFindCompanies() {
                     href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-brand-600 hover:text-brand-700"
+                    className="text-xs text-ink-secondary hover:text-ink-primary hover:underline"
                   >
                     {company.website}
                   </a>
@@ -170,15 +168,15 @@ export default function AcquisitionFindCompanies() {
                     <button
                       onClick={() => handleAdd(index)}
                       disabled={addingIndex === index}
-                      className="rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {addingIndex === index ? 'Adding…' : 'Add to contacts'}
                     </button>
                     <button
                       onClick={() => handleRemove(index)}
-                      className="flex items-center gap-1 rounded-lg border border-black/[0.10] px-3.5 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
+                      className="flex items-center gap-1 rounded-lg border border-black/[0.10] px-3 py-1.5 text-xs font-semibold text-ink-secondary hover:bg-surface-sunken"
                     >
-                      <X size={13} />
+                      <X size={12} />
                       Remove
                     </button>
                   </div>

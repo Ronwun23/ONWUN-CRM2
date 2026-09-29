@@ -184,7 +184,6 @@ export default function StudioSettings() {
     <div className="flex flex-col gap-8 pb-8">
       <div>
         <h1 className="text-xl font-semibold text-ink-primary">Settings</h1>
-        <p className="text-sm text-ink-secondary">Connect the studio to the tools your team already uses.</p>
       </div>
 
       <div>

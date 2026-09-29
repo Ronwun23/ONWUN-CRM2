@@ -39,7 +39,6 @@ export default function ClientBrandHub() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-ink-primary">Brand hub</h1>
-          <p className="text-sm text-ink-secondary">Final brand assets, once delivered</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}

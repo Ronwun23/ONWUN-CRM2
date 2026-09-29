@@ -36,7 +36,7 @@ export default function ClientAvatarStack({
       ))}
       {overflow > 0 && (
         <div
-          className={`flex shrink-0 items-center justify-center rounded-full bg-white/10 text-[11px] font-semibold text-white/70 ring-[3px] ${ringClassName}`}
+          className={`flex shrink-0 items-center justify-center rounded-full bg-black/[0.06] text-[11px] font-semibold text-ink-secondary ring-[3px] ${ringClassName}`}
           style={{ width: size, height: size, marginLeft: -overlap, zIndex: 0 }}
         >
           +{overflow}

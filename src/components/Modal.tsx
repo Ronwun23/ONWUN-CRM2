@@ -46,7 +46,7 @@ export default function Modal({
       onClick={(e) => {
         if (e.target === dialogNode) onClose()
       }}
-      className="m-auto w-full max-w-xl rounded-xl border border-black/[0.08] bg-white p-0 shadow-pop backdrop:bg-black/40"
+      className="m-auto w-full max-w-xl rounded-xl border border-black/[0.08] bg-white p-0 shadow-pop"
     >
       <div className="flex items-start justify-between border-b border-black/[0.06] px-6 py-4">
         <div>

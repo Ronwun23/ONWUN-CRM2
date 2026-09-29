@@ -80,9 +80,9 @@ function StepsIndicator() {
   return (
     <span
       className={clsx(
-        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors',
-        status === 'completed' && 'bg-brand-500 text-white',
-        status === 'current' && 'border-2 border-brand-500 bg-white text-brand-600',
+        'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors',
+        status === 'completed' && 'bg-black text-white',
+        status === 'current' && 'border-2 border-black bg-white text-ink-primary',
         status === 'upcoming' && 'border border-black/10 bg-surface-sunken text-ink-muted'
       )}
     >
@@ -96,7 +96,7 @@ function StepsSeparator() {
   return (
     <span
       aria-hidden="true"
-      className={clsx('mt-3.5 h-0.5 flex-1 shrink transition-colors', status === 'completed' ? 'bg-brand-500' : 'bg-black/10')}
+      className={clsx('mt-3 h-0.5 flex-1 shrink transition-colors', status === 'completed' ? 'bg-black' : 'bg-black/10')}
     />
   )
 }

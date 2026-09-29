@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useApp } from '@/context/AppContext'
-import Card from '@/components/Card'
 
 const inputClass =
-  'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
+  'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black'
 const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted'
 
 export default function AcquisitionSetup() {
@@ -43,11 +42,10 @@ export default function AcquisitionSetup() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-ink-primary">Setup</h1>
-        <p className="text-sm text-ink-secondary">The brief that drives who you target and how emails are drafted</p>
+        <h1 className="text-lg font-semibold text-ink-primary">Setup</h1>
       </div>
 
-      <Card>
+      <div className="rounded-xl border border-black/[0.06] bg-white p-3.5 shadow-card">
         <div className="flex flex-col gap-4">
           <div>
             <label className={labelClass}>Niche</label>
@@ -135,14 +133,14 @@ export default function AcquisitionSetup() {
             <button
               onClick={handleSave}
               disabled={!niche.trim() || !countries.trim() || saving}
-              className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
-            {saved && <span className="text-sm font-medium text-brand-600">Saved.</span>}
+            {saved && <span className="text-xs font-medium text-ink-secondary">Saved.</span>}
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

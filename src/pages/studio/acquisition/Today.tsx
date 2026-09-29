@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import Card from '@/components/Card'
 import { MemberAvatar, memberName } from '@/components/Avatar'
 import { todayCivil } from '@/lib/civilDate'
 import { formatDueDate } from '@/lib/format'
@@ -35,24 +34,23 @@ export default function AcquisitionToday() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-ink-primary">Today</h1>
-        <p className="text-sm text-ink-secondary">Everything due today or overdue, across both of you</p>
+        <h1 className="text-lg font-semibold text-ink-primary">Today</h1>
       </div>
 
-      <Card padded={false}>
+      <div className="rounded-xl border border-black/[0.06] bg-white shadow-card">
         {due.length === 0 ? (
-          <p className="p-4 text-sm text-ink-muted">Nothing due — you're caught up.</p>
+          <p className="p-3.5 text-sm text-ink-muted">Nothing due — you're caught up.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-black/[0.05] px-4">
+          <ul className="flex flex-col divide-y divide-black/[0.05] px-3.5">
             {due.map(({ lead, step }) => {
               const dueLabel = formatDueDate(step.dueDate)
               return (
-                <li key={step.id} className="flex items-center gap-3 py-3">
+                <li key={step.id} className="flex items-center gap-3 py-2.5">
                   <MemberAvatar memberId={lead.owner} size={26} />
                   <div className="min-w-0 flex-1">
                     <Link
                       to={`/acquisition/contacts/${lead.id}`}
-                      className="truncate text-sm font-medium text-ink-primary hover:text-brand-600"
+                      className="truncate text-sm font-medium text-ink-primary hover:underline"
                     >
                       {lead.companyName}
                     </Link>
@@ -78,7 +76,7 @@ export default function AcquisitionToday() {
             })}
           </ul>
         )}
-      </Card>
+      </div>
     </div>
   )
 }

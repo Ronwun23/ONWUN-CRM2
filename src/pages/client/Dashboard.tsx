@@ -5,7 +5,6 @@ import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { useViewMode } from '@/context/ViewModeContext'
-import Card from '@/components/Card'
 import Pill from '@/components/Pill'
 import InviteClientDrawer from '@/components/InviteClientDrawer'
 import { Steps } from '@/components/Steps'
@@ -40,23 +39,23 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-7">
+    <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={40} />
+        <div className="flex items-center gap-2.5">
+          <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={36} />
           <div>
-            <h1 className="text-xl font-semibold text-ink-primary">{client.name}</h1>
+            <h1 className="text-lg font-semibold text-ink-primary">{client.name}</h1>
             <p className="text-sm text-ink-secondary">{client.projectName}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <Pill tone={CLIENT_STATUS_TONE[client.status]}>{CLIENT_STATUS_LABEL[client.status]}</Pill>
           {!isClientView && (
             <button
               onClick={() => setShowInvite(true)}
               className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] px-3 py-1.5 text-xs font-semibold text-ink-secondary transition-colors hover:bg-surface-sunken"
             >
-              <UserPlus size={13} />
+              <UserPlus size={12} />
               Invite client
             </button>
           )}
@@ -66,11 +65,11 @@ export default function ClientDashboard() {
               className={clsx(
                 'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
                 isClientView
-                  ? 'bg-brand-500 text-white hover:bg-brand-600'
+                  ? 'bg-black text-white hover:bg-black/85'
                   : 'border border-black/[0.10] text-ink-secondary hover:bg-surface-sunken'
               )}
             >
-              <Eye size={13} />
+              <Eye size={12} />
               {isClientView ? 'Exit client view' : 'View as client'}
             </button>
           )}
@@ -79,7 +78,7 @@ export default function ClientDashboard() {
 
       <InviteClientDrawer client={client} open={showInvite} onClose={() => setShowInvite(false)} />
 
-      <Card>
+      <div className="rounded-xl border border-black/[0.06] bg-white p-3.5 shadow-card">
         <Steps activeStep={activeStep} aria-label="Project phase">
           {PHASES.map((key, i) => (
             <Steps.Item key={key} index={i} label={PHASE_LABELS[key]}>
@@ -88,12 +87,15 @@ export default function ClientDashboard() {
             </Steps.Item>
           ))}
         </Steps>
-      </Card>
+      </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
-        <Card title="The process" padded={false}>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
+        <div className="overflow-hidden rounded-xl border border-black/[0.06] bg-white shadow-card">
+          <div className="px-3.5 py-3">
+            <h3 className="text-sm font-semibold text-ink-primary">The process</h3>
+          </div>
           <div className="flex">
-            <div className="flex w-44 shrink-0 flex-col gap-0 border-r border-black/[0.06] p-3">
+            <div className="flex w-40 shrink-0 flex-col gap-0 border-r border-black/[0.06] p-2.5">
               {PHASES.map((key, i) => {
                 const p = client.phases.find((ph) => ph.key === key)!
                 const status = phaseStatus(p)
@@ -103,20 +105,20 @@ export default function ClientDashboard() {
                     key={key}
                     onClick={() => setSelectedPhase(key)}
                     className={clsx(
-                      'flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors',
+                      'flex items-start gap-2 rounded-lg px-2 py-1.5 text-left transition-colors',
                       selectedPhase === key ? 'bg-surface-sunken' : 'hover:bg-surface-sunken/60'
                     )}
                   >
                     <div className="flex flex-col items-center">
                       <span
                         className={clsx(
-                          'flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white',
-                          status === 'done' ? 'bg-brand-500' : status === 'in_progress' ? 'bg-brand-300' : 'bg-surface-sunken border border-black/10'
+                          'flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-white',
+                          status === 'done' ? 'bg-black' : status === 'in_progress' ? 'bg-black/40' : 'bg-surface-sunken border border-black/10'
                         )}
                       >
-                        {status === 'done' && <Check size={10} strokeWidth={3} />}
+                        {status === 'done' && <Check size={9} strokeWidth={3} />}
                       </span>
-                      {i < PHASES.length - 1 && <span className="mt-0.5 h-5 w-px bg-black/10" />}
+                      {i < PHASES.length - 1 && <span className="mt-0.5 h-4 w-px bg-black/10" />}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-ink-primary">{PHASE_LABELS[key]}</p>
@@ -133,17 +135,17 @@ export default function ClientDashboard() {
               })}
             </div>
 
-            <div className="flex-1 p-4">
+            <div className="flex-1 p-3.5">
               <ul className="flex flex-col divide-y divide-black/[0.05]">
                 {phase.steps.map((step) => (
-                  <li key={step.id} className="flex items-center gap-3 py-2">
+                  <li key={step.id} className="flex items-center gap-3 py-1.5">
                     <button
                       onClick={() => !isClientView && toggleStep(client.id, phase.key, step.id)}
                       disabled={isClientView}
                       className={clsx(
                         'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
-                        step.done ? 'border-brand-500 bg-brand-500 text-white' : 'border-black/20',
-                        isClientView ? 'cursor-default' : 'hover:border-brand-500'
+                        step.done ? 'border-black bg-black text-white' : 'border-black/20',
+                        isClientView ? 'cursor-default' : 'hover:border-black'
                       )}
                       aria-label="Toggle step"
                     >
@@ -163,31 +165,32 @@ export default function ClientDashboard() {
                     onChange={(e) => setNewStepTitle(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddStep()}
                     placeholder="Add a step…"
-                    className="flex-1 rounded-lg border border-black/[0.10] px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    className="flex-1 rounded-lg border border-black/[0.10] px-3 py-1.5 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                     autoComplete="off"
                     data-1p-ignore
                     data-lpignore="true"
                   />
                   <button
                     onClick={handleAddStep}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white hover:bg-brand-600"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white hover:bg-black/85"
                     aria-label="Add step"
                   >
-                    <Plus size={15} />
+                    <Plus size={14} />
                   </button>
                 </div>
               )}
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card title="Project">
-          <dl className="flex flex-col gap-3 text-sm">
+        <div className="rounded-xl border border-black/[0.06] bg-white p-3.5 shadow-card">
+          <h3 className="mb-2.5 text-sm font-semibold text-ink-primary">Project</h3>
+          <dl className="flex flex-col gap-2.5 text-sm">
             <div>
               <dt className="text-xs text-ink-muted">Progress</dt>
               <dd className="mt-1 flex items-center gap-2">
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
-                  <div className="h-full rounded-full bg-brand-500" style={{ width: `${progress.percent}%` }} />
+                  <div className="h-full rounded-full bg-black" style={{ width: `${progress.percent}%` }} />
                 </div>
                 <span className="text-xs font-medium tabular-nums text-ink-primary">{progress.percent}%</span>
               </dd>
@@ -214,12 +217,13 @@ export default function ClientDashboard() {
               </dd>
             </div>
           </dl>
-        </Card>
+        </div>
       </div>
 
-      <Card title="Timeline">
+      <div className="rounded-xl border border-black/[0.06] bg-white p-3.5 shadow-card">
+        <h3 className="mb-2.5 text-sm font-semibold text-ink-primary">Timeline</h3>
         <TimelineStrip client={client} />
-      </Card>
+      </div>
     </div>
   )
 }

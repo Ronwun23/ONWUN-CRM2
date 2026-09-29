@@ -12,7 +12,7 @@ import { LEAD_SOURCE_LABEL, LEAD_SOURCE_TONE } from '@/lib/labels'
 import type { LeadSource } from '@/types'
 
 const inputClass =
-  'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
+  'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black'
 const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted'
 
 const SOURCE_OPTIONS: { value: LeadSource; label: string }[] = [
@@ -119,23 +119,21 @@ export default function AcquisitionContacts() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink-primary">Contacts</h1>
+          <h1 className="text-lg font-semibold text-ink-primary">Contacts</h1>
           <p className="text-sm text-ink-secondary">
             {leads.length} contact{leads.length === 1 ? '' : 's'}.
           </p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 rounded-full border-2 border-brand-500 px-4 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50"
+          className="flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
         >
-          <UserPlus size={16} />
+          <UserPlus size={12} />
           New contact
         </button>
       </div>
 
-      <hr className="border-black/[0.06]" />
-
-      {justAdded && <p className="-mt-1 text-sm font-medium text-brand-600">Contact added.</p>}
+      {justAdded && <p className="-mt-1 text-xs font-medium text-ink-secondary">Contact added.</p>}
 
       <div className="relative">
         <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
@@ -143,7 +141,7 @@ export default function AcquisitionContacts() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, email, or company"
-          className="w-full rounded-lg border border-black/[0.10] py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          className="w-full rounded-lg border border-black/[0.10] py-2 pl-9 pr-3 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
           autoComplete="off"
         />
       </div>
@@ -157,17 +155,17 @@ export default function AcquisitionContacts() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-black/[0.06] text-xs font-medium uppercase tracking-wide text-ink-muted">
-                <th className="px-4 py-3">
+                <th className="px-3.5 py-2.5">
                   <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:text-ink-secondary">
                     Name
                     {sortKey === 'name' && <ArrowUpDown size={12} />}
                   </button>
                 </th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Phone</th>
-                <th className="px-4 py-3">Company</th>
-                <th className="px-4 py-3">Source</th>
-                <th className="px-4 py-3">
+                <th className="px-3.5 py-2.5">Email</th>
+                <th className="px-3.5 py-2.5">Phone</th>
+                <th className="px-3.5 py-2.5">Company</th>
+                <th className="px-3.5 py-2.5">Source</th>
+                <th className="px-3.5 py-2.5">
                   <button onClick={() => toggleSort('added')} className="flex items-center gap-1 hover:text-ink-secondary">
                     Added
                     {sortKey === 'added' && <ArrowUpDown size={12} />}
@@ -181,22 +179,22 @@ export default function AcquisitionContacts() {
                   <td className="p-0">
                     <Link
                       to={`/acquisition/contacts/${lead.id}`}
-                      className="block px-4 py-3.5 font-semibold text-ink-primary hover:underline"
+                      className="block px-3.5 py-2.5 font-semibold text-ink-primary hover:underline"
                     >
                       {lead.contactName || lead.companyName}
                     </Link>
                   </td>
-                  <td className="px-4 py-3.5 text-ink-secondary">{lead.contactEmail || '—'}</td>
-                  <td className="px-4 py-3.5 text-ink-secondary">{lead.phone || '—'}</td>
-                  <td className="px-4 py-3.5 text-ink-secondary">{lead.companyName || '—'}</td>
-                  <td className="px-4 py-3.5">
+                  <td className="px-3.5 py-2.5 text-ink-secondary">{lead.contactEmail || '—'}</td>
+                  <td className="px-3.5 py-2.5 text-ink-secondary">{lead.phone || '—'}</td>
+                  <td className="px-3.5 py-2.5 text-ink-secondary">{lead.companyName || '—'}</td>
+                  <td className="px-3.5 py-2.5">
                     {lead.source ? (
                       <Pill tone={LEAD_SOURCE_TONE[lead.source]}>{LEAD_SOURCE_LABEL[lead.source]}</Pill>
                     ) : (
                       '—'
                     )}
                   </td>
-                  <td className="px-4 py-3.5 text-ink-secondary">{formatAdded(lead.createdAt)}</td>
+                  <td className="px-3.5 py-2.5 text-ink-secondary">{formatAdded(lead.createdAt)}</td>
                 </tr>
               ))}
             </tbody>
@@ -318,14 +316,14 @@ export default function AcquisitionContacts() {
           <div className="mt-1 flex items-center justify-end gap-2">
             <button
               onClick={() => setShowAdd(false)}
-              className="rounded-lg border border-black/[0.10] bg-white px-3.5 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
+              className="rounded-lg border border-black/[0.10] bg-white px-3 py-1.5 text-xs font-semibold text-ink-secondary hover:bg-surface-sunken"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
               disabled={!companyName.trim() || saving}
-              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {saving ? 'Adding…' : 'Add contact'}
             </button>

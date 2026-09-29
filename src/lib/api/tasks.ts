@@ -62,3 +62,8 @@ export async function updateTaskRow(taskId: string, patch: Record<string, unknow
   const { error } = await supabase.from('tasks').update(patch).eq('id', Number(taskId))
   if (error) throw error
 }
+
+export async function deleteTaskRow(taskId: string): Promise<void> {
+  const { error } = await supabase.from('tasks').delete().eq('id', Number(taskId))
+  if (error) throw error
+}

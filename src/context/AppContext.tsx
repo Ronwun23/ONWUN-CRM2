@@ -12,6 +12,7 @@ import type {
   DealStage,
   DocumentComment,
   DocumentSignature,
+  DocumentStatus,
   DocumentTestimonial,
   Lead,
   LeadSource,
@@ -34,7 +35,7 @@ import {
   deleteDocumentRow,
   insertComment,
 } from '@/lib/api/documents'
-import { fetchTasksForClient, fetchStudioTasks, insertTask, updateTaskRow } from '@/lib/api/tasks'
+import { fetchTasksForClient, fetchStudioTasks, insertTask, updateTaskRow, deleteTaskRow } from '@/lib/api/tasks'
 import { fetchUpdatesForClient, fetchStudioUpdates, insertUpdate, deleteUpdateRow } from '@/lib/api/updates'
 import { fetchLibraryForClient, insertFolder, deleteFolderRow, insertFile, deleteFileRow } from '@/lib/api/library'
 import { fetchBrandAssetsForClient, insertBrandAsset } from '@/lib/api/brandAssets'
@@ -103,13 +104,17 @@ interface AppContextValue {
   updateClientProfile: (
     clientId: string,
     patch: Partial<
-      Pick<Client, 'name' | 'projectName' | 'owner' | 'dueDate' | 'avatarUrl' | 'color' | 'initials' | 'email' | 'phone'>
+      Pick<
+        Client,
+        'name' | 'projectName' | 'owner' | 'dueDate' | 'avatarUrl' | 'color' | 'initials' | 'email' | 'phone' | 'invoiceTotalValue'
+      >
     >
   ) => void
   toggleStep: (clientId: string, phaseKey: string, stepId: string) => void
   addStep: (clientId: string, phaseKey: string, title: string) => void
   toggleTask: (clientId: string, taskId: string) => void
   addTask: (clientId: string, task: ClientTask) => Promise<void>
+  removeTask: (clientId: string, taskId: string) => void
   addUpdate: (clientId: string, update: UpdateEntry) => Promise<void>
   removeUpdate: (clientId: string, updateId: string) => void
   addDocument: (clientId: string, doc: ClientDocument) => Promise<ClientDocument>
@@ -124,6 +129,8 @@ interface AppContextValue {
     party: 'agency' | 'client',
     signature: DocumentSignature
   ) => void
+  setInvoiceApproval: (clientId: string, docId: string, approved: boolean) => void
+  setInvoicePaid: (clientId: string, docId: string, paid: boolean) => void
   addLibraryFolder: (clientId: string, folder: LibraryFolder) => Promise<LibraryFolder>
   removeLibraryFolder: (clientId: string, folderId: string) => void
   addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => Promise<LibraryFile>
@@ -131,6 +138,7 @@ interface AppContextValue {
   addBrandAsset: (clientId: string, asset: BrandAsset) => Promise<BrandAsset>
   addClientEvent: (clientId: string, event: ClientEvent) => Promise<ClientEvent>
   removeClientEvent: (clientId: string, eventId: string) => void
+  updateClientEventSchedule: (clientId: string, eventId: string, patch: { date?: string; time?: string }) => void
   updateClientEventNotes: (clientId: string, eventId: string, notes: string) => void
   updateClientEventFile: (
     clientId: string,
@@ -148,12 +156,13 @@ interface AppContextValue {
   studio: StudioState
   addStudioTask: (task: ClientTask) => Promise<void>
   toggleStudioTask: (taskId: string) => void
+  removeStudioTask: (taskId: string) => void
   addStudioUpdate: (update: UpdateEntry) => Promise<void>
   removeStudioUpdate: (updateId: string) => void
   addStudioEvent: (event: ClientEvent) => Promise<void>
   removeStudioEvent: (eventId: string) => void
   setStudioLogo: (url: string | undefined) => void
-  updateStudioEventNotes: (eventId: string, notes: string) => void
+  updateStudioEvent: (eventId: string, patch: Partial<ClientEvent>) => void
   activeAccount: StudioAccount
   setActiveAccount: (accountId: string) => void
   leads: Lead[]
@@ -359,6 +368,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }))
   }, [])
 
+  const removeStudioTask = useCallback((taskId: string) => {
+    setStudio((prev) => ({ ...prev, tasks: prev.tasks.filter((t) => t.id !== taskId) }))
+    deleteTaskRow(taskId).catch((err) => console.error('Failed to delete task from Supabase:', err))
+  }, [])
+
   const addStudioUpdate = useCallback(async (update: UpdateEntry) => {
     const created = await insertUpdate(null, update)
     setStudio((prev) => ({ ...prev, updates: [created, ...prev.updates] }))
@@ -383,14 +397,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setStudio((prev) => ({ ...prev, logoUrl: url }))
   }, [])
 
-  const updateStudioEventNotes = useCallback((eventId: string, notes: string) => {
+  // General patch — covers reschedule (drag), notes, and the category/color/
+  // tags editor. Only the touched fields hit Supabase.
+  const updateStudioEvent = useCallback((eventId: string, patch: Partial<ClientEvent>) => {
     setStudio((prev) => ({
       ...prev,
-      events: prev.events.map((e) => (e.id === eventId ? { ...e, notes: notes || undefined } : e)),
+      events: prev.events.map((e) => (e.id === eventId ? { ...e, ...patch } : e)),
     }))
-    updateEventRow(eventId, { notes: notes || null }).catch((err) =>
-      console.error('Failed to save event notes to Supabase:', err)
-    )
+    const row: Record<string, unknown> = {}
+    if ('title' in patch) row.title = patch.title
+    if ('date' in patch) row.date = patch.date
+    if ('time' in patch) row.time = patch.time || null
+    if ('notes' in patch) row.notes = patch.notes || null
+    if ('category' in patch) row.category = patch.category || null
+    if ('color' in patch) row.color = patch.color || null
+    if ('tags' in patch) row.tags = patch.tags?.length ? patch.tags : null
+    updateEventRow(eventId, row).catch((err) => console.error('Failed to save event to Supabase:', err))
   }, [])
 
   const activeAccount =
@@ -441,6 +463,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         initials: patch.initials,
         email: patch.email,
         phone: patch.phone,
+        total_amount: patch.invoiceTotalValue,
       })
     },
     [updateClient]
@@ -502,6 +525,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const removeTask = useCallback(
+    (clientId: string, taskId: string) => {
+      updateClient(clientId, (c) => ({ ...c, tasks: c.tasks.filter((t) => t.id !== taskId) }))
+      deleteTaskRow(taskId).catch((err) => console.error('Failed to delete task from Supabase:', err))
+    },
+    [updateClient]
+  )
+
   const addTask = useCallback(async (clientId: string, task: ClientTask) => {
     const created = await insertTask(clientId, task)
     setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, tasks: [created, ...c.tasks] } : c)))
@@ -541,6 +572,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         status: patch.status,
         meta: patch.meta ?? null,
         url: patch.url ?? null,
+        invoice_number: patch.invoiceNumber ?? null,
+        billed_to_name: patch.billedToName ?? null,
+        issued_date: patch.issuedDate ?? null,
+        due_date: patch.dueDate ?? null,
+        amount: patch.amount ?? null,
         updated_at: updatedAt,
       })
     },
@@ -678,6 +714,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  // Surgical single-column updates, not routed through the generic
+  // updateDocument — that one's built for the full edit form and would
+  // null out meta/url on any partial patch that doesn't include them.
+  const setInvoiceApproval = useCallback(
+    (clientId: string, docId: string, approved: boolean) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        documents: c.documents.map((d) => (d.id === docId ? { ...d, invoiceApproved: approved } : d)),
+      }))
+      syncDocumentFields(docId, { invoice_approved: approved })
+    },
+    [updateClient]
+  )
+
+  const setInvoicePaid = useCallback(
+    (clientId: string, docId: string, paid: boolean) => {
+      const status: DocumentStatus = paid ? 'paid' : 'unpaid'
+      updateClient(clientId, (c) => ({
+        ...c,
+        documents: c.documents.map((d) => (d.id === docId ? { ...d, status } : d)),
+      }))
+      syncDocumentFields(docId, { status })
+    },
+    [updateClient]
+  )
+
   const addLibraryFolder = useCallback(async (clientId: string, folder: LibraryFolder) => {
     const created = await insertFolder(clientId, folder)
     setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, library: [...c.library, created] } : c)))
@@ -738,6 +800,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (clientId: string, eventId: string) => {
       updateClient(clientId, (c) => ({ ...c, events: c.events.filter((e) => e.id !== eventId) }))
       deleteEventRow(eventId).catch((err) => console.error('Failed to delete event from Supabase:', err))
+    },
+    [updateClient]
+  )
+
+  // Drag-to-reschedule on the Content Calendar — mirrors updateStudioEvent's
+  // reasoning: date/time only, since that's all a rescheduled event needs.
+  const updateClientEventSchedule = useCallback(
+    (clientId: string, eventId: string, patch: { date?: string; time?: string }) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        events: c.events.map((e) => (e.id === eventId ? { ...e, ...patch } : e)),
+      }))
+      const row: Record<string, unknown> = {}
+      if (patch.date !== undefined) row.date = patch.date
+      if (patch.time !== undefined) row.time = patch.time || null
+      updateEventRow(eventId, row).catch((err) => console.error('Failed to reschedule event in Supabase:', err))
     },
     [updateClient]
   )
@@ -1022,6 +1100,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStep,
       toggleTask,
       addTask,
+      removeTask,
       addUpdate,
       removeUpdate,
       addDocument,
@@ -1031,6 +1110,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentTestimonial,
       removeDocumentTestimonial,
       setDocumentSignature,
+      setInvoiceApproval,
+      setInvoicePaid,
       addLibraryFolder,
       removeLibraryFolder,
       addLibraryFile,
@@ -1038,6 +1119,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addBrandAsset,
       addClientEvent,
       removeClientEvent,
+      updateClientEventSchedule,
       updateClientEventNotes,
       updateClientEventFile,
       saveWorkshopAnswer,
@@ -1051,12 +1133,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       studio,
       addStudioTask,
       toggleStudioTask,
+      removeStudioTask,
       addStudioUpdate,
       removeStudioUpdate,
       addStudioEvent,
       removeStudioEvent,
       setStudioLogo,
-      updateStudioEventNotes,
+      updateStudioEvent,
       activeAccount,
       setActiveAccount,
       leads,
@@ -1084,6 +1167,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addStep,
       toggleTask,
       addTask,
+      removeTask,
       addUpdate,
       removeUpdate,
       addDocument,
@@ -1093,6 +1177,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentTestimonial,
       removeDocumentTestimonial,
       setDocumentSignature,
+      setInvoiceApproval,
+      setInvoicePaid,
       addLibraryFolder,
       removeLibraryFolder,
       addLibraryFile,
@@ -1100,6 +1186,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addBrandAsset,
       addClientEvent,
       removeClientEvent,
+      updateClientEventSchedule,
       updateClientEventNotes,
       updateClientEventFile,
       saveWorkshopAnswer,
@@ -1113,12 +1200,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       studio,
       addStudioTask,
       toggleStudioTask,
+      removeStudioTask,
       addStudioUpdate,
       removeStudioUpdate,
       addStudioEvent,
       removeStudioEvent,
       setStudioLogo,
-      updateStudioEventNotes,
+      updateStudioEvent,
       activeAccount,
       setActiveAccount,
       leads,

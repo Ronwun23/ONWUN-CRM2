@@ -39,6 +39,7 @@ import ClientForm from '@/components/ClientForm'
 import SearchPalette from '@/components/SearchPalette'
 import { confirmAction } from '@/lib/confirm'
 import { fileToLogoDataUrl } from '@/lib/image'
+import { formatDueDate } from '@/lib/format'
 
 /** Bottom-left "who's managing this" switcher — lets Ro or Niall flip
  * between themselves, since either one might be driving the studio account
@@ -60,17 +61,17 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
 
   if (profile?.role === 'client') {
     return (
-      <div className="mt-auto flex items-center gap-2.5 border-t border-white/10 px-5 py-4">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">
+      <div className="mt-auto flex items-center gap-2.5 border-t border-black/[0.06] px-5 py-4">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/[0.06] text-xs font-semibold text-ink-primary">
           {(profile.full_name ?? session?.user.email ?? '?').slice(0, 1).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium leading-tight text-white">{profile.full_name ?? 'Client'}</p>
-          <p className="truncate text-[11px] leading-tight text-white/40">{session?.user.email}</p>
+          <p className="truncate text-xs font-medium leading-tight text-ink-primary">{profile.full_name ?? 'Client'}</p>
+          <p className="truncate text-[11px] leading-tight text-ink-muted">{session?.user.email}</p>
         </div>
         <button
           onClick={() => signOut()}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/40 hover:bg-white/[0.06] hover:text-status-critical"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-black/[0.04] hover:text-status-critical"
           aria-label="Sign out"
           title="Sign out"
         >
@@ -91,20 +92,20 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
 
   if (!editable) {
     return (
-      <div className="mt-auto flex items-center gap-2.5 border-t border-white/10 px-5 py-4">
+      <div className="mt-auto flex items-center gap-2.5 border-t border-black/[0.06] px-5 py-4">
         {avatar}
         <div className="min-w-0">
-          <p className="truncate text-xs font-medium leading-tight text-white">{activeAccount.name}</p>
-          <p className="truncate text-[11px] leading-tight text-white/40">{activeAccount.email}</p>
+          <p className="truncate text-xs font-medium leading-tight text-ink-primary">{activeAccount.name}</p>
+          <p className="truncate text-[11px] leading-tight text-ink-muted">{activeAccount.email}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div ref={rootRef} className="relative mt-auto border-t border-white/10 px-3 py-3">
+    <div ref={rootRef} className="relative mt-auto border-t border-black/[0.06] px-3 py-3">
       {open && (
-        <div className="absolute bottom-full left-3 right-3 mb-1.5 overflow-hidden rounded-lg border border-white/10 bg-[#141414] shadow-pop">
+        <div className="absolute bottom-full left-3 right-3 mb-1.5 overflow-hidden rounded-lg border border-black/[0.08] bg-white shadow-pop">
           {STUDIO_ACCOUNTS.map((account) => (
             <button
               key={account.id}
@@ -112,7 +113,7 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
                 setActiveAccount(account.id)
                 setOpen(false)
               }}
-              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left hover:bg-white/[0.06]"
+              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left hover:bg-surface-sunken"
             >
               <div
                 className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
@@ -121,16 +122,16 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
                 {account.initials}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium leading-tight text-white">{account.name}</p>
-                <p className="truncate text-[11px] leading-tight text-white/40">{account.email}</p>
+                <p className="truncate text-xs font-medium leading-tight text-ink-primary">{account.name}</p>
+                <p className="truncate text-[11px] leading-tight text-ink-muted">{account.email}</p>
               </div>
-              {account.id === activeAccount.id && <Check size={13} className="shrink-0 text-brand-400" />}
+              {account.id === activeAccount.id && <Check size={13} className="shrink-0 text-brand-600" />}
             </button>
           ))}
           <Link
             to="/settings"
             onClick={() => setOpen(false)}
-            className="flex w-full items-center gap-2.5 border-t border-white/10 px-3 py-2.5 text-left text-white/70 hover:bg-white/[0.06]"
+            className="flex w-full items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-left text-ink-secondary hover:bg-surface-sunken"
           >
             <Settings size={13} className="shrink-0" />
             <span className="text-xs font-medium">Settings</span>
@@ -140,7 +141,7 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
               setOpen(false)
               signOut()
             }}
-            className="flex w-full items-center gap-2.5 border-t border-white/10 px-3 py-2.5 text-left text-status-critical hover:bg-white/[0.06]"
+            className="flex w-full items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-left text-status-critical hover:bg-surface-sunken"
           >
             <LogOut size={13} className="shrink-0" />
             <span className="text-xs font-medium">Sign out</span>
@@ -149,14 +150,14 @@ function AccountSwitcher({ editable }: { editable: boolean }) {
       )}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-white/[0.06]"
+        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-black/[0.04]"
       >
         {avatar}
         <div className="min-w-0 flex-1 text-left">
-          <p className="truncate text-xs font-medium leading-tight text-white">{activeAccount.name}</p>
-          <p className="truncate text-[11px] leading-tight text-white/40">{activeAccount.email}</p>
+          <p className="truncate text-xs font-medium leading-tight text-ink-primary">{activeAccount.name}</p>
+          <p className="truncate text-[11px] leading-tight text-ink-muted">{activeAccount.email}</p>
         </div>
-        <ChevronsUpDown size={13} className="shrink-0 text-white/40" />
+        <ChevronsUpDown size={13} className="shrink-0 text-ink-muted" />
       </button>
     </div>
   )
@@ -247,7 +248,7 @@ const CLIENT_NAV_ITEMS = [
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {
-  const { clients, getClient, removeClient } = useApp()
+  const { clients, studio, getClient, removeClient } = useApp()
   const { isClientView } = useViewMode()
   const clientMatch = useMatch('/clients/:clientId/*')
   const clientId = clientMatch?.params.clientId
@@ -270,10 +271,18 @@ export default function Layout({ children }: { children: ReactNode }) {
   // captured here, before the palette mounts and its input steals focus,
   // so it can be restored on dismissal.
   const searchTriggerRef = useRef<HTMLElement | null>(null)
-  const isImmersiveSession = Boolean(useMatch('/clients/:clientId/discovery/session'))
   // A client previewing their own portal only ever sees their own portal —
   // no route back to the studio's full client list.
   const lockedToClient = Boolean(client) && isClientView
+  // The little dot next to "Tasks" — only counts studio-wide tasks (always
+  // loaded) rather than every client's too, since per-client tasks are
+  // lazy-loaded and wouldn't give an honest signal from just anywhere in
+  // the app the way they can on Home (which explicitly warms them all up).
+  const hasStudioTaskDueSoon = studio.tasks.some((t) => {
+    if (t.done) return false
+    const due = formatDueDate(t.dueDate)
+    return due.overdue || due.today
+  })
 
   const openSearch = () => {
     searchTriggerRef.current = document.activeElement as HTMLElement | null
@@ -307,12 +316,8 @@ export default function Layout({ children }: { children: ReactNode }) {
     if (confirmed) removeClient(id)
   }
 
-  if (isImmersiveSession) {
-    return <div className="h-screen w-full overflow-y-auto bg-surface-page text-ink-primary">{children}</div>
-  }
-
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-surface-page text-ink-primary">
+    <div className="bg-dot-grid flex h-screen w-full overflow-hidden bg-surface-page text-ink-primary">
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
@@ -326,23 +331,23 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       <aside
         className={clsx(
-          'flex shrink-0 flex-col overflow-hidden bg-black transition-all duration-300 ease-in-out',
+          'flex shrink-0 flex-col overflow-hidden border-r border-black/[0.06] bg-surface-sidebar transition-all duration-300 ease-in-out',
           sidebarOpen ? 'w-60' : 'w-0'
         )}
       >
         <div className="flex h-full w-60 flex-col">
         {lockedToClient ? (
-          <div className="flex items-center justify-between gap-2.5 border-b border-white/10 px-5 py-5">
+          <div className="flex items-center justify-between gap-2.5 border-b border-black/[0.06] px-5 py-4">
             <div className="flex items-center gap-2.5">
               <StudioLogo editable={false} />
               <div>
-                <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
-                <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
+                <p className="text-sm font-bold leading-tight lowercase tracking-tight text-ink-primary">onwun</p>
+                <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-ink-muted">Studio</p>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-black/[0.04] hover:text-ink-primary"
               aria-label="Collapse sidebar"
               title="Collapse sidebar"
             >
@@ -350,17 +355,17 @@ export default function Layout({ children }: { children: ReactNode }) {
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-2.5 border-b border-white/10 px-5 py-5">
+          <div className="flex items-center justify-between gap-2.5 border-b border-black/[0.06] px-5 py-4">
             <div className="flex items-center gap-2.5">
               <StudioLogo editable={!isClientView} />
               <Link to="/">
-                <p className="text-sm font-bold leading-tight lowercase tracking-tight text-white">onwun</p>
-                <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-white/40">Studio</p>
+                <p className="text-sm font-bold leading-tight lowercase tracking-tight text-ink-primary">onwun</p>
+                <p className="text-[11px] font-medium uppercase leading-tight tracking-wide text-ink-muted">Studio</p>
               </Link>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-black/[0.04] hover:text-ink-primary"
               aria-label="Collapse sidebar"
               title="Collapse sidebar"
             >
@@ -373,11 +378,11 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div className="px-3 pt-3">
             <button
               onClick={openSearch}
-              className="flex w-full items-center gap-2.5 rounded-lg border border-white/10 px-3 py-2 text-left text-sm text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white/70"
+              className="flex w-full items-center gap-2.5 rounded-lg border border-black/[0.08] bg-white px-3 py-1.5 text-left text-sm text-ink-muted shadow-card transition-colors hover:text-ink-secondary"
             >
               <Search size={15} />
               <span className="flex-1">Search</span>
-              <kbd className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/30">⌘K</kbd>
+              <kbd className="rounded border border-black/[0.08] px-1.5 py-0.5 text-[10px] text-ink-muted">⌘K</kbd>
             </button>
           </div>
         )}
@@ -388,7 +393,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               <div className="px-3 pt-3">
                 <Link
                   to="/"
-                  className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-white/50 hover:bg-white/[0.06] hover:text-white"
+                  className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-ink-secondary hover:bg-black/[0.04] hover:text-ink-primary"
                 >
                   <ArrowLeft size={14} />
                   All clients
@@ -398,8 +403,8 @@ export default function Layout({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2.5 px-5 py-4">
               <ClientAvatar initials={client.initials} color={client.color} avatarUrl={client.avatarUrl} size={32} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold leading-tight text-white">{client.name}</p>
-                <p className="truncate text-xs leading-tight text-white/40">{client.projectName}</p>
+                <p className="truncate text-sm font-semibold leading-tight text-ink-primary">{client.name}</p>
+                <p className="truncate text-xs leading-tight text-ink-muted">{client.projectName}</p>
               </div>
             </div>
             <nav className="flex flex-col gap-0.5 px-3 py-1">
@@ -409,8 +414,8 @@ export default function Layout({ children }: { children: ReactNode }) {
                   to={`/clients/${client.id}/${to}`}
                   className={({ isActive }) =>
                     clsx(
-                      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                      'flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                      isActive ? 'bg-black text-white' : 'text-ink-secondary hover:bg-black/[0.04] hover:text-ink-primary'
                     )
                   }
                 >
@@ -430,13 +435,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                   end={end}
                   className={({ isActive }) =>
                     clsx(
-                      'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                      'flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                      isActive ? 'bg-black text-white' : 'text-ink-secondary hover:bg-black/[0.04] hover:text-ink-primary'
                     )
                   }
                 >
-                  <Icon size={17} strokeWidth={2} />
-                  {label}
+                  <Icon size={16} strokeWidth={2} />
+                  <span className="flex-1">{label}</span>
+                  {label === 'Tasks' && hasStudioTaskDueSoon && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ink-primary" />}
                 </NavLink>
               ))}
             </nav>
@@ -446,14 +452,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                 onClick={() => setClientListExpanded((v) => !v)}
                 aria-expanded={clientListExpanded}
                 aria-label={clientListExpanded ? 'Collapse client list' : 'Expand client list'}
-                className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-white/40 hover:text-white/70"
+                className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-ink-muted hover:text-ink-secondary"
               >
                 Clients · {clients.length}
                 <ChevronDown size={12} className={clsx('transition-transform', clientListExpanded && 'rotate-180')} />
               </button>
               <button
                 onClick={() => setShowAddClient(true)}
-                className="flex h-5 w-5 items-center justify-center rounded-md text-white/50 hover:bg-white/[0.06] hover:text-white"
+                className="flex h-5 w-5 items-center justify-center rounded-md text-ink-secondary hover:bg-black/[0.04] hover:text-ink-primary"
                 aria-label="Add client"
                 title="Add client"
               >
@@ -470,8 +476,8 @@ export default function Layout({ children }: { children: ReactNode }) {
                       title={c.name}
                       className={({ isActive }) =>
                         clsx(
-                          'flex h-9 w-9 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-black transition-colors',
-                          isActive ? 'ring-brand-500' : 'ring-transparent hover:ring-white/20'
+                          'flex h-9 w-9 items-center justify-center rounded-xl ring-2 ring-offset-2 ring-offset-surface-sidebar transition-colors',
+                          isActive ? 'ring-black' : 'ring-transparent hover:ring-black/15'
                         )
                       }
                     >
@@ -479,7 +485,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     </NavLink>
                     <button
                       onClick={(e) => handleRemoveClient(e, c.name, c.id)}
-                      className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#141414] text-white/0 opacity-0 shadow ring-1 ring-white/10 transition-opacity hover:text-white group-hover:text-white/50 group-hover:opacity-100 group-focus-within:opacity-100"
+                      className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-black/0 opacity-0 shadow ring-1 ring-black/[0.08] transition-opacity hover:text-status-critical group-hover:text-ink-muted group-hover:opacity-100 group-focus-within:opacity-100"
                       aria-label={`Remove ${c.name}`}
                       title={`Remove ${c.name}`}
                     >
@@ -489,7 +495,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 ))}
                 <button
                   onClick={() => setShowAddClient(true)}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-dashed border-white/25 text-white/40 hover:border-white/40 hover:text-white/70"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-dashed border-black/20 text-ink-muted hover:border-black/40 hover:text-ink-secondary"
                   aria-label="Add client"
                   title="Add client"
                 >
@@ -502,7 +508,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 className="mt-3 flex flex-col items-center gap-2 px-3 py-1"
                 aria-label="Expand client list"
               >
-                <ClientAvatarStack clients={clients} />
+                <ClientAvatarStack clients={clients} ringClassName="ring-surface-sidebar" />
               </button>
             )}
 
@@ -510,7 +516,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               onClick={() => setAcquisitionExpanded((v) => !v)}
               aria-expanded={acquisitionExpanded}
               aria-label={acquisitionExpanded ? 'Collapse client acquisition' : 'Expand client acquisition'}
-              className="mt-4 flex items-center gap-1 px-5 text-[11px] font-medium uppercase tracking-wide text-white/40 hover:text-white/70"
+              className="mt-4 flex items-center gap-1 px-5 text-[11px] font-medium uppercase tracking-wide text-ink-muted hover:text-ink-secondary"
             >
               Client Acquisition
               <ChevronDown size={12} className={clsx('transition-transform', acquisitionExpanded && 'rotate-180')} />
@@ -523,12 +529,12 @@ export default function Layout({ children }: { children: ReactNode }) {
                     to={to}
                     className={({ isActive }) =>
                       clsx(
-                        'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                        isActive ? 'bg-brand-500 text-white' : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
+                        'flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                        isActive ? 'bg-black text-white' : 'text-ink-secondary hover:bg-black/[0.04] hover:text-ink-primary'
                       )
                     }
                   >
-                    <Icon size={17} strokeWidth={2} />
+                    <Icon size={16} strokeWidth={2} />
                     {label}
                   </NavLink>
                 ))}

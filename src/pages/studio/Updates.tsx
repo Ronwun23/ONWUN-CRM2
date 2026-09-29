@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText, Send, Trash2 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
-import Card from '@/components/Card'
 import Pill from '@/components/Pill'
 import { ClientAvatar, MemberAvatar } from '@/components/Avatar'
 import { formatRelativeDate } from '@/lib/format'
@@ -45,30 +44,29 @@ export default function StudioUpdates() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-ink-primary">Updates</h1>
-        <p className="text-sm text-ink-secondary">Internal notes, plus every update posted across your clients' portals</p>
+        <h1 className="text-lg font-semibold text-ink-primary">Updates</h1>
       </div>
 
-      <Card>
+      <div className="rounded-xl border border-black/[0.06] bg-white p-3.5 shadow-card">
         <div className="flex gap-2">
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Post an update for the team…"
             rows={2}
-            className="flex-1 resize-none rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            className="flex-1 resize-none rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
           />
           <button
             onClick={handlePost}
-            className="flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-lg bg-brand-500 text-white hover:bg-brand-600"
+            className="flex h-8 w-8 shrink-0 items-center justify-center self-end rounded-lg bg-black text-white hover:bg-black/85"
             aria-label="Post update"
           >
-            <Send size={15} />
+            <Send size={14} />
           </button>
         </div>
-      </Card>
+      </div>
 
-      <ul className="flex flex-col gap-3">
+      <ul className="flex flex-col gap-2.5">
         {feed.length === 0 && <p className="text-sm text-ink-muted">No updates yet.</p>}
         {feed.map((update) => {
           const fromClient = update.authorType === 'client'
@@ -80,13 +78,13 @@ export default function StudioUpdates() {
                     initials={update.client.initials}
                     color={update.client.color}
                     avatarUrl={update.client.avatarUrl}
-                    size={28}
+                    size={26}
                   />
                 ) : (
-                  <MemberAvatar memberId={update.author} size={28} />
+                  <MemberAvatar memberId={update.author} size={26} />
                 )
               ) : (
-                <MemberAvatar memberId={update.author} size={28} />
+                <MemberAvatar memberId={update.author} size={26} />
               )}
               <div className="min-w-0 flex-1">
                 {update.docId && update.docTitle && (
@@ -98,7 +96,7 @@ export default function StudioUpdates() {
                 <p className="text-sm text-ink-primary">{update.text}</p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
                   <span className="font-medium text-ink-secondary">{update.author}</span>
-                  {fromClient && <Pill tone="brand">Client</Pill>}
+                  {fromClient && <Pill tone="neutral">Client</Pill>}
                   {update.client && <span className="text-ink-muted">· {update.client.name}</span>}
                   <span>· {formatRelativeDate(update.date)}</span>
                 </div>
@@ -123,16 +121,16 @@ export default function StudioUpdates() {
               {destination ? (
                 <button
                   onClick={() => navigate(destination)}
-                  className="flex min-w-0 flex-1 items-start gap-3 p-4 text-left hover:bg-surface-sunken/40"
+                  className="flex min-w-0 flex-1 items-start gap-3 p-3.5 text-left hover:bg-surface-sunken/40"
                 >
                   {content}
                 </button>
               ) : (
-                <div className="flex min-w-0 flex-1 items-start gap-3 p-4">{content}</div>
+                <div className="flex min-w-0 flex-1 items-start gap-3 p-3.5">{content}</div>
               )}
               <button
                 onClick={handleDelete}
-                className="mr-3 mt-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-[#fbecec] hover:text-status-critical"
+                className="mr-2.5 mt-2.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-[#fbecec] hover:text-status-critical"
                 aria-label="Delete update"
               >
                 <Trash2 size={14} />
