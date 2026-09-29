@@ -152,6 +152,12 @@ export interface ClientEvent {
   fileUrl?: string
   fileName?: string
   fileKind?: 'png' | 'jpg' | 'mp4'
+  // Which client a studio-calendar event is with — separate from this
+  // table's own client_id (which scopes a per-client content-calendar
+  // event to its owner). withClientId is unset when withClientName is
+  // "New client" — a prospective client with no record yet.
+  withClientId?: string
+  withClientName?: string
 }
 
 export interface WorkshopQuestion {
