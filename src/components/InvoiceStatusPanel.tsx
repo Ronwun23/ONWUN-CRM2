@@ -20,7 +20,7 @@ export default function InvoiceStatusPanel({ client, doc }: { client: Client; do
 
   return (
     <div className="flex h-fit w-80 shrink-0 flex-col gap-3">
-      <div className="rounded-xl border border-black/[0.06] bg-white p-4">
+      <div className="rounded-xl border border-black/[0.06] bg-white p-3.5 shadow-card">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">Invoice</p>
         <div className="flex flex-col gap-2.5 text-sm">
           {doc.invoiceNumber && (
@@ -56,7 +56,7 @@ export default function InvoiceStatusPanel({ client, doc }: { client: Client; do
         </div>
       </div>
 
-      <div className="rounded-xl border border-black/[0.06] bg-white p-4">
+      <div className="rounded-xl border border-black/[0.06] bg-white p-3.5 shadow-card">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">Status</p>
         <div className="flex flex-col gap-3">
           <div>
