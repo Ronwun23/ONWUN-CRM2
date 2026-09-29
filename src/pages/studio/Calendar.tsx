@@ -310,7 +310,6 @@ export default function StudioCalendar() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-ink-primary">Calendar</h1>
-          <p className="text-sm text-ink-secondary">Studio events — shoots, launches, team days</p>
         </div>
         <button
           onClick={() => openCreate()}

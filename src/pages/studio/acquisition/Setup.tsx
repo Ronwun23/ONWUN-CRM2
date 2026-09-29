@@ -44,7 +44,6 @@ export default function AcquisitionSetup() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-xl font-semibold text-ink-primary">Setup</h1>
-        <p className="text-sm text-ink-secondary">The brief that drives who you target and how emails are drafted</p>
       </div>
 
       <Card>

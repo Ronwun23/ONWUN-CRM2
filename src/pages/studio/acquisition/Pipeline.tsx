@@ -357,7 +357,6 @@ export default function AcquisitionPipeline() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-ink-primary">Pipeline</h1>
-            <p className="text-sm text-ink-secondary">Drag deals across stages. Your team sees every move in real time.</p>
           </div>
           <button
             onClick={() => setShowNewDeal(true)}
@@ -391,7 +390,6 @@ export default function AcquisitionPipeline() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink-primary">Pipeline</h1>
-          <p className="text-sm text-ink-secondary">Drag deals across stages. Your team sees every move in real time.</p>
         </div>
         <button
           onClick={() => setShowNewDeal(true)}

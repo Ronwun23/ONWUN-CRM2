@@ -85,7 +85,6 @@ export default function AcquisitionFindCompanies() {
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="text-xl font-semibold text-ink-primary">Find companies</h1>
-          <p className="text-sm text-ink-secondary">AI-powered search for companies matching your brief</p>
         </div>
         <Card>
           <p className="text-sm text-ink-muted">
@@ -104,7 +103,6 @@ export default function AcquisitionFindCompanies() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-ink-primary">Find companies</h1>
-          <p className="text-sm text-ink-secondary">AI-powered search for companies matching your brief</p>
         </div>
         {tokensUsed !== null && (
           <div className="text-right">

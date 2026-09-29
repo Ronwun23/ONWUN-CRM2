@@ -251,7 +251,6 @@ export default function ClientContentCalendar() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-ink-primary">Content calendar</h1>
-          <p className="text-sm text-ink-secondary">Scheduled posts and content for {client.name}</p>
         </div>
         <button
           onClick={() => openAdd()}

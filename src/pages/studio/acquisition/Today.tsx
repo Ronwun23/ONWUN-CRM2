@@ -36,7 +36,6 @@ export default function AcquisitionToday() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-xl font-semibold text-ink-primary">Today</h1>
-        <p className="text-sm text-ink-secondary">Everything due today or overdue, across both of you</p>
       </div>
 
       <Card padded={false}>

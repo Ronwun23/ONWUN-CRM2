@@ -35,7 +35,6 @@ export default function ClientLibrary() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-ink-primary">Library</h1>
-          <p className="text-sm text-ink-secondary">Individual brand assets, organised so you can grab exactly what you need.</p>
         </div>
         {!isClientView && (
           <button

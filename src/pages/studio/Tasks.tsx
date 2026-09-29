@@ -112,7 +112,6 @@ export default function StudioTasks() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-ink-primary">Tasks</h1>
-          <p className="text-sm text-ink-secondary">Every task across the studio, not just one client</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
