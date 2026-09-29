@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import clsx from 'clsx'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
@@ -93,25 +94,33 @@ export default function DiscoverySession() {
   const isFinalQuestion = screen === 'question' && phaseIndex === LAST_PHASE_INDEX && questionIndex === LAST_QUESTION_INDEX
 
   return (
-    <div className="flex min-h-screen flex-col px-4 sm:px-8">
-      <div className="flex items-center justify-between py-5">
-        <p className="text-xs font-medium text-ink-muted">{client.name}</p>
+    <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-lg font-semibold text-ink-primary">Discovery workshop</h1>
+          <div className="flex items-center gap-1">
+            {WORKSHOP_PHASES.map((p, i) => (
+              <div key={p.id} className={clsx('h-1.5 w-8 rounded-full', i <= phaseIndex ? 'bg-black' : 'bg-black/10')} />
+            ))}
+          </div>
+        </div>
         <Link
           to={`/clients/${client.id}/discovery`}
           onClick={commit}
-          className="flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-ink-secondary"
+          className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-muted hover:bg-surface-sunken hover:text-ink-primary"
         >
           <X size={13} />
           Exit
         </Link>
       </div>
-      <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
+
+      <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
         {screen === 'intro' ? (
           <div className="flex max-w-lg flex-col items-center gap-4">
             <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
               Phase {phaseIndex + 1} of {WORKSHOP_PHASES.length}
             </p>
-            <h1 className="text-3xl font-semibold text-ink-primary">{phase.introHeading}</h1>
+            <h2 className="text-3xl font-semibold text-ink-primary">{phase.introHeading}</h2>
             <p className="max-w-md text-base leading-relaxed text-ink-secondary">{phase.introBody}</p>
           </div>
         ) : (
@@ -119,9 +128,7 @@ export default function DiscoverySession() {
             <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
               Phase {phaseIndex + 1} · {phase.title}
             </p>
-            <h1 className="max-w-lg text-2xl font-semibold leading-snug text-ink-primary sm:text-3xl">
-              {question?.text}
-            </h1>
+            <h2 className="max-w-lg text-2xl font-semibold leading-snug text-ink-primary sm:text-3xl">{question?.text}</h2>
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -129,26 +136,26 @@ export default function DiscoverySession() {
               rows={6}
               autoFocus
               placeholder="Leave a note"
-              className="w-full resize-none rounded-xl border border-black/[0.10] bg-white px-4 py-3.5 text-base leading-relaxed text-ink-primary placeholder:text-ink-muted focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full resize-none rounded-xl border border-black/[0.10] bg-white px-4 py-3.5 text-base leading-relaxed text-ink-primary placeholder:text-ink-muted focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
             />
           </div>
         )}
       </div>
 
-      <div className="flex items-center justify-between pb-6 pt-2">
+      <div className="mt-auto flex items-center justify-between">
         <button
           onClick={goPrev}
-          className="flex items-center gap-1 rounded-lg px-3.5 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-secondary hover:bg-surface-sunken"
         >
-          <ChevronLeft size={15} />
+          <ChevronLeft size={12} />
           Back
         </button>
         <button
           onClick={goNext}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
+          className="flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
         >
           {screen === 'intro' ? "Let's go" : isFinalQuestion ? 'Finish' : 'Next'}
-          {screen !== 'intro' && !isFinalQuestion && <ChevronRight size={15} />}
+          {screen !== 'intro' && !isFinalQuestion && <ChevronRight size={12} />}
         </button>
       </div>
     </div>

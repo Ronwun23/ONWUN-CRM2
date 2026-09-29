@@ -271,7 +271,6 @@ export default function Layout({ children }: { children: ReactNode }) {
   // captured here, before the palette mounts and its input steals focus,
   // so it can be restored on dismissal.
   const searchTriggerRef = useRef<HTMLElement | null>(null)
-  const isImmersiveSession = Boolean(useMatch('/clients/:clientId/discovery/session'))
   // A client previewing their own portal only ever sees their own portal —
   // no route back to the studio's full client list.
   const lockedToClient = Boolean(client) && isClientView
@@ -315,10 +314,6 @@ export default function Layout({ children }: { children: ReactNode }) {
       { confirmLabel: 'Remove', destructive: true }
     )
     if (confirmed) removeClient(id)
-  }
-
-  if (isImmersiveSession) {
-    return <div className="bg-dot-grid h-screen w-full overflow-y-auto bg-surface-page text-ink-primary">{children}</div>
   }
 
   return (

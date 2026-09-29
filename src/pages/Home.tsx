@@ -12,6 +12,7 @@ import { phaseStatus, overallProgress, currentPhaseKey } from '@/lib/progress'
 import { formatDueDate, formatDate } from '@/lib/format'
 import { toDisplayDate, todayCivil } from '@/lib/civilDate'
 import { CLIENT_STATUS_LABEL, CLIENT_STATUS_TONE } from '@/lib/labels'
+import { colorFor } from '@/lib/eventColors'
 import { resolveMember } from '@/data/team'
 import clsx from 'clsx'
 
@@ -203,16 +204,24 @@ export default function HomePage() {
                 <p className="text-xs text-ink-muted">{task.clientName}</p>
               </button>
             ))}
-            {todaysEvents.map((event) => (
-              <button
-                key={event.id}
-                onClick={() => navigate('/calendar')}
-                className="flex flex-col items-start gap-0.5 rounded-lg border border-black/[0.06] bg-surface-sunken/40 px-3 py-2 text-left hover:bg-surface-sunken/70"
-              >
-                <p className="text-sm font-medium text-ink-primary">{event.title}</p>
-                <p className="text-xs text-ink-muted">{event.time ?? 'All day'}</p>
-              </button>
-            ))}
+            {todaysEvents.map((event) => {
+              const color = colorFor(event.color)
+              return (
+                <button
+                  key={event.id}
+                  onClick={() => navigate('/calendar')}
+                  className={clsx(
+                    'flex flex-col items-start gap-0.5 rounded-lg border-l-2 px-3 py-2 text-left transition-colors',
+                    color.tint,
+                    color.swatch.replace('bg-', 'border-'),
+                    'hover:brightness-95'
+                  )}
+                >
+                  <p className="text-sm font-medium text-ink-primary">{event.title}</p>
+                  <p className={clsx('text-xs', color.text)}>{event.time ?? 'All day'}</p>
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -224,6 +233,7 @@ export default function HomePage() {
           <ul className="flex flex-col divide-y divide-black/[0.05]">
             {upcomingEvents.map((event) => {
               const day = toDisplayDate(event.date)
+              const color = colorFor(event.color)
               return (
                 <li key={event.id}>
                   <button
@@ -239,7 +249,9 @@ export default function HomePage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm text-ink-primary">{event.title}</p>
                     </div>
-                    {event.time && <span className="shrink-0 rounded bg-surface-sunken px-1.5 py-0.5 text-xs text-ink-muted">{event.time}</span>}
+                    {event.time && (
+                      <span className={clsx('shrink-0 rounded px-1.5 py-0.5 text-xs font-medium', color.tint, color.text)}>{event.time}</span>
+                    )}
                   </button>
                 </li>
               )
