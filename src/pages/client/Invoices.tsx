@@ -94,32 +94,32 @@ export default function ClientInvoices() {
       </Link>
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-ink-primary">Invoices</h1>
+        <h1 className="text-lg font-semibold text-ink-primary">Invoices</h1>
         {!isClientView && (
           <div className="flex items-center gap-2">
             <button
               onClick={openTotalModal}
-              className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] bg-white px-3.5 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
+              className="flex items-center gap-1.5 rounded-lg border border-black/[0.10] bg-white px-3 py-1.5 text-xs font-semibold text-ink-secondary hover:bg-surface-sunken"
             >
-              <PoundSterling size={14} />
+              <PoundSterling size={12} />
               {client.invoiceTotalValue != null ? `Total: ${formatFullCurrency(client.invoiceTotalValue, 'GBP')}` : 'Total amount'}
             </button>
             <button
               onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-black px-3.5 py-2 text-sm font-semibold text-white hover:bg-black/85"
+              className="flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
             >
-              <Plus size={14} />
+              <Plus size={12} />
               New invoice
             </button>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-black/[0.06] bg-white p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Open</p>
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+        <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
+          <p className="text-xs text-ink-muted">Open</p>
           <div className="mt-1 flex items-center gap-2">
-            <p className="text-2xl font-bold text-ink-primary">{formatFullCurrency(stats.open, 'GBP')}</p>
+            <p className="text-2xl font-semibold text-ink-primary">{formatFullCurrency(stats.open, 'GBP')}</p>
             {stats.openCount > 0 && (
               <Pill tone="neutral">
                 {stats.openCount} invoice{stats.openCount === 1 ? '' : 's'}
@@ -130,16 +130,16 @@ export default function ClientInvoices() {
             <p className="mt-1 text-xs text-ink-muted">of {formatFullCurrency(client.invoiceTotalValue, 'GBP')} total</p>
           )}
         </div>
-        <div className="rounded-xl border border-black/[0.06] bg-white p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Overdue</p>
-          <p className={clsx('mt-1 text-2xl font-bold', stats.overdue > 0 ? 'text-status-critical' : 'text-ink-primary')}>
+        <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
+          <p className="text-xs text-ink-muted">Overdue</p>
+          <p className={clsx('mt-1 text-2xl font-semibold', stats.overdue > 0 ? 'text-status-critical' : 'text-ink-primary')}>
             {formatFullCurrency(stats.overdue, 'GBP')}
           </p>
         </div>
-        <div className="rounded-xl border border-black/[0.06] bg-white p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Paid</p>
+        <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
+          <p className="text-xs text-ink-muted">Paid</p>
           <div className="mt-1 flex items-center gap-2">
-            <p className="text-2xl font-bold text-ink-primary">{formatFullCurrency(stats.paid, 'GBP')}</p>
+            <p className="text-2xl font-semibold text-ink-primary">{formatFullCurrency(stats.paid, 'GBP')}</p>
             {stats.paidCount > 0 && (
               <Pill tone="good">
                 {stats.paidCount} invoice{stats.paidCount === 1 ? '' : 's'}
@@ -149,18 +149,25 @@ export default function ClientInvoices() {
         </div>
       </div>
 
-      <div className="flex items-center gap-1 rounded-xl border border-black/[0.06] bg-white p-1">
+      <div className="flex items-center gap-1 rounded-xl border border-black/[0.06] bg-white px-3 py-2 shadow-card">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={clsx(
-              'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium',
-              tab === t.key ? 'bg-surface-sunken text-ink-primary' : 'text-ink-secondary hover:text-ink-primary'
+              'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors',
+              tab === t.key ? 'text-ink-primary' : 'text-ink-muted hover:text-ink-secondary'
             )}
           >
             {t.label}
-            <span className="text-xs text-ink-muted">{counts[t.key]}</span>
+            <span
+              className={clsx(
+                'rounded-full px-1.5 py-0.5 text-xs tabular-nums',
+                tab === t.key ? 'bg-black/[0.06] text-ink-primary' : 'bg-black/[0.04] text-ink-muted'
+              )}
+            >
+              {counts[t.key]}
+            </span>
           </button>
         ))}
       </div>
@@ -174,12 +181,12 @@ export default function ClientInvoices() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-black/[0.06] text-xs font-medium uppercase tracking-wide text-ink-muted">
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Number</th>
-                <th className="px-4 py-3">Billed to</th>
-                <th className="px-4 py-3">Issued</th>
-                <th className="px-4 py-3">Due</th>
-                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-3.5 py-2.5">Status</th>
+                <th className="px-3.5 py-2.5">Number</th>
+                <th className="px-3.5 py-2.5">Billed to</th>
+                <th className="px-3.5 py-2.5">Issued</th>
+                <th className="px-3.5 py-2.5">Due</th>
+                <th className="px-3.5 py-2.5 text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -188,23 +195,23 @@ export default function ClientInvoices() {
                 const overdue = state === 'approved' && !!doc.dueDate && doc.dueDate < today
                 return (
                   <tr key={doc.id} className={clsx(i > 0 && 'border-t border-black/[0.05]')}>
-                    <td className="px-4 py-3.5">
+                    <td className="px-3.5 py-2.5">
                       <Pill tone={STATE_TONE[state]}>{STATE_LABEL[state]}</Pill>
                     </td>
                     <td className="p-0">
                       <Link
                         to={`/clients/${client.id}/documents/${doc.id}`}
-                        className="block px-4 py-3.5 font-semibold text-ink-primary hover:underline"
+                        className="block px-3.5 py-2.5 font-semibold text-ink-primary hover:underline"
                       >
                         {doc.invoiceNumber || doc.title}
                       </Link>
                     </td>
-                    <td className="px-4 py-3.5 text-ink-secondary">{doc.billedToName || '—'}</td>
-                    <td className="px-4 py-3.5 text-ink-secondary">{doc.issuedDate ? formatDate(doc.issuedDate) : '—'}</td>
-                    <td className={clsx('px-4 py-3.5', overdue ? 'font-medium text-status-critical' : 'text-ink-secondary')}>
+                    <td className="px-3.5 py-2.5 text-ink-secondary">{doc.billedToName || '—'}</td>
+                    <td className="px-3.5 py-2.5 text-ink-secondary">{doc.issuedDate ? formatDate(doc.issuedDate) : '—'}</td>
+                    <td className={clsx('px-3.5 py-2.5', overdue ? 'font-medium text-status-critical' : 'text-ink-secondary')}>
                       {doc.dueDate ? formatDate(doc.dueDate) : '—'}
                     </td>
-                    <td className="px-4 py-3.5 text-right font-semibold text-ink-primary">
+                    <td className="px-3.5 py-2.5 text-right font-semibold text-ink-primary">
                       {doc.amount != null ? formatFullCurrency(doc.amount, 'GBP') : '—'}
                     </td>
                   </tr>
@@ -234,20 +241,20 @@ export default function ClientInvoices() {
               onChange={(e) => setTotalInput(e.target.value)}
               placeholder="20000"
               autoFocus
-              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
               autoComplete="off"
             />
           </div>
           <div className="mt-1 flex items-center justify-end gap-2">
             <button
               onClick={() => setShowTotal(false)}
-              className="rounded-lg border border-black/[0.10] bg-white px-3.5 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
+              className="rounded-lg border border-black/[0.10] bg-white px-3 py-1.5 text-xs font-semibold text-ink-secondary hover:bg-surface-sunken"
             >
               Cancel
             </button>
             <button
               onClick={handleSaveTotal}
-              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+              className="rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
             >
               Save
             </button>

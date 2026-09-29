@@ -45,7 +45,6 @@ export default function StudioUpdates() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-lg font-semibold text-ink-primary">Updates</h1>
-        <p className="text-sm text-ink-secondary">Internal notes, plus every update posted across your clients' portals</p>
       </div>
 
       <div className="rounded-xl border border-black/[0.06] bg-white p-3.5 shadow-card">

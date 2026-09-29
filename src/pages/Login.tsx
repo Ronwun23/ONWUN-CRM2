@@ -28,8 +28,8 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface-page px-4">
-      <div className="w-full max-w-sm rounded-xl border border-black/[0.06] bg-white p-6 shadow-card">
+    <div className="login-backdrop flex min-h-screen items-center justify-center px-4">
+      <div className="border-beam glass-panel w-full max-w-sm rounded-xl p-6">
         <h1 className="text-lg font-semibold text-ink-primary">Onwun Studio</h1>
         <p className="mt-1 text-sm text-ink-secondary">
           {sent ? 'Check your email for a sign-in link.' : 'Sign in with your email — no password needed.'}

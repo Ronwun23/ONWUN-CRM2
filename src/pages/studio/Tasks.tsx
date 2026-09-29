@@ -26,9 +26,11 @@ function DueDatePill({ dueDate }: { dueDate: string }) {
     ? 'bg-[#fbecec] text-[#a92e2d]'
     : due.today
       ? 'bg-[#fdf1de] text-[#96660a]'
-      : due.label === 'Tomorrow'
+      : due.diffDays === 1
         ? 'bg-[#fdeee1] text-[#a15a1f]'
-        : 'bg-surface-sunken text-ink-secondary'
+        : due.diffDays <= 6
+          ? 'bg-[#fdf6ea] text-[#ad8a4a]'
+          : 'bg-surface-sunken text-ink-secondary'
   return (
     <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', tone)}>
       <Calendar size={10} />
@@ -112,7 +114,6 @@ export default function StudioTasks() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-ink-primary">Tasks</h1>
-          <p className="text-sm text-ink-secondary">Every task across the studio, not just one client</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
@@ -212,7 +213,7 @@ export default function StudioTasks() {
                   <span className="flex items-center gap-2 text-ink-secondary">
                     <span
                       className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: row.clientColor ?? '#8b8d99' }}
+                      style={{ backgroundColor: row.clientColor ?? resolveMember(row.assignee).color }}
                     />
                     {row.clientName}
                   </span>

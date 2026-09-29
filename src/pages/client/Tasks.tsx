@@ -22,9 +22,11 @@ function DueDatePill({ dueDate }: { dueDate: string }) {
     ? 'bg-[#fbecec] text-[#a92e2d]'
     : due.today
       ? 'bg-[#fdf1de] text-[#96660a]'
-      : due.label === 'Tomorrow'
+      : due.diffDays === 1
         ? 'bg-[#fdeee1] text-[#a15a1f]'
-        : 'bg-surface-sunken text-ink-secondary'
+        : due.diffDays <= 6
+          ? 'bg-[#fdf6ea] text-[#ad8a4a]'
+          : 'bg-surface-sunken text-ink-secondary'
   return (
     <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', tone)}>
       <Calendar size={10} />

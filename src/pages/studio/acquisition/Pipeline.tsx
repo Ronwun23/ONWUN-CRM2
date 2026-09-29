@@ -38,7 +38,7 @@ const CURRENCY_OPTIONS = [
 ]
 
 const inputClass =
-  'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
+  'w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black'
 const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted'
 
 function FilterPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -46,8 +46,8 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
     <button
       onClick={onClick}
       className={clsx(
-        'rounded-full border px-3 py-1 text-xs font-medium',
-        active ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-black/[0.10] bg-white text-ink-secondary hover:bg-surface-sunken'
+        'rounded-full px-2.5 py-1 text-xs font-medium transition-colors',
+        active ? 'bg-black text-white' : 'bg-surface-sunken text-ink-secondary hover:bg-black/[0.06]'
       )}
     >
       {label}
@@ -335,14 +335,14 @@ export default function AcquisitionPipeline() {
         <div className="mt-1 flex items-center justify-end gap-2">
           <button
             onClick={() => setShowNewDeal(false)}
-            className="rounded-lg border border-black/[0.10] bg-white px-3.5 py-2 text-sm font-medium text-ink-secondary hover:bg-surface-sunken"
+            className="rounded-lg border border-black/[0.10] bg-white px-3 py-1.5 text-xs font-semibold text-ink-secondary hover:bg-surface-sunken"
           >
             Cancel
           </button>
           <button
             onClick={handleCreate}
             disabled={!title.trim() || !contact || saving}
-            className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? 'Creating…' : 'Create Deal'}
           </button>
@@ -356,14 +356,13 @@ export default function AcquisitionPipeline() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-ink-primary">Pipeline</h1>
-            <p className="text-sm text-ink-secondary">Drag deals across stages. Your team sees every move in real time.</p>
+            <h1 className="text-lg font-semibold text-ink-primary">Pipeline</h1>
           </div>
           <button
             onClick={() => setShowNewDeal(true)}
-            className="flex items-center gap-1.5 rounded-full border-2 border-brand-500 px-4 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50"
+            className="flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
           >
-            <UserPlus size={16} />
+            <UserPlus size={12} />
             New Deal
           </button>
         </div>
@@ -375,9 +374,9 @@ export default function AcquisitionPipeline() {
           <p className="text-sm text-ink-secondary">Create your first deal to start tracking opportunities.</p>
           <button
             onClick={() => setShowNewDeal(true)}
-            className="mt-1 flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+            className="mt-1 flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
           >
-            <UserPlus size={15} />
+            <UserPlus size={12} />
             New Deal
           </button>
         </div>
@@ -390,19 +389,18 @@ export default function AcquisitionPipeline() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink-primary">Pipeline</h1>
-          <p className="text-sm text-ink-secondary">Drag deals across stages. Your team sees every move in real time.</p>
+          <h1 className="text-lg font-semibold text-ink-primary">Pipeline</h1>
         </div>
         <button
           onClick={() => setShowNewDeal(true)}
-          className="flex items-center gap-1.5 rounded-full border-2 border-brand-500 px-4 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50"
+          className="flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
         >
-          <UserPlus size={16} />
+          <UserPlus size={12} />
           New Deal
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-black/[0.06] bg-white px-4 py-3">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-black/[0.06] bg-white px-3 py-2 shadow-card">
         <span className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Filters</span>
         <span className="text-xs text-ink-muted">Stage:</span>
         {STAGES.map((s) => (
@@ -437,18 +435,18 @@ export default function AcquisitionPipeline() {
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-black/[0.06] bg-white p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Open deals</p>
-          <p className="mt-1 text-2xl font-bold text-ink-primary">{openDeals.length}</p>
+      <div className="grid grid-cols-3 gap-2.5">
+        <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
+          <p className="text-xs text-ink-muted">Open deals</p>
+          <p className="mt-1 text-2xl font-semibold text-ink-primary">{openDeals.length}</p>
         </div>
-        <div className="rounded-xl border border-black/[0.06] bg-white p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Open pipeline value</p>
-          <p className="mt-1 text-2xl font-bold text-ink-primary">{formatFullCurrency(openValue)}</p>
+        <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
+          <p className="text-xs text-ink-muted">Open pipeline value</p>
+          <p className="mt-1 text-2xl font-semibold text-ink-primary">{formatFullCurrency(openValue)}</p>
         </div>
-        <div className="rounded-xl border border-black/[0.06] bg-white p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Won this view</p>
-          <p className="mt-1 text-2xl font-bold text-status-good">{formatFullCurrency(wonValue)}</p>
+        <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
+          <p className="text-xs text-ink-muted">Won this view</p>
+          <p className="mt-1 text-2xl font-semibold text-status-good">{formatFullCurrency(wonValue)}</p>
         </div>
       </div>
 

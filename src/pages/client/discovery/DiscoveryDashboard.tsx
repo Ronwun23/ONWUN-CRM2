@@ -46,10 +46,10 @@ export default function DiscoveryDashboard() {
           </div>
           <button
             onClick={() => navigate(`/clients/${client.id}/discovery/answers`)}
-            className="mt-1 flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+            className="mt-1 flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
           >
             View answers
-            <ArrowRight size={15} />
+            <ArrowRight size={12} />
           </button>
         </div>
       ) : (
@@ -64,10 +64,10 @@ export default function DiscoveryDashboard() {
           </div>
           <button
             onClick={workshop.started ? handleContinue : handleStart}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+            className="flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/85"
           >
             {workshop.started ? 'Continue questionnaire' : 'Start questionnaire'}
-            <ArrowRight size={15} />
+            <ArrowRight size={12} />
           </button>
         </div>
       )}

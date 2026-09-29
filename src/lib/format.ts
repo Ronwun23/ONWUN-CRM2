@@ -29,19 +29,19 @@ export function formatRelativeDate(iso: string): string {
   return `${Math.floor(months / 12)}y ago`
 }
 
-export function formatDueDate(iso: string): { label: string; overdue: boolean; today: boolean } {
+export function formatDueDate(iso: string): { label: string; overdue: boolean; today: boolean; diffDays: number } {
   const due = toDisplayDate(iso)
   const now = new Date()
   const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate())
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const diffDays = Math.round((dueDay.getTime() - today.getTime()) / 86400000)
 
-  if (diffDays === 0) return { label: 'Today', overdue: false, today: true }
-  if (diffDays === 1) return { label: 'Tomorrow', overdue: false, today: false }
-  if (diffDays === -1) return { label: 'Yesterday', overdue: true, today: false }
-  if (diffDays < 0) return { label: `${Math.abs(diffDays)}d overdue`, overdue: true, today: false }
-  if (diffDays < 7) return { label: `In ${diffDays}d`, overdue: false, today: false }
-  return { label: formatDate(iso), overdue: false, today: false }
+  if (diffDays === 0) return { label: 'Today', overdue: false, today: true, diffDays }
+  if (diffDays === 1) return { label: 'Tomorrow', overdue: false, today: false, diffDays }
+  if (diffDays === -1) return { label: 'Yesterday', overdue: true, today: false, diffDays }
+  if (diffDays < 0) return { label: `${Math.abs(diffDays)}d overdue`, overdue: true, today: false, diffDays }
+  if (diffDays < 7) return { label: `In ${diffDays}d`, overdue: false, today: false, diffDays }
+  return { label: formatDate(iso), overdue: false, today: false, diffDays }
 }
 
 export function initials(name: string): string {

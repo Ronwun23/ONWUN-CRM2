@@ -17,9 +17,9 @@ export default function Card({
   padded?: boolean
 }) {
   return (
-    <div className={clsx('rounded-xl border border-black/[0.06] bg-white shadow-card', padded && 'p-4', className)}>
+    <div className={clsx('rounded-xl border border-black/[0.06] bg-white shadow-card', padded && 'p-3.5', className)}>
       {(title || action) && (
-        <div className={clsx('flex items-start justify-between', padded ? 'mb-3' : 'p-4 pb-0')}>
+        <div className={clsx('flex items-start justify-between', padded ? 'mb-3' : 'p-3.5 pb-0')}>
           <div>
             {title && <h3 className="text-sm font-semibold text-ink-primary">{title}</h3>}
             {subtitle && <p className="text-xs text-ink-muted">{subtitle}</p>}
