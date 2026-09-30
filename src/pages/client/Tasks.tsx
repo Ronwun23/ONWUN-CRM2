@@ -41,6 +41,7 @@ export default function ClientTasks() {
   const { isClientView } = useViewMode()
   const [showAdd, setShowAdd] = useState(false)
   const [title, setTitle] = useState('')
+  const [startDate, setStartDate] = useState<string | undefined>(undefined)
   const [dueDate, setDueDate] = useState<string | undefined>(undefined)
   const [assignee, setAssignee] = useState(activeAccount.id)
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -64,9 +65,17 @@ export default function ClientTasks() {
 
   const handleAdd = async () => {
     if (!title.trim() || !dueDate) return
-    const task: ClientTask = { id: `task-${Date.now()}`, title: title.trim(), done: false, dueDate, assignee }
+    const task: ClientTask = {
+      id: `task-${Date.now()}`,
+      title: title.trim(),
+      done: false,
+      dueDate,
+      startDate: startDate && new Date(startDate) < new Date(dueDate) ? startDate : undefined,
+      assignee,
+    }
     await addTask(client.id, task)
     setTitle('')
+    setStartDate(undefined)
     setDueDate(undefined)
     setShowAdd(false)
   }
@@ -212,6 +221,12 @@ export default function ClientTasks() {
               data-1p-ignore
               data-lpignore="true"
             />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">
+              Start date <span className="normal-case text-ink-muted/70">(optional)</span>
+            </label>
+            <DatePicker value={startDate} onChange={setStartDate} placeholder="Select date" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Due date</label>

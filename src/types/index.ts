@@ -88,6 +88,8 @@ export interface ClientTask {
   title: string
   done: boolean
   dueDate: string
+  /** When set and earlier than dueDate, the task spans that range on the client dashboard's Timeline strip. */
+  startDate?: string
   assignee: string
 }
 

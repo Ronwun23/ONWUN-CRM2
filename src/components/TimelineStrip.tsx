@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
+import clsx from 'clsx'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import type { Client } from '@/types'
 import { useApp } from '@/context/AppContext'
@@ -15,6 +16,51 @@ function startOfDay(date: Date): Date {
 
 function sameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+interface TimelineBar {
+  id: string
+  title: string
+  start: Date
+  end: Date
+  tone: 'task' | 'event'
+}
+
+interface LaidOutBar extends TimelineBar {
+  startCol: number // 1-based, inclusive
+  endCol: number // 1-based, inclusive
+  lane: number
+  clippedStart: boolean
+  clippedEnd: boolean
+}
+
+// Greedy interval scheduling: sorted by start then by length (longest first),
+// each bar takes the first lane whose last-placed bar ends before it starts.
+function layoutLanes(bars: TimelineBar[], rangeStart: Date, rangeEnd: Date): LaidOutBar[] {
+  const dayIndex = (d: Date) => Math.round((startOfDay(d).getTime() - rangeStart.getTime()) / DAY_MS)
+
+  const visible = bars
+    .filter((b) => b.end >= rangeStart && b.start <= rangeEnd)
+    .map((b) => ({
+      ...b,
+      startCol: Math.max(0, dayIndex(b.start)) + 1,
+      endCol: Math.min(6, dayIndex(b.end)) + 1,
+      clippedStart: b.start < rangeStart,
+      clippedEnd: b.end > rangeEnd,
+    }))
+    .sort((a, b) => a.startCol - b.startCol || b.endCol - b.startCol - (a.endCol - a.startCol))
+
+  const laneEnds: number[] = []
+  return visible.map((bar) => {
+    let lane = laneEnds.findIndex((end) => end < bar.startCol)
+    if (lane === -1) {
+      lane = laneEnds.length
+      laneEnds.push(bar.endCol)
+    } else {
+      laneEnds[lane] = bar.endCol
+    }
+    return { ...bar, lane }
+  })
 }
 
 export default function TimelineStrip({ client }: { client: Client }) {
@@ -34,14 +80,25 @@ export default function TimelineStrip({ client }: { client: Client }) {
     () => Array.from({ length: 7 }, (_, i) => new Date(rangeStart.getTime() + i * DAY_MS)),
     [rangeStart]
   )
+  const rangeEnd = days[6]
 
-  const items = useMemo(() => {
-    const taskItems = client.tasks
+  const bars = useMemo<TimelineBar[]>(() => {
+    const taskBars = client.tasks
       .filter((t) => !t.done)
-      .map((t) => ({ id: t.id, title: t.title, date: new Date(t.dueDate), tone: 'task' as const }))
-    const eventItems = client.events.map((e) => ({ id: e.id, title: e.title, date: new Date(e.date), tone: 'event' as const }))
-    return [...taskItems, ...eventItems]
+      .map((t) => {
+        const due = startOfDay(new Date(t.dueDate))
+        const start = t.startDate ? startOfDay(new Date(t.startDate)) : due
+        return { id: t.id, title: t.title, start: start <= due ? start : due, end: due, tone: 'task' as const }
+      })
+    const eventBars = client.events.map((e) => {
+      const day = startOfDay(new Date(e.date))
+      return { id: e.id, title: e.title, start: day, end: day, tone: 'event' as const }
+    })
+    return [...taskBars, ...eventBars]
   }, [client])
+
+  const laidOut = useMemo(() => layoutLanes(bars, rangeStart, rangeEnd), [bars, rangeStart, rangeEnd])
+  const laneCount = Math.max(1, ...laidOut.map((b) => b.lane + 1))
 
   const isAtProjectStart = rangeStart.getTime() <= projectStart.getTime()
   const rangeLabel = `${rangeStart.getDate()} ${rangeStart.toLocaleDateString('en-US', { month: 'short' })} – ${days[6].getDate()} ${days[6].toLocaleDateString('en-US', { month: 'short' })}`
@@ -98,62 +155,76 @@ export default function TimelineStrip({ client }: { client: Client }) {
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-1.5">
-        {days.map((day) => {
-          const dayKey = day.toISOString()
-          const dayItems = items.filter((item) => sameDay(item.date, day))
-          const isToday = sameDay(day, new Date())
-          const isAdding = addingDay === dayKey
-          return (
-            <div
-              key={dayKey}
-              className="group flex min-h-[64px] flex-col rounded-lg border border-black/[0.05] bg-surface-sunken/40 p-1.5"
-            >
-              <p className={isToday ? 'text-xs font-semibold text-brand-600' : 'text-xs font-medium text-ink-muted'}>
-                {day.toLocaleDateString('en-US', { weekday: 'short' })} {day.getDate()}
-              </p>
-              <div className="mt-1 flex flex-col gap-1">
-                {dayItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className={
-                      item.tone === 'event'
-                        ? 'truncate rounded-md bg-brand-100 px-1.5 py-1 text-[11px] font-medium text-brand-700'
-                        : 'truncate rounded-md bg-[#fdf1de] px-1.5 py-1 text-[11px] font-medium text-[#96660a]'
-                    }
-                    title={item.title}
-                  >
-                    {item.title}
-                  </div>
-                ))}
-              </div>
 
-              {!isClientView &&
-                (isAdding ? (
-                  <input
-                    ref={inputRef}
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, day)}
-                    onBlur={() => commitAdd(day)}
-                    placeholder="What needs doing…"
-                    className="mt-1 w-full rounded-md border border-brand-500 bg-white px-1.5 py-1 text-[11px] focus:outline-none"
-                    autoComplete="off"
-                    data-1p-ignore
-                    data-lpignore="true"
-                  />
-                ) : (
-                  <button
-                    onClick={() => startAdding(dayKey)}
-                    className="mt-1 flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-ink-muted opacity-0 transition-opacity hover:bg-white hover:text-ink-secondary group-hover:opacity-100 focus:opacity-100"
-                  >
-                    <Plus size={11} />
-                    Add
-                  </button>
-                ))}
+      <div className="overflow-hidden rounded-lg border border-black/[0.06]">
+        <div className="grid grid-cols-7 border-b border-black/[0.06] bg-surface-sunken/40">
+          {days.map((day) => {
+            const isToday = sameDay(day, new Date())
+            return (
+              <div key={day.toISOString()} className="border-r border-black/[0.05] px-2 py-1.5 text-center last:border-r-0">
+                <p className={isToday ? 'text-xs font-semibold text-brand-600' : 'text-xs font-medium text-ink-muted'}>
+                  {day.toLocaleDateString('en-US', { weekday: 'short' })} {day.getDate()}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+
+        <div
+          className="grid grid-cols-7 gap-y-1 p-1.5"
+          style={{ gridAutoRows: 'minmax(22px, auto)', minHeight: laneCount * 22 + (laneCount - 1) * 4 }}
+        >
+          {laidOut.map((bar) => (
+            <div
+              key={bar.id}
+              style={{ gridColumn: `${bar.startCol} / ${bar.endCol + 1}`, gridRow: bar.lane + 1 }}
+              title={bar.title}
+              className={clsx(
+                'flex items-center truncate px-1.5 py-1 text-[11px] font-medium',
+                bar.tone === 'event' ? 'bg-brand-100 text-brand-700' : 'bg-[#fdf1de] text-[#96660a]',
+                bar.clippedStart ? 'rounded-l-none' : 'rounded-l-md',
+                bar.clippedEnd ? 'rounded-r-none' : 'rounded-r-md'
+              )}
+            >
+              {bar.title}
             </div>
-          )
-        })}
+          ))}
+        </div>
+
+        {!isClientView && (
+          <div className="grid grid-cols-7 border-t border-black/[0.05]">
+            {days.map((day) => {
+              const dayKey = day.toISOString()
+              const isAdding = addingDay === dayKey
+              return (
+                <div key={dayKey} className="group border-r border-black/[0.05] px-1.5 py-1 last:border-r-0">
+                  {isAdding ? (
+                    <input
+                      ref={inputRef}
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, day)}
+                      onBlur={() => commitAdd(day)}
+                      placeholder="What needs doing…"
+                      className="w-full rounded-md border border-brand-500 bg-white px-1.5 py-1 text-[11px] focus:outline-none"
+                      autoComplete="off"
+                      data-1p-ignore
+                      data-lpignore="true"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => startAdding(dayKey)}
+                      className="flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-ink-muted opacity-0 transition-opacity hover:bg-surface-sunken hover:text-ink-secondary group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <Plus size={11} />
+                      Add
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
