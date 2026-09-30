@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import clsx from 'clsx'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Maximize2, Plus } from 'lucide-react'
 import type { Client } from '@/types'
 import { useApp } from '@/context/AppContext'
 import { useViewMode } from '@/context/ViewModeContext'
+import Modal from '@/components/Modal'
 
 const DAY_MS = 86400000
 
@@ -36,15 +37,16 @@ interface LaidOutBar extends TimelineBar {
 
 // Greedy interval scheduling: sorted by start then by length (longest first),
 // each bar takes the first lane whose last-placed bar ends before it starts.
-function layoutLanes(bars: TimelineBar[], rangeStart: Date, rangeEnd: Date): LaidOutBar[] {
+function layoutLanes(bars: TimelineBar[], rangeStart: Date, rangeEnd: Date, dayCount: number): LaidOutBar[] {
   const dayIndex = (d: Date) => Math.round((startOfDay(d).getTime() - rangeStart.getTime()) / DAY_MS)
+  const lastCol = dayCount - 1
 
   const visible = bars
     .filter((b) => b.end >= rangeStart && b.start <= rangeEnd)
     .map((b) => ({
       ...b,
       startCol: Math.max(0, dayIndex(b.start)) + 1,
-      endCol: Math.min(6, dayIndex(b.end)) + 1,
+      endCol: Math.min(lastCol, dayIndex(b.end)) + 1,
       clippedStart: b.start < rangeStart,
       clippedEnd: b.end > rangeEnd,
     }))
@@ -63,6 +65,55 @@ function layoutLanes(bars: TimelineBar[], rangeStart: Date, rangeEnd: Date): Lai
   })
 }
 
+// Header + lane-bar grid, shared by the rolling 7-day strip and the
+// full-scope expanded view — only the day count and column width differ.
+function TimelineGrid({ days, laidOut, dense }: { days: Date[]; laidOut: LaidOutBar[]; dense?: boolean }) {
+  const laneCount = Math.max(1, ...laidOut.map((b) => b.lane + 1))
+  const columns = dense ? `repeat(${days.length}, minmax(40px, 1fr))` : `repeat(${days.length}, minmax(0, 1fr))`
+
+  return (
+    <div className={dense ? 'overflow-x-auto' : undefined}>
+      <div style={{ minWidth: dense ? days.length * 40 : undefined }}>
+        <div className="grid border-b border-black/[0.06] bg-surface-sunken/40" style={{ gridTemplateColumns: columns }}>
+          {days.map((day, i) => {
+            const isToday = sameDay(day, new Date())
+            const showMonth = dense && (i === 0 || day.getDate() === 1)
+            return (
+              <div key={day.toISOString()} className="border-r border-black/[0.05] px-2 py-1.5 text-center last:border-r-0">
+                {showMonth && <p className="text-[10px] text-ink-muted">{day.toLocaleDateString('en-US', { month: 'short' })}</p>}
+                <p className={isToday ? 'text-xs font-semibold text-brand-600' : 'text-xs font-medium text-ink-muted'}>
+                  {dense ? day.getDate() : `${day.toLocaleDateString('en-US', { weekday: 'short' })} ${day.getDate()}`}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+
+        <div
+          className="grid gap-y-1 p-1.5"
+          style={{ gridTemplateColumns: columns, gridAutoRows: 'minmax(22px, auto)', minHeight: laneCount * 22 + (laneCount - 1) * 4 }}
+        >
+          {laidOut.map((bar) => (
+            <div
+              key={bar.id}
+              style={{ gridColumn: `${bar.startCol} / ${bar.endCol + 1}`, gridRow: bar.lane + 1 }}
+              title={bar.title}
+              className={clsx(
+                'flex items-center truncate px-1.5 py-1 text-[11px] font-medium',
+                bar.tone === 'event' ? 'bg-brand-100 text-brand-700' : 'bg-[#fdf1de] text-[#96660a]',
+                bar.clippedStart ? 'rounded-l-none' : 'rounded-l-md',
+                bar.clippedEnd ? 'rounded-r-none' : 'rounded-r-md'
+              )}
+            >
+              {bar.title}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function TimelineStrip({ client }: { client: Client }) {
   const { addTask } = useApp()
   const { isClientView } = useViewMode()
@@ -72,6 +123,7 @@ export default function TimelineStrip({ client }: { client: Client }) {
   const [rangeStart, setRangeStart] = useState(projectStart)
   const [addingDay, setAddingDay] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
+  const [expanded, setExpanded] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => setRangeStart(projectStart), [projectStart])
@@ -97,8 +149,19 @@ export default function TimelineStrip({ client }: { client: Client }) {
     return [...taskBars, ...eventBars]
   }, [client])
 
-  const laidOut = useMemo(() => layoutLanes(bars, rangeStart, rangeEnd), [bars, rangeStart, rangeEnd])
-  const laneCount = Math.max(1, ...laidOut.map((b) => b.lane + 1))
+  const laidOut = useMemo(() => layoutLanes(bars, rangeStart, rangeEnd, days.length), [bars, rangeStart, rangeEnd, days.length])
+
+  // Full project scope: every day from kickoff to the due date, so the
+  // expanded view isn't just a longer rolling window — it's the whole thing.
+  const fullDays = useMemo(() => {
+    const end = startOfDay(new Date(client.dueDate))
+    const totalDays = Math.max(1, Math.round((end.getTime() - projectStart.getTime()) / DAY_MS) + 1)
+    return Array.from({ length: totalDays }, (_, i) => new Date(projectStart.getTime() + i * DAY_MS))
+  }, [projectStart, client.dueDate])
+  const fullLaidOut = useMemo(
+    () => layoutLanes(bars, projectStart, fullDays[fullDays.length - 1], fullDays.length),
+    [bars, projectStart, fullDays]
+  )
 
   const isAtProjectStart = rangeStart.getTime() <= projectStart.getTime()
   const rangeLabel = `${rangeStart.getDate()} ${rangeStart.toLocaleDateString('en-US', { month: 'short' })} – ${days[6].getDate()} ${days[6].toLocaleDateString('en-US', { month: 'short' })}`
@@ -153,43 +216,20 @@ export default function TimelineStrip({ client }: { client: Client }) {
           >
             <ChevronRight size={14} />
           </button>
+          <span className="mx-1 h-4 w-px bg-black/[0.08]" />
+          <button
+            onClick={() => setExpanded(true)}
+            className="flex h-6 w-6 items-center justify-center rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink-primary"
+            aria-label="Expand full project timeline"
+            title="Expand full project timeline"
+          >
+            <Maximize2 size={13} />
+          </button>
         </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-black/[0.06]">
-        <div className="grid grid-cols-7 border-b border-black/[0.06] bg-surface-sunken/40">
-          {days.map((day) => {
-            const isToday = sameDay(day, new Date())
-            return (
-              <div key={day.toISOString()} className="border-r border-black/[0.05] px-2 py-1.5 text-center last:border-r-0">
-                <p className={isToday ? 'text-xs font-semibold text-brand-600' : 'text-xs font-medium text-ink-muted'}>
-                  {day.toLocaleDateString('en-US', { weekday: 'short' })} {day.getDate()}
-                </p>
-              </div>
-            )
-          })}
-        </div>
-
-        <div
-          className="grid grid-cols-7 gap-y-1 p-1.5"
-          style={{ gridAutoRows: 'minmax(22px, auto)', minHeight: laneCount * 22 + (laneCount - 1) * 4 }}
-        >
-          {laidOut.map((bar) => (
-            <div
-              key={bar.id}
-              style={{ gridColumn: `${bar.startCol} / ${bar.endCol + 1}`, gridRow: bar.lane + 1 }}
-              title={bar.title}
-              className={clsx(
-                'flex items-center truncate px-1.5 py-1 text-[11px] font-medium',
-                bar.tone === 'event' ? 'bg-brand-100 text-brand-700' : 'bg-[#fdf1de] text-[#96660a]',
-                bar.clippedStart ? 'rounded-l-none' : 'rounded-l-md',
-                bar.clippedEnd ? 'rounded-r-none' : 'rounded-r-md'
-              )}
-            >
-              {bar.title}
-            </div>
-          ))}
-        </div>
+        <TimelineGrid days={days} laidOut={laidOut} />
 
         {!isClientView && (
           <div className="grid grid-cols-7 border-t border-black/[0.05]">
@@ -226,6 +266,18 @@ export default function TimelineStrip({ client }: { client: Client }) {
           </div>
         )}
       </div>
+
+      <Modal
+        open={expanded}
+        onClose={() => setExpanded(false)}
+        title="Project timeline"
+        subtitle={`${projectStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${fullDays[fullDays.length - 1].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · full scope`}
+        maxWidthClassName="max-w-5xl"
+      >
+        <div className="overflow-hidden rounded-lg border border-black/[0.06]">
+          <TimelineGrid days={fullDays} laidOut={fullLaidOut} dense />
+        </div>
+      </Modal>
     </div>
   )
 }

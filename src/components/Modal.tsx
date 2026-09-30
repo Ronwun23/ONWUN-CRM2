@@ -18,12 +18,14 @@ export default function Modal({
   title,
   subtitle,
   children,
+  maxWidthClassName = 'max-w-xl',
 }: {
   open: boolean
   onClose: () => void
   title: string
   subtitle?: string
   children: ReactNode
+  maxWidthClassName?: string
 }) {
   const [dialogNode, setDialogNode] = useState<HTMLDialogElement | null>(null)
 
@@ -46,7 +48,7 @@ export default function Modal({
       onClick={(e) => {
         if (e.target === dialogNode) onClose()
       }}
-      className="m-auto w-full max-w-xl rounded-xl border border-black/[0.08] bg-white p-0 shadow-pop"
+      className={`m-auto w-full ${maxWidthClassName} rounded-xl border border-black/[0.08] bg-white p-0 shadow-pop`}
     >
       <div className="flex items-start justify-between border-b border-black/[0.06] px-6 py-4">
         <div>
