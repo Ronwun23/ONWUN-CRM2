@@ -442,11 +442,11 @@ export default function AcquisitionPipeline() {
         </div>
         <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
           <p className="text-xs text-ink-muted">Open pipeline value</p>
-          <p className="mt-1 text-2xl font-semibold text-ink-primary">{formatFullCurrency(openValue)}</p>
+          <p className="mt-1 text-2xl font-semibold text-ink-primary">{formatFullCurrency(openValue, 'GBP')}</p>
         </div>
         <div className="rounded-xl border border-black/[0.06] bg-white px-5 py-3.5 shadow-card">
           <p className="text-xs text-ink-muted">Won this view</p>
-          <p className="mt-1 text-2xl font-semibold text-status-good">{formatFullCurrency(wonValue)}</p>
+          <p className="mt-1 text-2xl font-semibold text-status-good">{formatFullCurrency(wonValue, 'GBP')}</p>
         </div>
       </div>
 
@@ -469,7 +469,9 @@ export default function AcquisitionPipeline() {
                     {stageDeals.length}
                   </span>
                 </span>
-                {stageValue > 0 && <span className="text-xs font-medium text-ink-secondary">{formatFullCurrency(stageValue)}</span>}
+                {stageValue > 0 && (
+                  <span className="text-xs font-medium text-ink-secondary">{formatFullCurrency(stageValue, 'GBP')}</span>
+                )}
               </div>
               <div className="flex min-h-[120px] flex-col gap-2">
                 {stageDeals.length === 0 ? (
