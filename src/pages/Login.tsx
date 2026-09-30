@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '@/context/AuthContext'
+import onwunWordmark from '@/assets/onwun-wordmark.png'
 
 export default function Login() {
   const { signInWithEmail, linkError } = useAuth()
@@ -30,12 +31,10 @@ export default function Login() {
   return (
     <div className="login-backdrop flex min-h-screen items-center justify-center px-4">
       <div className="border-beam glass-panel w-full max-w-sm rounded-xl p-6">
-        <h1 className="text-lg font-semibold text-ink-primary">Onwun Studio</h1>
-        <p className="mt-1 text-sm text-ink-secondary">
-          {sent ? 'Check your email for a sign-in link.' : 'Sign in with your email — no password needed.'}
-        </p>
+        <img src={onwunWordmark} alt="Onwun" className="mx-auto h-7 w-auto" />
+        {sent && <p className="mt-3 text-center text-sm text-ink-secondary">Check your email for a sign-in link.</p>}
         {!sent && (
-          <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
+          <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
             <input
               type="email"
               required
