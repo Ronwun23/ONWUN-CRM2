@@ -414,6 +414,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if ('tags' in patch) row.tags = patch.tags?.length ? patch.tags : null
     if ('withClientId' in patch) row.with_client_id = patch.withClientId ? Number(patch.withClientId) : null
     if ('withClientName' in patch) row.with_client_name = patch.withClientName || null
+    if ('linkedClientEventId' in patch)
+      row.linked_client_event_id = patch.linkedClientEventId ? Number(patch.linkedClientEventId) : null
     updateEventRow(eventId, row).catch((err) => console.error('Failed to save event to Supabase:', err))
   }, [])
 

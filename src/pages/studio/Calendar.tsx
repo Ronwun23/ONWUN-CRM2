@@ -157,7 +157,7 @@ function FilterPopover({
 }
 
 export default function StudioCalendar() {
-  const { studio, clients, addStudioEvent, removeStudioEvent, updateStudioEvent } = useApp()
+  const { studio, clients, addStudioEvent, removeStudioEvent, updateStudioEvent, addClientEvent, removeClientEvent } = useApp()
   const [view, setView] = useState<ViewMode>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [dragging, setDragging] = useState<ClientEvent | null>(null)
@@ -252,6 +252,25 @@ export default function StudioCalendar() {
         formClientId !== NO_CLIENT_VALUE && formClientId !== NEW_CLIENT_VALUE ? formClientId : undefined
       const withClientName =
         formClientId === NEW_CLIENT_VALUE ? 'New client' : clients.find((c) => c.id === formClientId)?.name
+
+      // Always tear down the old mirrored copy on the previously-selected
+      // client's timeline (if any) and recreate fresh — simpler than
+      // patching it in place, and title/date/time can't go stale this way.
+      if (editing?.linkedClientEventId && editing.withClientId) {
+        removeClientEvent(editing.withClientId, editing.linkedClientEventId)
+      }
+      let linkedClientEventId: string | undefined
+      if (withClientId) {
+        const mirrored = await addClientEvent(withClientId, {
+          id: `client-event-${Date.now()}`,
+          title: formTitle.trim(),
+          notes: formNotes.trim() || undefined,
+          date: formDate,
+          time: formTime || undefined,
+        })
+        linkedClientEventId = mirrored.id
+      }
+
       if (editing) {
         updateStudioEvent(editing.id, {
           title: formTitle.trim(),
@@ -263,6 +282,7 @@ export default function StudioCalendar() {
           tags: formTags,
           withClientId,
           withClientName,
+          linkedClientEventId,
         })
       } else {
         await addStudioEvent({
@@ -276,6 +296,7 @@ export default function StudioCalendar() {
           tags: formTags,
           withClientId,
           withClientName,
+          linkedClientEventId,
         })
       }
       setShowForm(false)
@@ -294,6 +315,9 @@ export default function StudioCalendar() {
       destructive: true,
     })
     if (confirmed) {
+      if (editing.linkedClientEventId && editing.withClientId) {
+        removeClientEvent(editing.withClientId, editing.linkedClientEventId)
+      }
       removeStudioEvent(editing.id)
       setShowForm(false)
     }
