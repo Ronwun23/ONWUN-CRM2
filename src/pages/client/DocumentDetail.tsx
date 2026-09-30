@@ -11,6 +11,7 @@ import DocumentComments from '@/components/DocumentComments'
 import DocumentTestimonial from '@/components/DocumentTestimonial'
 import ContractSignaturePanel from '@/components/ContractSignaturePanel'
 import InvoiceStatusPanel from '@/components/InvoiceStatusPanel'
+import DocumentReviewPanel from '@/components/DocumentReviewPanel'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import FullscreenViewer from '@/components/FullscreenViewer'
 import Spinner from '@/components/Spinner'
@@ -91,11 +92,17 @@ export default function DocumentDetail() {
   const sidePanel = isOffboarding ? (
     <DocumentTestimonial client={client} doc={doc} />
   ) : isContract ? (
-    <ContractSignaturePanel client={client} doc={doc} />
+    <div className="flex w-80 shrink-0 flex-col gap-3">
+      <ContractSignaturePanel client={client} doc={doc} />
+      {isClientView && <DocumentReviewPanel client={client} doc={doc} />}
+    </div>
   ) : isInvoice ? (
     <InvoiceStatusPanel client={client} doc={doc} />
   ) : (
-    <DocumentComments client={client} doc={doc} pageLabel={pageLabel} />
+    <div className="flex w-72 shrink-0 flex-col gap-3">
+      <DocumentComments client={client} doc={doc} pageLabel={pageLabel} />
+      {isClientView && <DocumentReviewPanel client={client} doc={doc} />}
+    </div>
   )
 
   const backTo = isInvoice ? `/clients/${client.id}/documents/invoices` : `/clients/${client.id}/documents`

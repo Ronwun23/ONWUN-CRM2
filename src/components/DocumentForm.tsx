@@ -22,7 +22,16 @@ const TYPE_OPTIONS: DocumentType[] = [
   'offboarding',
   'other',
 ]
-const STATUS_OPTIONS: DocumentStatus[] = ['with_client', 'with_you', 'signed', 'paid', 'unpaid', 'draft']
+const STATUS_OPTIONS: DocumentStatus[] = [
+  'with_client',
+  'with_you',
+  'signed',
+  'paid',
+  'unpaid',
+  'draft',
+  'changes_requested',
+  'approved',
+]
 const PDF_DATA_URL_PREFIX = 'data:application/pdf'
 
 function isExistingPdf(url: string | undefined): boolean {
@@ -51,7 +60,9 @@ export default function DocumentForm({
   const [saveError, setSaveError] = useState<string | null>(null)
   const [title, setTitle] = useState(existing?.title ?? '')
   const [type, setType] = useState<DocumentType>(existing?.type ?? initialType ?? 'other')
-  const [status, setStatus] = useState<DocumentStatus>(existing?.status ?? 'draft')
+  // A brand new document defaults to "with client" (orange) — it's being
+  // added because it's ready to go to them, not left pending.
+  const [status, setStatus] = useState<DocumentStatus>(existing?.status ?? 'with_client')
   const [meta, setMeta] = useState(existing?.meta ?? '')
   const [url, setUrl] = useState(existing?.url ?? '')
   const [invoiceNumber, setInvoiceNumber] = useState(existing?.invoiceNumber ?? '')

@@ -131,6 +131,12 @@ interface AppContextValue {
   ) => void
   setInvoiceApproval: (clientId: string, docId: string, approved: boolean) => void
   setInvoicePaid: (clientId: string, docId: string, paid: boolean) => void
+  setDocumentReviewStatus: (
+    clientId: string,
+    docId: string,
+    status: 'approved' | 'changes_requested',
+    authorName: string
+  ) => void
   addLibraryFolder: (clientId: string, folder: LibraryFolder) => Promise<LibraryFolder>
   removeLibraryFolder: (clientId: string, folderId: string) => void
   addLibraryFile: (clientId: string, folderId: string, file: LibraryFile) => Promise<LibraryFile>
@@ -744,6 +750,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [updateClient]
   )
 
+  const setDocumentReviewStatus = useCallback(
+    (clientId: string, docId: string, status: 'approved' | 'changes_requested', authorName: string) => {
+      updateClient(clientId, (c) => {
+        const doc = c.documents.find((d) => d.id === docId)
+        if (!doc) return c
+        const updateEntry: UpdateEntry = {
+          id: `update-review-${docId}-${Date.now()}`,
+          text:
+            status === 'approved'
+              ? `${authorName} approved "${doc.title}".`
+              : `${authorName} requested changes on "${doc.title}".`,
+          date: new Date().toISOString(),
+          author: authorName,
+          authorType: 'client',
+          docId,
+          docTitle: doc.title,
+        }
+        insertUpdate(clientId, updateEntry).catch((err) => console.error('Failed to save update to Supabase:', err))
+        return {
+          ...c,
+          documents: c.documents.map((d) => (d.id === docId ? { ...d, status } : d)),
+          updates: [updateEntry, ...c.updates],
+        }
+      })
+      syncDocumentFields(docId, { status })
+    },
+    [updateClient]
+  )
+
   const addLibraryFolder = useCallback(async (clientId: string, folder: LibraryFolder) => {
     const created = await insertFolder(clientId, folder)
     setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, library: [...c.library, created] } : c)))
@@ -1116,6 +1151,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentSignature,
       setInvoiceApproval,
       setInvoicePaid,
+      setDocumentReviewStatus,
       addLibraryFolder,
       removeLibraryFolder,
       addLibraryFile,
@@ -1183,6 +1219,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentSignature,
       setInvoiceApproval,
       setInvoicePaid,
+      setDocumentReviewStatus,
       addLibraryFolder,
       removeLibraryFolder,
       addLibraryFile,

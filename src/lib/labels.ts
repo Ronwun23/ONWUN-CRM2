@@ -7,16 +7,20 @@ export const DOCUMENT_STATUS_LABEL: Record<DocumentStatus, string> = {
   signed: 'Signed',
   paid: 'Paid',
   unpaid: 'Unpaid',
-  draft: 'Draft',
+  draft: 'Pending',
+  changes_requested: 'Request change',
+  approved: 'Approved',
 }
 
 export const DOCUMENT_STATUS_TONE: Record<DocumentStatus, PillTone> = {
-  with_client: 'brand',
+  with_client: 'orange',
   with_you: 'warning',
   signed: 'good',
   paid: 'good',
   unpaid: 'critical',
   draft: 'neutral',
+  changes_requested: 'critical',
+  approved: 'good',
 }
 
 export const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {

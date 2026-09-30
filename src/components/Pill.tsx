@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
 
-export type PillTone = 'neutral' | 'brand' | 'good' | 'warning' | 'critical'
+export type PillTone = 'neutral' | 'brand' | 'good' | 'warning' | 'critical' | 'orange'
 
 const TONE_STYLES: Record<PillTone, string> = {
   neutral: 'bg-surface-sunken text-ink-secondary',
@@ -9,6 +9,7 @@ const TONE_STYLES: Record<PillTone, string> = {
   good: 'bg-[#e8f7e8] text-[#0d6b0d]',
   warning: 'bg-[#fdf1de] text-[#96660a]',
   critical: 'bg-[#fbecec] text-[#a92e2d]',
+  orange: 'bg-[#fce4cc] text-[#b5560a]',
 }
 
 export default function Pill({ tone = 'neutral', children }: { tone?: PillTone; children: ReactNode }) {

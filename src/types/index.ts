@@ -34,7 +34,15 @@ export type DocumentType =
   | 'offboarding'
   | 'other'
 
-export type DocumentStatus = 'with_client' | 'with_you' | 'signed' | 'paid' | 'unpaid' | 'draft'
+export type DocumentStatus =
+  | 'with_client'
+  | 'with_you'
+  | 'signed'
+  | 'paid'
+  | 'unpaid'
+  | 'draft'
+  | 'changes_requested'
+  | 'approved'
 
 export type CommentAuthorType = 'agency' | 'client'
 
