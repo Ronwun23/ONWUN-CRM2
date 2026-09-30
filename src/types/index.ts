@@ -160,6 +160,11 @@ export interface ClientEvent {
   // "New client" — a prospective client with no record yet.
   withClientId?: string
   withClientName?: string
+  // The mirrored copy of this studio event living on withClientId's own
+  // events list, so it shows on that client's portal Timeline too. Kept
+  // in sync (and removed) alongside this event; unset when withClientId
+  // is unset or the client is prospective ("New client").
+  linkedClientEventId?: string
 }
 
 export interface WorkshopQuestion {

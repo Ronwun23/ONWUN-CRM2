@@ -21,6 +21,7 @@ export interface EventRow {
   file_kind: string | null
   with_client_id: number | null
   with_client_name: string | null
+  linked_client_event_id: number | null
 }
 
 export function rowToEvent(row: EventRow): ClientEvent {
@@ -41,6 +42,7 @@ export function rowToEvent(row: EventRow): ClientEvent {
     fileKind: (row.file_kind as ClientEvent['fileKind']) ?? undefined,
     withClientId: row.with_client_id ? String(row.with_client_id) : undefined,
     withClientName: row.with_client_name ?? undefined,
+    linkedClientEventId: row.linked_client_event_id ? String(row.linked_client_event_id) : undefined,
   }
 }
 
@@ -62,6 +64,7 @@ function eventToRow(clientId: string | null, event: ClientEvent) {
     file_kind: event.fileKind ?? null,
     with_client_id: event.withClientId ? Number(event.withClientId) : null,
     with_client_name: event.withClientName ?? null,
+    linked_client_event_id: event.linkedClientEventId ? Number(event.linkedClientEventId) : null,
   }
 }
 
