@@ -56,7 +56,7 @@ export default function DocumentComments({
   }
 
   return (
-    <div className="flex h-full min-h-[420px] w-72 shrink-0 flex-col rounded-xl border border-black/[0.06] bg-white">
+    <div className="flex h-[420px] w-72 shrink-0 flex-col rounded-xl border border-black/[0.06] bg-white">
       <p className="border-b border-black/[0.06] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">
         Comments
       </p>
