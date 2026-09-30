@@ -40,6 +40,7 @@ import SearchPalette from '@/components/SearchPalette'
 import { confirmAction } from '@/lib/confirm'
 import { fileToLogoDataUrl } from '@/lib/image'
 import { formatDueDate } from '@/lib/format'
+import onwunWordmark from '@/assets/onwun-wordmark.png'
 
 /** Fades/collapses a text label to nothing when the sidebar is hovered
  *  shut — the same treatment SidebarLink uses, reused here for all the
@@ -357,19 +358,19 @@ function SidebarNav({
           )}
           {lockedToClient ? (
             <div>
-              <SidebarLabel open={open} display="block" className="block text-sm font-bold leading-tight lowercase tracking-tight text-ink-primary">
-                onwun
+              <SidebarLabel open={open} display="block">
+                <img src={onwunWordmark} alt="Onwun" className="h-3 w-auto" />
               </SidebarLabel>
-              <SidebarLabel open={open} display="block" className="block text-[11px] font-medium uppercase leading-tight tracking-wide text-ink-muted">
+              <SidebarLabel open={open} display="block" className="mt-1 block text-[11px] font-medium uppercase leading-tight tracking-wide text-ink-muted">
                 Studio
               </SidebarLabel>
             </div>
           ) : (
             <Link to="/">
-              <SidebarLabel open={open} display="block" className="block text-sm font-bold leading-tight lowercase tracking-tight text-ink-primary">
-                onwun
+              <SidebarLabel open={open} display="block">
+                <img src={onwunWordmark} alt="Onwun" className="h-3 w-auto" />
               </SidebarLabel>
-              <SidebarLabel open={open} display="block" className="block text-[11px] font-medium uppercase leading-tight tracking-wide text-ink-muted">
+              <SidebarLabel open={open} display="block" className="mt-1 block text-[11px] font-medium uppercase leading-tight tracking-wide text-ink-muted">
                 Studio
               </SidebarLabel>
             </Link>
