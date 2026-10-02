@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Calendar } from 'lucide-react'
 import { toastManager } from '@/components/ui/toast'
 
-const CALENDLY_URL = 'https://calendly.com/niallpenn19/30min'
+const CALENDLY_URL = 'https://calendly.com/niallpenn19/brand-discovery'
 
 declare global {
   interface Window {

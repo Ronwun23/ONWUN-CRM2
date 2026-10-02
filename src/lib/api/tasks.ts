@@ -9,6 +9,7 @@ export interface TaskRow {
   title: string
   done: boolean
   due_date: string
+  start_date: string | null
   assignee: string
 }
 
@@ -18,6 +19,7 @@ export function rowToTask(row: TaskRow): ClientTask {
     title: row.title,
     done: row.done,
     dueDate: row.due_date,
+    startDate: row.start_date ?? undefined,
     assignee: row.assignee,
   }
 }
@@ -28,6 +30,7 @@ function taskToRow(clientId: string | null, task: ClientTask) {
     title: task.title,
     done: task.done,
     due_date: task.dueDate,
+    start_date: task.startDate ?? null,
     assignee: task.assignee,
   }
 }

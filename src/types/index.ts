@@ -34,7 +34,15 @@ export type DocumentType =
   | 'offboarding'
   | 'other'
 
-export type DocumentStatus = 'with_client' | 'with_you' | 'signed' | 'paid' | 'unpaid' | 'draft'
+export type DocumentStatus =
+  | 'with_client'
+  | 'with_you'
+  | 'signed'
+  | 'paid'
+  | 'unpaid'
+  | 'draft'
+  | 'changes_requested'
+  | 'approved'
 
 export type CommentAuthorType = 'agency' | 'client'
 
@@ -88,6 +96,8 @@ export interface ClientTask {
   title: string
   done: boolean
   dueDate: string
+  /** When set and earlier than dueDate, the task spans that range on the client dashboard's Timeline strip. */
+  startDate?: string
   assignee: string
 }
 
@@ -152,6 +162,17 @@ export interface ClientEvent {
   fileUrl?: string
   fileName?: string
   fileKind?: 'png' | 'jpg' | 'mp4'
+  // Which client a studio-calendar event is with — separate from this
+  // table's own client_id (which scopes a per-client content-calendar
+  // event to its owner). withClientId is unset when withClientName is
+  // "New client" — a prospective client with no record yet.
+  withClientId?: string
+  withClientName?: string
+  // The mirrored copy of this studio event living on withClientId's own
+  // events list, so it shows on that client's portal Timeline too. Kept
+  // in sync (and removed) alongside this event; unset when withClientId
+  // is unset or the client is prospective ("New client").
+  linkedClientEventId?: string
 }
 
 export interface WorkshopQuestion {

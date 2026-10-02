@@ -17,6 +17,8 @@ type ViewMode = 'month' | 'week' | 'day' | 'list'
 
 const CATEGORIES = ['Meeting', 'Shoot', 'Launch', 'Team', 'Reminder']
 const TAGS = ['Important', 'Urgent', 'Client-facing', 'Internal']
+const NEW_CLIENT_VALUE = '__new__'
+const NO_CLIENT_VALUE = '__none__'
 
 function eventStart(event: ClientEvent): Date {
   const start = toDisplayDate(event.date)
@@ -70,7 +72,15 @@ function EventCard({ event, onClick, onDragStart, onDragEnd, variant = 'default'
         variant === 'compact' ? 'px-1.5 py-0.5' : 'px-2 py-1'
       )}
     >
-      <div className={clsx('truncate font-medium', color.text, variant === 'compact' ? 'text-[11px]' : 'text-xs')}>{event.title}</div>
+      <div className={clsx('truncate font-medium', color.text, variant === 'compact' ? 'text-[11px]' : 'text-xs')}>
+        {event.title}
+        {variant === 'compact' && event.withClientName && (
+          <span className="font-normal opacity-70"> · {event.withClientName}</span>
+        )}
+      </div>
+      {variant !== 'compact' && event.withClientName && (
+        <div className="truncate text-[11px] text-ink-muted">{event.withClientName}</div>
+      )}
       {variant !== 'compact' && event.time && (
         <div className="flex items-center gap-1 text-[11px] text-ink-muted">
           <Clock size={9} />
@@ -147,7 +157,7 @@ function FilterPopover({
 }
 
 export default function StudioCalendar() {
-  const { studio, addStudioEvent, removeStudioEvent, updateStudioEvent } = useApp()
+  const { studio, clients, addStudioEvent, removeStudioEvent, updateStudioEvent, addClientEvent, removeClientEvent } = useApp()
   const [view, setView] = useState<ViewMode>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [dragging, setDragging] = useState<ClientEvent | null>(null)
@@ -166,8 +176,18 @@ export default function StudioCalendar() {
   const [formCategory, setFormCategory] = useState(CATEGORIES[0])
   const [formColor, setFormColor] = useState(EVENT_COLORS[0].value)
   const [formTags, setFormTags] = useState<string[]>([])
+  const [formClientId, setFormClientId] = useState(NO_CLIENT_VALUE)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+
+  const clientOptions = useMemo(
+    () => [
+      { value: NO_CLIENT_VALUE, label: 'None' },
+      { value: NEW_CLIENT_VALUE, label: 'New client' },
+      ...clients.map((c) => ({ value: c.id, label: c.name })),
+    ],
+    [clients]
+  )
 
   const filteredEvents = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -204,6 +224,7 @@ export default function StudioCalendar() {
     setFormCategory(CATEGORIES[0])
     setFormColor(EVENT_COLORS[0].value)
     setFormTags([])
+    setFormClientId(NO_CLIENT_VALUE)
     setFormError(null)
     setShowForm(true)
   }
@@ -217,6 +238,7 @@ export default function StudioCalendar() {
     setFormCategory(event.category ?? CATEGORIES[0])
     setFormColor(event.color ?? EVENT_COLORS[0].value)
     setFormTags(event.tags ?? [])
+    setFormClientId(event.withClientId ?? (event.withClientName ? NEW_CLIENT_VALUE : NO_CLIENT_VALUE))
     setFormError(null)
     setShowForm(true)
   }
@@ -226,6 +248,29 @@ export default function StudioCalendar() {
     setSaving(true)
     setFormError(null)
     try {
+      const withClientId =
+        formClientId !== NO_CLIENT_VALUE && formClientId !== NEW_CLIENT_VALUE ? formClientId : undefined
+      const withClientName =
+        formClientId === NEW_CLIENT_VALUE ? 'New client' : clients.find((c) => c.id === formClientId)?.name
+
+      // Always tear down the old mirrored copy on the previously-selected
+      // client's timeline (if any) and recreate fresh — simpler than
+      // patching it in place, and title/date/time can't go stale this way.
+      if (editing?.linkedClientEventId && editing.withClientId) {
+        removeClientEvent(editing.withClientId, editing.linkedClientEventId)
+      }
+      let linkedClientEventId: string | undefined
+      if (withClientId) {
+        const mirrored = await addClientEvent(withClientId, {
+          id: `client-event-${Date.now()}`,
+          title: formTitle.trim(),
+          notes: formNotes.trim() || undefined,
+          date: formDate,
+          time: formTime || undefined,
+        })
+        linkedClientEventId = mirrored.id
+      }
+
       if (editing) {
         updateStudioEvent(editing.id, {
           title: formTitle.trim(),
@@ -235,6 +280,9 @@ export default function StudioCalendar() {
           category: formCategory,
           color: formColor,
           tags: formTags,
+          withClientId,
+          withClientName,
+          linkedClientEventId,
         })
       } else {
         await addStudioEvent({
@@ -246,6 +294,9 @@ export default function StudioCalendar() {
           category: formCategory,
           color: formColor,
           tags: formTags,
+          withClientId,
+          withClientName,
+          linkedClientEventId,
         })
       }
       setShowForm(false)
@@ -264,6 +315,9 @@ export default function StudioCalendar() {
       destructive: true,
     })
     if (confirmed) {
+      if (editing.linkedClientEventId && editing.withClientId) {
+        removeClientEvent(editing.withClientId, editing.linkedClientEventId)
+      }
       removeStudioEvent(editing.id)
       setShowForm(false)
     }
@@ -460,6 +514,12 @@ export default function StudioCalendar() {
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Category</label>
             <Select value={formCategory} onChange={setFormCategory} options={CATEGORIES.map((c) => ({ value: c, label: c }))} />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">
+              Client <span className="normal-case text-ink-muted/70">(optional)</span>
+            </label>
+            <Select value={formClientId} onChange={setFormClientId} options={clientOptions} />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Colour</label>
