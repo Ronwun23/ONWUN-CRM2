@@ -767,11 +767,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // realtime before this one had actually committed, that echo
         // would carry a row with no signature on it yet, momentarily
         // wiping out the signature that was just shown locally.
+        let signatureSaved = false
         try {
           await updateDocumentRow(docId, {
             ...signatureFieldsPatch,
             status: stampJobRef.current?.bothSigned ? 'signed' : 'awaiting_signature',
           })
+          signatureSaved = true
         } catch (err) {
           console.error('Failed to save document to Supabase:', err)
           toastManager.add({
@@ -782,7 +784,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
           })
         }
 
-        if (stampJobRef.current) {
+        // Skip the restamp-and-url-write entirely if the signature itself
+        // didn't actually persist — writing the new url anyway would echo
+        // back over realtime with a row that still has no signature on it,
+        // silently reverting what the signer just saw locally.
+        if (signatureSaved && stampJobRef.current) {
           const job = stampJobRef.current
           try {
             const { stampContractPdf } = await import('@/lib/contractStamp')

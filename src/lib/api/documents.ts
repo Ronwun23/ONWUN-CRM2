@@ -217,9 +217,18 @@ export async function insertDocument(clientId: string, doc: ClientDocument): Pro
   return rowToDocument(data as DocumentRow, [])
 }
 
+// `.select()` is required here, not decorative — without it Postgrest
+// reports success (no error) even when RLS silently blocks the row and
+// zero rows are actually affected, which previously let a failed
+// signature write go unnoticed while a later, unrelated write to the
+// same row (e.g. the stamped PDF's url) sailed through and echoed back
+// over realtime with the signature still missing.
 export async function updateDocumentRow(docId: string, patch: Record<string, unknown>): Promise<void> {
-  const { error } = await supabase.from('documents').update(patch).eq('id', Number(docId))
+  const { data, error } = await supabase.from('documents').update(patch).eq('id', Number(docId)).select('id')
   if (error) throw error
+  if (!data || data.length === 0) {
+    throw new Error(`Update to document ${docId} affected no rows (blocked by a policy, or the row doesn't exist)`)
+  }
 }
 
 export async function deleteDocumentRow(docId: string): Promise<void> {
