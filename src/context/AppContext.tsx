@@ -58,6 +58,7 @@ import { buildSequence, notNowResurfaceDate, LEAD_STATUS_LABEL } from '@/lib/lea
 import { createBlankClient } from '@/data/clients'
 import { subscribeToRealtimeUpdates } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
+import { toastManager } from '@/components/ui/toast'
 
 const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 
@@ -69,12 +70,28 @@ const STUDIO_STORAGE_KEY = 'onwun-studio-internal-v1'
 function syncClientFields(clientId: string, patch: Record<string, unknown>) {
   updateClientRow(clientId, patch).catch((err) => {
     console.error('Failed to save to Supabase:', err)
+    toastManager.add({
+      type: 'error',
+      title: "Couldn't save that change",
+      description: 'It may not survive a refresh — check your connection and try again.',
+      timeout: 8000,
+    })
   })
 }
 
 function syncDocumentFields(docId: string, patch: Record<string, unknown>) {
   updateDocumentRow(docId, patch).catch((err) => {
     console.error('Failed to save document to Supabase:', err)
+    // This is fire-and-forget by design (the UI already updated
+    // optimistically), but a silent failure here means the change looks
+    // saved and then reverts on the next refresh — worth a visible nudge
+    // rather than only a console log nobody's watching.
+    toastManager.add({
+      type: 'error',
+      title: "Couldn't save that change",
+      description: 'It may not survive a refresh — check your connection and try again.',
+      timeout: 8000,
+    })
   })
 }
 
