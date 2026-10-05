@@ -196,18 +196,33 @@ export default function DocumentDetail() {
               )}
             >
               {resolveError ? (
-                <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-black text-sm text-white/60">
+                <div
+                  className={clsx(
+                    'flex items-center justify-center rounded-xl bg-black text-sm text-white/60',
+                    isContract ? 'aspect-[595/842] h-[100vh]' : 'min-h-[420px]'
+                  )}
+                >
                   Couldn't load this PDF.
                 </div>
               ) : !pdfSrc ? (
-                <div className="flex min-h-[420px] items-center justify-center gap-2 rounded-xl bg-black text-sm text-white/50">
+                <div
+                  className={clsx(
+                    'flex items-center justify-center gap-2 rounded-xl bg-black text-sm text-white/50',
+                    isContract ? 'aspect-[595/842] h-[100vh]' : 'min-h-[420px]'
+                  )}
+                >
                   <Spinner className="text-white/50" />
                   Loading PDF viewer…
                 </div>
               ) : (
                 <ErrorBoundary
                   fallback={
-                    <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 rounded-xl bg-black text-center text-sm text-white/60">
+                    <div
+                      className={clsx(
+                        'flex flex-col items-center justify-center gap-3 rounded-xl bg-black text-center text-sm text-white/60',
+                        isContract ? 'aspect-[595/842] h-[100vh]' : 'min-h-[420px]'
+                      )}
+                    >
                       <p>Couldn't preview this PDF here.</p>
                       <a
                         href={pdfSrc}
@@ -221,7 +236,12 @@ export default function DocumentDetail() {
                 >
                   <Suspense
                     fallback={
-                      <div className="flex min-h-[420px] items-center justify-center gap-2 rounded-xl bg-black text-sm text-white/50">
+                      <div
+                        className={clsx(
+                          'flex items-center justify-center gap-2 rounded-xl bg-black text-sm text-white/50',
+                          isContract ? 'aspect-[595/842] h-[100vh]' : 'min-h-[420px]'
+                        )}
+                      >
                         <Spinner className="text-white/50" />
                         Loading PDF viewer…
                       </div>

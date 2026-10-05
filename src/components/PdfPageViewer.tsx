@@ -86,7 +86,12 @@ export default function PdfPageViewer({
 
   if (error) {
     return (
-      <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-black text-sm text-white/60">
+      <div
+        className={clsx(
+          'flex items-center justify-center rounded-xl bg-black text-sm text-white/60',
+          fitToView ? 'aspect-[595/842] h-[100vh]' : 'aspect-video w-full'
+        )}
+      >
         {error}
       </div>
     )
@@ -94,7 +99,12 @@ export default function PdfPageViewer({
 
   if (numPages === 0) {
     return (
-      <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl bg-black text-white/60">
+      <div
+        className={clsx(
+          'flex flex-col items-center justify-center gap-2 rounded-xl bg-black text-white/60',
+          fitToView ? 'aspect-[595/842] h-[100vh]' : 'aspect-video w-full'
+        )}
+      >
         {downloadPercent !== null ? (
           <ProgressRing value={downloadPercent} label="Downloading PDF" />
         ) : (
