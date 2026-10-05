@@ -221,7 +221,7 @@ export default function DocumentDetail() {
                       </div>
                     }
                   >
-                    <PdfPageViewer url={pdfSrc} onPageChange={handlePdfPageChange} />
+                    <PdfPageViewer url={pdfSrc} onPageChange={handlePdfPageChange} fitToView={isContract} />
                   </Suspense>
                 </ErrorBoundary>
               )}

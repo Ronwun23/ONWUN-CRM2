@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import clsx from 'clsx'
 import * as pdfjsLib from 'pdfjs-dist'
 import type { OnProgressParameters, PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
 import PdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
@@ -11,9 +12,13 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = PdfWorkerUrl
 export default function PdfPageViewer({
   url,
   onPageChange,
+  // Caps the rendered page's height to the viewport so a full A4 page is
+  // visible without scrolling, instead of rendering it at full size.
+  fitToView,
 }: {
   url: string
   onPageChange?: (page: number, numPages: number) => void
+  fitToView?: boolean
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pdfRef = useRef<PDFDocumentProxy | null>(null)
@@ -104,8 +109,11 @@ export default function PdfPageViewer({
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl bg-black">
-      <div className="flex min-h-[420px] flex-1 items-center justify-center overflow-auto p-6">
-        <canvas ref={canvasRef} className="max-h-full max-w-full shadow-2xl" />
+      <div className={clsx('flex flex-1 items-center justify-center overflow-auto p-6', fitToView ? 'min-h-0' : 'min-h-[420px]')}>
+        <canvas
+          ref={canvasRef}
+          className={clsx('max-w-full shadow-2xl', fitToView ? 'max-h-[70vh]' : 'max-h-full')}
+        />
       </div>
       {numPages > 1 && (
         <div className="flex items-center justify-center gap-4 border-t border-white/10 py-3">
