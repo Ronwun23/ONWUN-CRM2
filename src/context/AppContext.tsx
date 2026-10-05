@@ -7,6 +7,7 @@ import type {
   ClientDocument,
   ClientEvent,
   ClientTask,
+  ContractStampLayout,
   Deal,
   DealPriority,
   DealStage,
@@ -34,6 +35,8 @@ import {
   updateDocumentRow,
   deleteDocumentRow,
   insertComment,
+  fetchPdfBytes,
+  uploadStampedPdf,
 } from '@/lib/api/documents'
 import { fetchTasksForClient, fetchStudioTasks, insertTask, updateTaskRow, deleteTaskRow } from '@/lib/api/tasks'
 import { fetchUpdatesForClient, fetchStudioUpdates, insertUpdate, deleteUpdateRow } from '@/lib/api/updates'
@@ -129,6 +132,7 @@ interface AppContextValue {
     party: 'agency' | 'client',
     signature: DocumentSignature
   ) => void
+  setContractStampLayout: (clientId: string, docId: string, layout: ContractStampLayout) => void
   setInvoiceApproval: (clientId: string, docId: string, approved: boolean) => void
   setInvoicePaid: (clientId: string, docId: string, paid: boolean) => void
   setDocumentReviewStatus: (
@@ -682,6 +686,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setDocumentSignature = useCallback(
     (clientId: string, docId: string, party: 'agency' | 'client', signature: DocumentSignature) => {
       let bothSigned = false
+      const stampJobRef: {
+        current: { url: string; layout: ContractStampLayout; agencySignature: DocumentSignature; clientSignature: DocumentSignature } | null
+      } = { current: null }
       updateClient(clientId, (c) => {
         const doc = c.documents.find((d) => d.id === docId)
         if (!doc) return c
@@ -698,6 +705,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           docTitle: doc.title,
         }
         insertUpdate(clientId, updateEntry).catch((err) => console.error('Failed to save update to Supabase:', err))
+        if (bothSigned && doc.url && doc.stampLayout) {
+          stampJobRef.current = {
+            url: doc.url,
+            layout: doc.stampLayout,
+            agencySignature: party === 'agency' ? signature : doc.agencySignature!,
+            clientSignature: party === 'client' ? signature : doc.clientSignature!,
+          }
+        }
         return {
           ...c,
           documents: c.documents.map((d) =>
@@ -720,6 +735,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }),
         ...(bothSigned ? { status: 'signed' } : {}),
       })
+
+      if (stampJobRef.current) {
+        const job = stampJobRef.current
+        ;(async () => {
+          const { stampContractPdf } = await import('@/lib/contractStamp')
+          const originalBytes = await fetchPdfBytes(job.url)
+          const stampedBytes = await stampContractPdf({
+            originalBytes,
+            layout: job.layout,
+            agencySignature: job.agencySignature,
+            clientSignature: job.clientSignature,
+          })
+          const newUrl = await uploadStampedPdf(clientId, stampedBytes, `${docId}.pdf`)
+          updateClient(clientId, (c) => ({
+            ...c,
+            documents: c.documents.map((d) => (d.id === docId ? { ...d, url: newUrl } : d)),
+          }))
+          syncDocumentFields(docId, { url: newUrl })
+        })().catch((err) => console.error('Failed to stamp signed contract PDF:', err))
+      }
+    },
+    [updateClient]
+  )
+
+  const setContractStampLayout = useCallback(
+    (clientId: string, docId: string, layout: ContractStampLayout) => {
+      updateClient(clientId, (c) => ({
+        ...c,
+        documents: c.documents.map((d) => (d.id === docId ? { ...d, stampLayout: layout } : d)),
+      }))
+      syncDocumentFields(docId, { stamp_layout: layout })
     },
     [updateClient]
   )
@@ -1149,6 +1195,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentTestimonial,
       removeDocumentTestimonial,
       setDocumentSignature,
+      setContractStampLayout,
       setInvoiceApproval,
       setInvoicePaid,
       setDocumentReviewStatus,
@@ -1217,6 +1264,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentTestimonial,
       removeDocumentTestimonial,
       setDocumentSignature,
+      setContractStampLayout,
       setInvoiceApproval,
       setInvoicePaid,
       setDocumentReviewStatus,

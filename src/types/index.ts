@@ -68,6 +68,22 @@ export interface DocumentSignature {
   createdAt: string
 }
 
+// Where on the contract PDF a signature or date gets stamped — set once
+// by the agency (clicking the rendered page), in page-relative 0-1
+// coordinates (top-left origin) so it's independent of render resolution.
+export interface StampPosition {
+  page: number
+  x: number
+  y: number
+}
+
+export interface ContractStampLayout {
+  designerSignature?: StampPosition
+  designerDate?: StampPosition
+  clientSignature?: StampPosition
+  clientDate?: StampPosition
+}
+
 export interface ClientDocument {
   id: string
   title: string
@@ -80,6 +96,11 @@ export interface ClientDocument {
   testimonial?: DocumentTestimonial
   agencySignature?: DocumentSignature
   clientSignature?: DocumentSignature
+  // Set once by the agency per contract — where the signature pad's
+  // output and the sign date actually get drawn onto the PDF. Stamping
+  // happens once both parties have signed, replacing `url` with the
+  // stamped file.
+  stampLayout?: ContractStampLayout
   // Only meaningful when type is 'invoice' — status's existing 'paid'/
   // 'unpaid' values double as the invoice's payment state, so only
   // approval needs a field of its own.

@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
-import { storagePathFrom, toStoragePath } from '@/lib/embed'
-import type { ClientDocument, DocumentComment, DocumentSignature } from '@/types'
+import { isStoragePath, storagePathFrom, toStoragePath } from '@/lib/embed'
+import type { ClientDocument, ContractStampLayout, DocumentComment, DocumentSignature } from '@/types'
 
 const DOCUMENTS_BUCKET = 'documents'
 
@@ -29,6 +29,7 @@ export interface DocumentRow {
   due_date: string | null
   amount: number | null
   invoice_approved: boolean | null
+  stamp_layout: ContractStampLayout | null
 }
 
 export interface CommentRow {
@@ -87,6 +88,7 @@ export function rowToDocument(row: DocumentRow, comments: DocumentComment[]): Cl
     dueDate: row.due_date ?? undefined,
     amount: row.amount ?? undefined,
     invoiceApproved: row.invoice_approved ?? undefined,
+    stampLayout: row.stamp_layout ?? undefined,
   }
 }
 
@@ -115,6 +117,7 @@ function documentToRow(clientId: string, doc: ClientDocument) {
     due_date: doc.dueDate ?? null,
     amount: doc.amount ?? null,
     invoice_approved: doc.invoiceApproved ?? null,
+    stamp_layout: doc.stampLayout ?? null,
   }
 }
 
@@ -159,6 +162,18 @@ export async function uploadDocumentFile(clientId: string, file: File): Promise<
   return toStoragePath(path)
 }
 
+// Re-uploads a contract PDF after both signatures have been stamped onto
+// it — a fresh storage object each time, never overwriting the original
+// upload in place.
+export async function uploadStampedPdf(clientId: string, bytes: Uint8Array, filename: string): Promise<string> {
+  const path = `${clientId}/${Date.now()}-signed-${filename}`
+  const { error } = await supabase.storage
+    .from(DOCUMENTS_BUCKET)
+    .upload(path, new Blob([bytes.slice()], { type: 'application/pdf' }))
+  if (error) throw error
+  return toStoragePath(path)
+}
+
 // Storage is private — a document's PDF is only ever accessed via a
 // short-lived signed URL generated on demand, not a permanent public link.
 export async function getSignedDocumentUrl(storageUrl: string): Promise<string> {
@@ -166,6 +181,16 @@ export async function getSignedDocumentUrl(storageUrl: string): Promise<string> 
   const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).createSignedUrl(path, 3600)
   if (error) throw error
   return data.signedUrl
+}
+
+// Resolves a document's `url` (a storage marker or a data: URL) to the
+// raw PDF bytes — used for stamping, where we need the actual file
+// rather than something to point a <PdfPageViewer> at.
+export async function fetchPdfBytes(url: string): Promise<Uint8Array> {
+  const fetchUrl = isStoragePath(url) ? await getSignedDocumentUrl(url) : url
+  const response = await fetch(fetchUrl)
+  const buffer = await response.arrayBuffer()
+  return new Uint8Array(buffer)
 }
 
 export async function insertDocument(clientId: string, doc: ClientDocument): Promise<ClientDocument> {
