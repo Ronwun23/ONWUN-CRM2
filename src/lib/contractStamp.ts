@@ -1,6 +1,24 @@
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
-import type { PDFPage } from 'pdf-lib'
+import { PDFDocument, rgb } from 'pdf-lib'
+import type { PDFFont, PDFPage } from 'pdf-lib'
+import fontkit from '@pdf-lib/fontkit'
+import SoraRegularUrl from '@fontsource/sora/files/sora-latin-400-normal.woff2?url'
+import SoraBoldUrl from '@fontsource/sora/files/sora-latin-700-normal.woff2?url'
 import type { ContractStampLayout, DocumentSignature, StampPosition } from '@/types'
+
+// The app's own brand colour (brand-500 in tailwind.config), reused here
+// so the generated page's lines match the rest of the product, not a
+// generic grey.
+const BRAND = rgb(0x6a / 255, 0x60 / 255, 0xf6 / 255)
+
+async function embedSoraFonts(pdfDoc: PDFDocument): Promise<{ regular: PDFFont; bold: PDFFont }> {
+  pdfDoc.registerFontkit(fontkit)
+  const [regularBytes, boldBytes] = await Promise.all([
+    fetch(SoraRegularUrl).then((r) => r.arrayBuffer()),
+    fetch(SoraBoldUrl).then((r) => r.arrayBuffer()),
+  ])
+  const [regular, bold] = await Promise.all([pdfDoc.embedFont(regularBytes), pdfDoc.embedFont(boldBytes)])
+  return { regular, bold }
+}
 
 function dataUrlToBytes(dataUrl: string): Uint8Array {
   const base64 = dataUrl.split(',')[1] ?? dataUrl
@@ -38,7 +56,7 @@ export async function stampContractPdf({
 }): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.load(originalBytes)
   const pages = pdfDoc.getPages()
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const { regular: font } = await embedSoraFonts(pdfDoc)
 
   // Fitted (not stretched) into the drawn box, centred within it — the
   // box is whatever area the agency marked, not assumed to be a fixed size.
@@ -102,8 +120,7 @@ export async function appendSignaturePage({
   const page = pdfDoc.addPage([pageWidth, pageHeight])
   const pageIndex = pdfDoc.getPageCount() - 1
 
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+  const { regular: font, bold: boldFont } = await embedSoraFonts(pdfDoc)
   const muted = rgb(0.55, 0.55, 0.55)
   const fromTop = (pt: number) => pageHeight - pt
 
@@ -158,18 +175,29 @@ export async function appendSignaturePage({
     },
   }
 
+  // A plain underline under the box — matching the brand line used
+  // elsewhere, not a bordered rectangle — is where the signature/date
+  // actually gets drawn, but nothing visually "boxes" it in beforehand.
+  const drawUnderline = (box: StampPosition) => {
+    const rect = toPdfBox(page, box)
+    page.drawLine({
+      start: { x: rect.x, y: rect.y },
+      end: { x: rect.x + rect.width, y: rect.y },
+      thickness: 1.5,
+      color: BRAND,
+    })
+  }
+
   const drawColumn = (label: string, name: string, x: number, sigBox: StampPosition, dateBox: StampPosition) => {
     page.drawText(label, { x, y: fromTop(160), size: 13, font: boldFont })
 
-    const sigRect = toPdfBox(page, sigBox)
-    page.drawRectangle({ ...sigRect, borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 1 })
+    drawUnderline(sigBox)
     page.drawText('Signature', { x, y: fromTop(266), size: 9, font, color: muted })
 
     page.drawText(name, { x, y: fromTop(300), size: 13, font: boldFont })
     page.drawText('Name', { x, y: fromTop(315), size: 9, font, color: muted })
 
-    const dateRect = toPdfBox(page, dateBox)
-    page.drawRectangle({ ...dateRect, borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 1 })
+    drawUnderline(dateBox)
     page.drawText('Date', { x, y: fromTop(392), size: 9, font, color: muted })
   }
 
