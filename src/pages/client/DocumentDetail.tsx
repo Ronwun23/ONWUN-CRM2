@@ -188,11 +188,11 @@ export default function DocumentDetail() {
             {sidePanel}
           </div>
         ) : isPdf ? (
-          <div className="flex flex-col gap-4 lg:flex-row">
+          <div className={clsx('flex flex-col gap-4 lg:flex-row', isContract && 'lg:justify-between')}>
             <FullscreenViewer
               className={clsx(
                 'min-w-0 rounded-xl shadow-card',
-                isContract ? 'w-fit max-w-[calc(70vh*0.75)] shrink-0' : 'flex-1'
+                isContract ? 'w-fit max-w-[calc(100vh*0.75)] shrink-0' : 'flex-1'
               )}
             >
               {resolveError ? (

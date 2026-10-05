@@ -112,7 +112,7 @@ export default function PdfPageViewer({
       <div className={clsx('flex flex-1 items-center justify-center overflow-auto p-6', fitToView ? 'min-h-0' : 'min-h-[420px]')}>
         <canvas
           ref={canvasRef}
-          className={clsx('max-w-full shadow-2xl', fitToView ? 'max-h-[70vh]' : 'max-h-full')}
+          className={clsx('max-w-full shadow-2xl', fitToView ? 'max-h-[100vh]' : 'max-h-full')}
         />
       </div>
       {numPages > 1 && (
