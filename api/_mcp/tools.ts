@@ -85,6 +85,32 @@ export function registerTools(server: McpServer, supabase: SupabaseClient) {
   )
 
   server.registerTool(
+    'post_studio_update',
+    {
+      title: 'Post studio update',
+      description: 'Post a studio-wide update to the internal update feed — not tied to any client.',
+      inputSchema: { text: z.string().describe('The update text') },
+    },
+    async ({ text }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      let author = user?.email ?? 'Claude'
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+        if (profile?.full_name) author = profile.full_name
+      }
+      const { data, error } = await supabase
+        .from('updates')
+        .insert({ client_id: null, text, date: new Date().toISOString(), author, author_type: 'agency' })
+        .select()
+        .single()
+      if (error) return errorResult(error.message)
+      return textResult(data)
+    }
+  )
+
+  server.registerTool(
     'list_documents',
     {
       title: 'List documents',
