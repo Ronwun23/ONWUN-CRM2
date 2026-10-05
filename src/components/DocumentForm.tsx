@@ -66,6 +66,7 @@ export default function DocumentForm({
   const [meta, setMeta] = useState(existing?.meta ?? '')
   const [url, setUrl] = useState(existing?.url ?? '')
   const [stampLayout, setStampLayout] = useState<ContractStampLayout | undefined>(existing?.stampLayout)
+  const [unstampedUrl, setUnstampedUrl] = useState(existing?.unstampedUrl ?? '')
   const [invoiceNumber, setInvoiceNumber] = useState(existing?.invoiceNumber ?? '')
   const [billedToName, setBilledToName] = useState(existing?.billedToName ?? '')
   const [issuedDate, setIssuedDate] = useState(existing?.issuedDate)
@@ -97,7 +98,7 @@ export default function DocumentForm({
             amount: amount.trim() ? Number(amount) : undefined,
           }
         : {}),
-      ...(type === 'contract' ? { stampLayout } : {}),
+      ...(type === 'contract' ? { stampLayout, unstampedUrl: unstampedUrl.trim() || undefined } : {}),
     }
 
     setSaving(true)
@@ -141,7 +142,9 @@ export default function DocumentForm({
           designerName: activeAccount.name,
           clientName,
         })
-        setUrl(await uploadStampedPdf(clientId, bytes, file.name))
+        const uploaded = await uploadStampedPdf(clientId, bytes, file.name)
+        setUrl(uploaded)
+        setUnstampedUrl(uploaded)
         setStampLayout(layout)
       } else {
         setUrl(await uploadDocumentFile(clientId, file))

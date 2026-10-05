@@ -103,10 +103,13 @@ export interface ClientDocument {
   agencySignature?: DocumentSignature
   clientSignature?: DocumentSignature
   // Set once by the agency per contract — where the signature pad's
-  // output and the sign date actually get drawn onto the PDF. Stamping
-  // happens once both parties have signed, replacing `url` with the
-  // stamped file.
+  // output and the sign date actually get drawn onto the PDF.
   stampLayout?: ContractStampLayout
+  // The signature page as generated at upload — blank boxes, nothing
+  // signed yet. Every restamp (after either party signs) is drawn fresh
+  // from this file, never from `url` itself, so signing twice can never
+  // double-stamp an already-stamped PDF.
+  unstampedUrl?: string
   // Only meaningful when type is 'invoice' — status's existing 'paid'/
   // 'unpaid' values double as the invoice's payment state, so only
   // approval needs a field of its own.

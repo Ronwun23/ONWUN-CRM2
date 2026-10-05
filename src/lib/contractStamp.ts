@@ -31,8 +31,10 @@ export async function stampContractPdf({
 }: {
   originalBytes: Uint8Array
   layout: ContractStampLayout
-  agencySignature: DocumentSignature
-  clientSignature: DocumentSignature
+  // Either can be missing — called again every time just one party signs,
+  // not only once both have, so the PDF shows whoever's signed so far.
+  agencySignature?: DocumentSignature
+  clientSignature?: DocumentSignature
 }): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.load(originalBytes)
   const pages = pdfDoc.getPages()
@@ -40,8 +42,8 @@ export async function stampContractPdf({
 
   // Fitted (not stretched) into the drawn box, centred within it — the
   // box is whatever area the agency marked, not assumed to be a fixed size.
-  const drawSignature = async (position: StampPosition | undefined, signature: DocumentSignature) => {
-    if (!position) return
+  const drawSignature = async (position: StampPosition | undefined, signature: DocumentSignature | undefined) => {
+    if (!position || !signature) return
     const page = pages[position.page]
     if (!page) return
     const png = await pdfDoc.embedPng(dataUrlToBytes(signature.signatureData))
@@ -57,8 +59,8 @@ export async function stampContractPdf({
     })
   }
 
-  const drawDate = (position: StampPosition | undefined, signature: DocumentSignature) => {
-    if (!position) return
+  const drawDate = (position: StampPosition | undefined, signature: DocumentSignature | undefined) => {
+    if (!position || !signature) return
     const page = pages[position.page]
     if (!page) return
     const box = toPdfBox(page, position)

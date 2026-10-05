@@ -591,6 +591,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         due_date: patch.dueDate ?? null,
         amount: patch.amount ?? null,
         stamp_layout: patch.stampLayout ?? null,
+        unstamped_url: patch.unstampedUrl ?? null,
         updated_at: updatedAt,
       })
     },
@@ -685,16 +686,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setDocumentSignature = useCallback(
     (clientId: string, docId: string, party: 'agency' | 'client', signature: DocumentSignature) => {
-      let bothSigned = false
       const stampJobRef: {
-        current: { url: string; layout: ContractStampLayout; agencySignature: DocumentSignature; clientSignature: DocumentSignature } | null
+        current: {
+          url: string
+          layout: ContractStampLayout
+          agencySignature?: DocumentSignature
+          clientSignature?: DocumentSignature
+          bothSigned: boolean
+        } | null
       } = { current: null }
       updateClient(clientId, (c) => {
         const doc = c.documents.find((d) => d.id === docId)
         if (!doc) return c
-        bothSigned = party === 'agency' ? !!doc.clientSignature : !!doc.agencySignature
-        const patch =
-          party === 'agency' ? { agencySignature: signature } : { clientSignature: signature }
+        const patch = party === 'agency' ? { agencySignature: signature } : { clientSignature: signature }
+        const agencySig = party === 'agency' ? signature : doc.agencySignature
+        const clientSig = party === 'client' ? signature : doc.clientSignature
+        const bothSigned = !!agencySig && !!clientSig
         const updateEntry: UpdateEntry = {
           id: `update-signature-${docId}-${signature.createdAt}`,
           text: `${signature.authorName} signed "${doc.title}".`,
@@ -705,13 +712,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           docTitle: doc.title,
         }
         insertUpdate(clientId, updateEntry).catch((err) => console.error('Failed to save update to Supabase:', err))
-        if (bothSigned && doc.url && doc.stampLayout) {
-          stampJobRef.current = {
-            url: doc.url,
-            layout: doc.stampLayout,
-            agencySignature: party === 'agency' ? signature : doc.agencySignature!,
-            clientSignature: party === 'client' ? signature : doc.clientSignature!,
-          }
+        // Every signature (not just the second one) restamps the PDF, drawn
+        // fresh from the never-touched blank-box original each time — so
+        // whoever's signed so far is visible immediately, and re-signing
+        // can never stack a second stamp on top of the first.
+        const sourceUrl = doc.unstampedUrl ?? doc.url
+        if (sourceUrl && doc.stampLayout) {
+          stampJobRef.current = { url: sourceUrl, layout: doc.stampLayout, agencySignature: agencySig, clientSignature: clientSig, bothSigned }
         }
         return {
           ...c,
@@ -726,14 +733,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ? {
               agency_signature_data: signature.signatureData,
               agency_signature_author_name: signature.authorName,
+              agency_signature_date_text: signature.dateText,
               agency_signature_created_at: signature.createdAt,
             }
           : {
               client_signature_data: signature.signatureData,
               client_signature_author_name: signature.authorName,
+              client_signature_date_text: signature.dateText,
               client_signature_created_at: signature.createdAt,
             }),
-        ...(bothSigned ? { status: 'signed' } : {}),
+        ...(stampJobRef.current?.bothSigned ? { status: 'signed' } : {}),
       })
 
       if (stampJobRef.current) {
