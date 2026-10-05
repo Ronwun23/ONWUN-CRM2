@@ -111,6 +111,13 @@ export interface ClientDocument {
   // from this file, never from `url` itself, so signing twice can never
   // double-stamp an already-stamped PDF.
   unstampedUrl?: string
+  // A party's own explicit confirmation that they've signed — ticked by
+  // hand after drawing a signature, not inferred from whether signature
+  // data exists. The contract's status (awaiting/signed) is driven only
+  // by these two flags, so it can never get stuck mid-update if the PDF
+  // restamp is slow, fails, or races with another write.
+  agencySignedOff?: boolean
+  clientSignedOff?: boolean
   // Only meaningful when type is 'invoice' — status's existing 'paid'/
   // 'unpaid' values double as the invoice's payment state, so only
   // approval needs a field of its own.

@@ -33,6 +33,8 @@ export interface DocumentRow {
   invoice_approved: boolean | null
   stamp_layout: ContractStampLayout | null
   unstamped_url: string | null
+  agency_signed_off: boolean | null
+  client_signed_off: boolean | null
 }
 
 export interface CommentRow {
@@ -104,6 +106,8 @@ export function rowToDocument(row: DocumentRow, comments: DocumentComment[]): Cl
     invoiceApproved: row.invoice_approved ?? undefined,
     stampLayout: row.stamp_layout ?? undefined,
     unstampedUrl: row.unstamped_url ?? undefined,
+    agencySignedOff: row.agency_signed_off ?? undefined,
+    clientSignedOff: row.client_signed_off ?? undefined,
   }
 }
 
@@ -136,6 +140,8 @@ function documentToRow(clientId: string, doc: ClientDocument) {
     invoice_approved: doc.invoiceApproved ?? null,
     stamp_layout: doc.stampLayout ?? null,
     unstamped_url: doc.unstampedUrl ?? null,
+    agency_signed_off: doc.agencySignedOff ?? null,
+    client_signed_off: doc.clientSignedOff ?? null,
   }
 }
 

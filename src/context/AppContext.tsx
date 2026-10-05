@@ -149,6 +149,7 @@ interface AppContextValue {
     party: 'agency' | 'client',
     signature: DocumentSignature
   ) => void
+  setContractSignedOff: (clientId: string, docId: string, party: 'agency' | 'client', signedOff: boolean) => void
   setInvoiceApproval: (clientId: string, docId: string, approved: boolean) => void
   setInvoicePaid: (clientId: string, docId: string, paid: boolean) => void
   setDocumentReviewStatus: (
@@ -709,7 +710,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           layout: ContractStampLayout
           agencySignature?: DocumentSignature
           clientSignature?: DocumentSignature
-          bothSigned: boolean
         } | null
       } = { current: null }
       updateClient(clientId, (c) => {
@@ -718,7 +718,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const patch = party === 'agency' ? { agencySignature: signature } : { clientSignature: signature }
         const agencySig = party === 'agency' ? signature : doc.agencySignature
         const clientSig = party === 'client' ? signature : doc.clientSignature
-        const bothSigned = !!agencySig && !!clientSig
         const updateEntry: UpdateEntry = {
           id: `update-signature-${docId}-${signature.createdAt}`,
           text: `${signature.authorName} signed "${doc.title}".`,
@@ -735,12 +734,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // can never stack a second stamp on top of the first.
         const sourceUrl = doc.unstampedUrl ?? doc.url
         if (sourceUrl && doc.stampLayout) {
-          stampJobRef.current = { url: sourceUrl, layout: doc.stampLayout, agencySignature: agencySig, clientSignature: clientSig, bothSigned }
+          stampJobRef.current = { url: sourceUrl, layout: doc.stampLayout, agencySignature: agencySig, clientSignature: clientSig }
         }
-        const newStatus: DocumentStatus = bothSigned ? 'signed' : 'awaiting_signature'
         return {
           ...c,
-          documents: c.documents.map((d) => (d.id === docId ? { ...d, ...patch, status: newStatus } : d)),
+          documents: c.documents.map((d) => (d.id === docId ? { ...d, ...patch } : d)),
           updates: [updateEntry, ...c.updates],
         }
       })
@@ -769,10 +767,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // wiping out the signature that was just shown locally.
         let signatureSaved = false
         try {
-          await updateDocumentRow(docId, {
-            ...signatureFieldsPatch,
-            status: stampJobRef.current?.bothSigned ? 'signed' : 'awaiting_signature',
-          })
+          await updateDocumentRow(docId, signatureFieldsPatch)
           signatureSaved = true
         } catch (err) {
           console.error('Failed to save document to Supabase:', err)
@@ -810,6 +805,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
       })()
+    },
+    [updateClient]
+  )
+
+  // A party's explicit "I've signed this" confirmation — a plain boolean,
+  // ticked by hand, that drives the contract's status on its own rather
+  // than the status being inferred from whether signature data exists.
+  // That inference depended on the PDF restamp job (fetch → stamp →
+  // upload → write) completing cleanly, which made the visible status
+  // fragile to anything slow or flaky in that pipeline; this one-column
+  // write has no such dependency.
+  const setContractSignedOff = useCallback(
+    (clientId: string, docId: string, party: 'agency' | 'client', signedOff: boolean) => {
+      const newStatusRef: { current: DocumentStatus | null } = { current: null }
+      updateClient(clientId, (c) => {
+        const doc = c.documents.find((d) => d.id === docId)
+        if (!doc) return c
+        const agencySignedOff = party === 'agency' ? signedOff : !!doc.agencySignedOff
+        const clientSignedOff = party === 'client' ? signedOff : !!doc.clientSignedOff
+        const newStatus: DocumentStatus =
+          agencySignedOff && clientSignedOff ? 'signed' : agencySignedOff || clientSignedOff ? 'awaiting_signature' : 'draft'
+        newStatusRef.current = newStatus
+        return {
+          ...c,
+          documents: c.documents.map((d) =>
+            d.id === docId
+              ? { ...d, [party === 'agency' ? 'agencySignedOff' : 'clientSignedOff']: signedOff, status: newStatus }
+              : d
+          ),
+        }
+      })
+      syncDocumentFields(docId, {
+        [party === 'agency' ? 'agency_signed_off' : 'client_signed_off']: signedOff,
+        status: newStatusRef.current ?? 'awaiting_signature',
+      })
     },
     [updateClient]
   )
@@ -1239,6 +1269,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentTestimonial,
       removeDocumentTestimonial,
       setDocumentSignature,
+      setContractSignedOff,
       setInvoiceApproval,
       setInvoicePaid,
       setDocumentReviewStatus,
@@ -1307,6 +1338,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentTestimonial,
       removeDocumentTestimonial,
       setDocumentSignature,
+      setContractSignedOff,
       setInvoiceApproval,
       setInvoicePaid,
       setDocumentReviewStatus,
