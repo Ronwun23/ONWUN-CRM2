@@ -38,6 +38,7 @@ export type DocumentStatus =
   | 'with_client'
   | 'with_you'
   | 'signed'
+  | 'awaiting_signature'
   | 'paid'
   | 'unpaid'
   | 'draft'

@@ -737,16 +737,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (sourceUrl && doc.stampLayout) {
           stampJobRef.current = { url: sourceUrl, layout: doc.stampLayout, agencySignature: agencySig, clientSignature: clientSig, bothSigned }
         }
+        const newStatus: DocumentStatus = bothSigned ? 'signed' : 'awaiting_signature'
         return {
           ...c,
-          documents: c.documents.map((d) =>
-            d.id === docId ? { ...d, ...patch, status: bothSigned ? 'signed' : d.status } : d
-          ),
+          documents: c.documents.map((d) => (d.id === docId ? { ...d, ...patch, status: newStatus } : d)),
           updates: [updateEntry, ...c.updates],
         }
       })
-      syncDocumentFields(docId, {
-        ...(party === 'agency'
+
+      const signatureFieldsPatch =
+        party === 'agency'
           ? {
               agency_signature_data: signature.signatureData,
               agency_signature_author_name: signature.authorName,
@@ -758,29 +758,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
               client_signature_author_name: signature.authorName,
               client_signature_date_text: signature.dateText,
               client_signature_created_at: signature.createdAt,
-            }),
-        ...(stampJobRef.current?.bothSigned ? { status: 'signed' } : {}),
-      })
+            }
 
-      if (stampJobRef.current) {
-        const job = stampJobRef.current
-        ;(async () => {
-          const { stampContractPdf } = await import('@/lib/contractStamp')
-          const originalBytes = await fetchPdfBytes(job.url)
-          const stampedBytes = await stampContractPdf({
-            originalBytes,
-            layout: job.layout,
-            agencySignature: job.agencySignature,
-            clientSignature: job.clientSignature,
+      ;(async () => {
+        // Awaited deliberately, ahead of the stamp job below — both of
+        // them write to this same row, and if the stamp job's own write
+        // (just the url) reached the database and echoed back over
+        // realtime before this one had actually committed, that echo
+        // would carry a row with no signature on it yet, momentarily
+        // wiping out the signature that was just shown locally.
+        try {
+          await updateDocumentRow(docId, {
+            ...signatureFieldsPatch,
+            status: stampJobRef.current?.bothSigned ? 'signed' : 'awaiting_signature',
           })
-          const newUrl = await uploadStampedPdf(clientId, stampedBytes, `${docId}.pdf`)
-          updateClient(clientId, (c) => ({
-            ...c,
-            documents: c.documents.map((d) => (d.id === docId ? { ...d, url: newUrl } : d)),
-          }))
-          syncDocumentFields(docId, { url: newUrl })
-        })().catch((err) => console.error('Failed to stamp signed contract PDF:', err))
-      }
+        } catch (err) {
+          console.error('Failed to save document to Supabase:', err)
+          toastManager.add({
+            type: 'error',
+            title: "Couldn't save that change",
+            description: 'It may not survive a refresh — check your connection and try again.',
+            timeout: 8000,
+          })
+        }
+
+        if (stampJobRef.current) {
+          const job = stampJobRef.current
+          try {
+            const { stampContractPdf } = await import('@/lib/contractStamp')
+            const originalBytes = await fetchPdfBytes(job.url)
+            const stampedBytes = await stampContractPdf({
+              originalBytes,
+              layout: job.layout,
+              agencySignature: job.agencySignature,
+              clientSignature: job.clientSignature,
+            })
+            const newUrl = await uploadStampedPdf(clientId, stampedBytes, `${docId}.pdf`)
+            updateClient(clientId, (c) => ({
+              ...c,
+              documents: c.documents.map((d) => (d.id === docId ? { ...d, url: newUrl } : d)),
+            }))
+            await updateDocumentRow(docId, { url: newUrl })
+          } catch (err) {
+            console.error('Failed to stamp signed contract PDF:', err)
+          }
+        }
+      })()
     },
     [updateClient]
   )
