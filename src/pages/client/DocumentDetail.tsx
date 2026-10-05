@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Link2, Pencil, Trash2 } from 'lucide-react'
+import clsx from 'clsx'
 import { useClientOutlet } from '@/lib/useClient'
 import { useApp } from '@/context/AppContext'
 import { useViewMode } from '@/context/ViewModeContext'
@@ -188,7 +189,12 @@ export default function DocumentDetail() {
           </div>
         ) : isPdf ? (
           <div className="flex flex-col gap-4 lg:flex-row">
-            <FullscreenViewer className="min-w-0 flex-1 rounded-xl shadow-card">
+            <FullscreenViewer
+              className={clsx(
+                'min-w-0 rounded-xl shadow-card',
+                isContract ? 'w-fit max-w-[calc(70vh*0.75)] shrink-0' : 'flex-1'
+              )}
+            >
               {resolveError ? (
                 <div className="flex min-h-[420px] items-center justify-center rounded-xl bg-black text-sm text-white/60">
                   Couldn't load this PDF.
