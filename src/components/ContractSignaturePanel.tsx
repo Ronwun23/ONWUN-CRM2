@@ -67,7 +67,7 @@ export default function ContractSignaturePanel({ client, doc }: { client: Client
 
       <div className="rounded-xl border border-black/[0.06] bg-white p-4">
         <p className="mb-1 text-sm font-semibold text-ink-primary">
-          {bothSigned ? 'Signed' : mySignature ? 'Waiting on the other party' : 'Your signature'}
+          {bothSigned ? 'Signed' : mySignature ? 'Waiting on 1 signature' : 'Your signature'}
         </p>
         <p className="mb-3 text-xs text-ink-secondary">
           {bothSigned
