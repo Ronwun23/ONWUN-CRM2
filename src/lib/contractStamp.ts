@@ -79,3 +79,101 @@ export async function stampContractPdf({
 
   return pdfDoc.save()
 }
+
+// Appends a clean, dedicated signature page to a contract instead of
+// stamping into whatever blank space (if any) the uploaded PDF happens to
+// have — that depended on matching a hand-drawn box to the exact spot on
+// each document, which never lined up reliably. Since we draw this page
+// ourselves, we already know exactly where the boxes are, so the layout
+// comes back alongside the bytes — no separate position-marking step.
+export async function appendSignaturePage({
+  originalBytes,
+  designerName,
+  clientName,
+}: {
+  originalBytes: Uint8Array
+  designerName: string
+  clientName: string
+}): Promise<{ bytes: Uint8Array; layout: ContractStampLayout }> {
+  const pdfDoc = await PDFDocument.load(originalBytes)
+  const { width: pageWidth, height: pageHeight } = pdfDoc.getPage(0).getSize()
+  const page = pdfDoc.addPage([pageWidth, pageHeight])
+  const pageIndex = pdfDoc.getPageCount() - 1
+
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+  const muted = rgb(0.55, 0.55, 0.55)
+  const fromTop = (pt: number) => pageHeight - pt
+
+  const margin = 56
+  const colWidth = (pageWidth - margin * 2 - 32) / 2
+  const leftX = margin
+  const rightX = margin + colWidth + 32
+
+  page.drawText('Signatures', { x: margin, y: fromTop(70), size: 26, font: boldFont })
+  page.drawText('By signing below, both parties agree to the terms outlined in this agreement.', {
+    x: margin,
+    y: fromTop(100),
+    size: 11,
+    font,
+    color: rgb(0.4, 0.4, 0.4),
+  })
+  page.drawLine({
+    start: { x: margin, y: fromTop(118) },
+    end: { x: pageWidth - margin, y: fromTop(118) },
+    thickness: 1,
+    color: rgb(0.85, 0.85, 0.85),
+  })
+
+  const layout: ContractStampLayout = {
+    designerSignature: {
+      page: pageIndex,
+      x: leftX / pageWidth,
+      y: 180 / pageHeight,
+      width: colWidth / pageWidth,
+      height: 70 / pageHeight,
+    },
+    designerDate: {
+      page: pageIndex,
+      x: leftX / pageWidth,
+      y: 350 / pageHeight,
+      width: (colWidth * 0.5) / pageWidth,
+      height: 26 / pageHeight,
+    },
+    clientSignature: {
+      page: pageIndex,
+      x: rightX / pageWidth,
+      y: 180 / pageHeight,
+      width: colWidth / pageWidth,
+      height: 70 / pageHeight,
+    },
+    clientDate: {
+      page: pageIndex,
+      x: rightX / pageWidth,
+      y: 350 / pageHeight,
+      width: (colWidth * 0.5) / pageWidth,
+      height: 26 / pageHeight,
+    },
+  }
+
+  const drawColumn = (label: string, name: string, x: number, sigBox: StampPosition, dateBox: StampPosition) => {
+    page.drawText(label, { x, y: fromTop(160), size: 13, font: boldFont })
+
+    const sigRect = toPdfBox(page, sigBox)
+    page.drawRectangle({ ...sigRect, borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 1 })
+    page.drawText('Signature', { x, y: fromTop(266), size: 9, font, color: muted })
+
+    page.drawText(name, { x, y: fromTop(300), size: 13, font: boldFont })
+    page.drawText('Name', { x, y: fromTop(315), size: 9, font, color: muted })
+
+    const dateRect = toPdfBox(page, dateBox)
+    page.drawRectangle({ ...dateRect, borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 1 })
+    page.drawText('Date', { x, y: fromTop(392), size: 9, font, color: muted })
+  }
+
+  drawColumn('DESIGNER', designerName, leftX, layout.designerSignature!, layout.designerDate!)
+  drawColumn('CLIENT', clientName, rightX, layout.clientSignature!, layout.clientDate!)
+
+  const bytes = await pdfDoc.save()
+  return { bytes, layout }
+}

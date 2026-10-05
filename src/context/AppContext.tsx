@@ -132,7 +132,6 @@ interface AppContextValue {
     party: 'agency' | 'client',
     signature: DocumentSignature
   ) => void
-  setContractStampLayout: (clientId: string, docId: string, layout: ContractStampLayout) => void
   setInvoiceApproval: (clientId: string, docId: string, approved: boolean) => void
   setInvoicePaid: (clientId: string, docId: string, paid: boolean) => void
   setDocumentReviewStatus: (
@@ -591,6 +590,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         issued_date: patch.issuedDate ?? null,
         due_date: patch.dueDate ?? null,
         amount: patch.amount ?? null,
+        stamp_layout: patch.stampLayout ?? null,
         updated_at: updatedAt,
       })
     },
@@ -755,17 +755,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           syncDocumentFields(docId, { url: newUrl })
         })().catch((err) => console.error('Failed to stamp signed contract PDF:', err))
       }
-    },
-    [updateClient]
-  )
-
-  const setContractStampLayout = useCallback(
-    (clientId: string, docId: string, layout: ContractStampLayout) => {
-      updateClient(clientId, (c) => ({
-        ...c,
-        documents: c.documents.map((d) => (d.id === docId ? { ...d, stampLayout: layout } : d)),
-      }))
-      syncDocumentFields(docId, { stamp_layout: layout })
     },
     [updateClient]
   )
@@ -1195,7 +1184,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentTestimonial,
       removeDocumentTestimonial,
       setDocumentSignature,
-      setContractStampLayout,
       setInvoiceApproval,
       setInvoicePaid,
       setDocumentReviewStatus,
@@ -1264,7 +1252,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDocumentTestimonial,
       removeDocumentTestimonial,
       setDocumentSignature,
-      setContractStampLayout,
       setInvoiceApproval,
       setInvoicePaid,
       setDocumentReviewStatus,

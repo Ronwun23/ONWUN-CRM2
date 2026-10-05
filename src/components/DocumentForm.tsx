@@ -5,10 +5,10 @@ import clsx from 'clsx'
 import { useApp } from '@/context/AppContext'
 import { Select } from '@/components/ui/select'
 import { DatePicker } from '@/components/ui/date-picker'
-import { uploadDocumentFile } from '@/lib/api/documents'
+import { uploadDocumentFile, uploadStampedPdf } from '@/lib/api/documents'
 import { isStoragePath } from '@/lib/embed'
 import { DOCUMENT_STATUS_LABEL, DOCUMENT_TYPE_LABEL } from '@/lib/labels'
-import type { ClientDocument, DocumentStatus, DocumentType } from '@/types'
+import type { ClientDocument, ContractStampLayout, DocumentStatus, DocumentType } from '@/types'
 
 const TYPE_OPTIONS: DocumentType[] = [
   'proposal',
@@ -55,7 +55,7 @@ export default function DocumentForm({
   initialType?: DocumentType
   onDone: () => void
 }) {
-  const { addDocument, updateDocument } = useApp()
+  const { addDocument, updateDocument, activeAccount, getClient } = useApp()
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [title, setTitle] = useState(existing?.title ?? '')
@@ -65,6 +65,7 @@ export default function DocumentForm({
   const [status, setStatus] = useState<DocumentStatus>(existing?.status ?? 'with_client')
   const [meta, setMeta] = useState(existing?.meta ?? '')
   const [url, setUrl] = useState(existing?.url ?? '')
+  const [stampLayout, setStampLayout] = useState<ContractStampLayout | undefined>(existing?.stampLayout)
   const [invoiceNumber, setInvoiceNumber] = useState(existing?.invoiceNumber ?? '')
   const [billedToName, setBilledToName] = useState(existing?.billedToName ?? '')
   const [issuedDate, setIssuedDate] = useState(existing?.issuedDate)
@@ -96,6 +97,7 @@ export default function DocumentForm({
             amount: amount.trim() ? Number(amount) : undefined,
           }
         : {}),
+      ...(type === 'contract' ? { stampLayout } : {}),
     }
 
     setSaving(true)
@@ -127,7 +129,23 @@ export default function DocumentForm({
     setUploadError(null)
     setUploadingFile(true)
     try {
-      setUrl(await uploadDocumentFile(clientId, file))
+      if (type === 'contract') {
+        // Append a dedicated signature page to the PDF itself, rather than
+        // uploading it as-is — that way every contract has one, regardless
+        // of whether the source document had its own signature block.
+        const { appendSignaturePage } = await import('@/lib/contractStamp')
+        const originalBytes = new Uint8Array(await file.arrayBuffer())
+        const clientName = getClient(clientId)?.name ?? 'Client'
+        const { bytes, layout } = await appendSignaturePage({
+          originalBytes,
+          designerName: activeAccount.name,
+          clientName,
+        })
+        setUrl(await uploadStampedPdf(clientId, bytes, file.name))
+        setStampLayout(layout)
+      } else {
+        setUrl(await uploadDocumentFile(clientId, file))
+      }
     } catch {
       setUploadError("Couldn't upload this PDF — try again.")
       setPdfFileName('')
