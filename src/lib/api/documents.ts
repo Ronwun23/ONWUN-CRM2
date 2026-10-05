@@ -140,8 +140,8 @@ function documentToRow(clientId: string, doc: ClientDocument) {
     invoice_approved: doc.invoiceApproved ?? null,
     stamp_layout: doc.stampLayout ?? null,
     unstamped_url: doc.unstampedUrl ?? null,
-    agency_signed_off: doc.agencySignedOff ?? null,
-    client_signed_off: doc.clientSignedOff ?? null,
+    agency_signed_off: doc.agencySignedOff ?? false,
+    client_signed_off: doc.clientSignedOff ?? false,
   }
 }
 
