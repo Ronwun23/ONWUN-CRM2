@@ -4,3 +4,9 @@
 -- parties have signed.
 alter table public.documents
   add column if not exists stamp_layout jsonb;
+
+-- The date as typed by whoever signed (not derived from when they
+-- clicked sign) — they're filling in the contract's own date field.
+alter table public.documents
+  add column if not exists agency_signature_date_text text,
+  add column if not exists client_signature_date_text text;

@@ -10,16 +10,17 @@ function dataUrlToBytes(dataUrl: string): Uint8Array {
   return bytes
 }
 
-const SIGNATURE_WIDTH = 140
-const SIGNATURE_HEIGHT = 50
-const DATE_FONT_SIZE = 11
-
-// Stored positions are page-relative 0-1, top-left origin (how they were
-// clicked on screen) — pdf-lib's origin is bottom-left, so y needs
-// flipping before anything gets drawn.
-function toPdfPoint(page: PDFPage, position: StampPosition): { x: number; y: number } {
-  const { width, height } = page.getSize()
-  return { x: position.x * width, y: height - position.y * height }
+// Stored positions are page-relative 0-1 boxes, top-left origin (how
+// they're drawn on screen) — pdf-lib's origin is bottom-left and anchors
+// drawImage/drawText at the box's bottom-left corner, so y needs both
+// flipping and shifting down by the box's own height.
+function toPdfBox(page: PDFPage, position: StampPosition): { x: number; y: number; width: number; height: number } {
+  const { width: pageWidth, height: pageHeight } = page.getSize()
+  const width = position.width * pageWidth
+  const height = position.height * pageHeight
+  const x = position.x * pageWidth
+  const y = pageHeight - (position.y + position.height) * pageHeight
+  return { x, y, width, height }
 }
 
 export async function stampContractPdf({
@@ -37,28 +38,38 @@ export async function stampContractPdf({
   const pages = pdfDoc.getPages()
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
-  // The clicked point is the signature/date LINE itself (the obvious,
-  // reliable click target) — pdf-lib anchors drawImage/drawText at the
-  // BOTTOM of what they draw, which already extends upward from there,
-  // so the stamp lands sitting above the line, same as a handwritten one.
+  // Fitted (not stretched) into the drawn box, centred within it — the
+  // box is whatever area the agency marked, not assumed to be a fixed size.
   const drawSignature = async (position: StampPosition | undefined, signature: DocumentSignature) => {
     if (!position) return
     const page = pages[position.page]
     if (!page) return
     const png = await pdfDoc.embedPng(dataUrlToBytes(signature.signatureData))
-    const { x, y } = toPdfPoint(page, position)
-    page.drawImage(png, { x, y, width: SIGNATURE_WIDTH, height: SIGNATURE_HEIGHT })
+    const box = toPdfBox(page, position)
+    const scale = Math.min(box.width / png.width, box.height / png.height)
+    const drawWidth = png.width * scale
+    const drawHeight = png.height * scale
+    page.drawImage(png, {
+      x: box.x + (box.width - drawWidth) / 2,
+      y: box.y + (box.height - drawHeight) / 2,
+      width: drawWidth,
+      height: drawHeight,
+    })
   }
 
   const drawDate = (position: StampPosition | undefined, signature: DocumentSignature) => {
     if (!position) return
     const page = pages[position.page]
     if (!page) return
-    const dateText = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(
-      new Date(signature.createdAt)
-    )
-    const { x, y } = toPdfPoint(page, position)
-    page.drawText(dateText, { x, y: y + 2, size: DATE_FONT_SIZE, font, color: rgb(0, 0, 0) })
+    const box = toPdfBox(page, position)
+    const fontSize = Math.max(8, Math.min(box.height * 0.6, 16))
+    page.drawText(signature.dateText, {
+      x: box.x + 2,
+      y: box.y + (box.height - fontSize) / 2,
+      size: fontSize,
+      font,
+      color: rgb(0, 0, 0),
+    })
   }
 
   await drawSignature(layout.designerSignature, agencySignature)

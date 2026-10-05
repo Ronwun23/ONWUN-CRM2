@@ -4,16 +4,21 @@ import type { PointerEvent } from 'react'
 const WIDTH = 480
 const HEIGHT = 180
 
+function todayFormatted(): string {
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date())
+}
+
 export default function SignaturePad({
   onSign,
   onCancel,
 }: {
-  onSign: (signatureDataUrl: string) => void
+  onSign: (signatureDataUrl: string, dateText: string) => void
   onCancel: () => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const drawing = useRef(false)
   const [hasSignature, setHasSignature] = useState(false)
+  const [dateText, setDateText] = useState(todayFormatted)
 
   // Maps a pointer event to canvas drawing-buffer coordinates, not CSS
   // pixels — the two differ whenever the canvas is scaled by layout (e.g.
@@ -58,7 +63,7 @@ export default function SignaturePad({
   }
 
   const confirm = () => {
-    onSign(canvasRef.current!.toDataURL('image/png'))
+    onSign(canvasRef.current!.toDataURL('image/png'), dateText.trim())
   }
 
   return (
@@ -73,6 +78,15 @@ export default function SignaturePad({
         onPointerUp={stop}
         onPointerLeave={stop}
       />
+      <div>
+        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-muted">Date</label>
+        <input
+          value={dateText}
+          onChange={(e) => setDateText(e.target.value)}
+          className="w-full rounded-lg border border-black/[0.10] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          autoComplete="off"
+        />
+      </div>
       <div className="flex items-center justify-between">
         <button onClick={clear} className="text-xs font-medium text-ink-muted hover:text-ink-primary">
           Clear
@@ -86,7 +100,7 @@ export default function SignaturePad({
           </button>
           <button
             onClick={confirm}
-            disabled={!hasSignature}
+            disabled={!hasSignature || !dateText.trim()}
             className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Sign

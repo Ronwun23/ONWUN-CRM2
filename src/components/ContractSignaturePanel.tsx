@@ -43,10 +43,11 @@ export default function ContractSignaturePanel({ client, doc }: { client: Client
   const bothSigned = !!doc.agencySignature && !!doc.clientSignature
   const stampLayoutComplete = STAMP_FIELDS.every((f) => doc.stampLayout?.[f])
 
-  const handleSign = (signatureData: string) => {
+  const handleSign = (signatureData: string, dateText: string) => {
     setDocumentSignature(client.id, doc.id, myParty, {
       authorName: myName,
       signatureData,
+      dateText,
       createdAt: new Date().toISOString(),
     })
     setShowPad(false)

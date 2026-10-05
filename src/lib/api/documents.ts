@@ -19,9 +19,11 @@ export interface DocumentRow {
   testimonial_created_at: string | null
   agency_signature_data: string | null
   agency_signature_author_name: string | null
+  agency_signature_date_text: string | null
   agency_signature_created_at: string | null
   client_signature_data: string | null
   client_signature_author_name: string | null
+  client_signature_date_text: string | null
   client_signature_created_at: string | null
   invoice_number: string | null
   billed_to_name: string | null
@@ -56,10 +58,11 @@ export function rowToComment(row: CommentRow): DocumentComment {
 function rowToSignature(
   data: string | null,
   authorName: string | null,
+  dateText: string | null,
   createdAt: string | null
 ): DocumentSignature | undefined {
   if (!data) return undefined
-  return { signatureData: data, authorName: authorName ?? '', createdAt: createdAt ?? '' }
+  return { signatureData: data, authorName: authorName ?? '', dateText: dateText ?? '', createdAt: createdAt ?? '' }
 }
 
 export function rowToDocument(row: DocumentRow, comments: DocumentComment[]): ClientDocument {
@@ -80,8 +83,18 @@ export function rowToDocument(row: DocumentRow, comments: DocumentComment[]): Cl
           createdAt: row.testimonial_created_at ?? row.updated_at,
         }
       : undefined,
-    agencySignature: rowToSignature(row.agency_signature_data, row.agency_signature_author_name, row.agency_signature_created_at),
-    clientSignature: rowToSignature(row.client_signature_data, row.client_signature_author_name, row.client_signature_created_at),
+    agencySignature: rowToSignature(
+      row.agency_signature_data,
+      row.agency_signature_author_name,
+      row.agency_signature_date_text,
+      row.agency_signature_created_at
+    ),
+    clientSignature: rowToSignature(
+      row.client_signature_data,
+      row.client_signature_author_name,
+      row.client_signature_date_text,
+      row.client_signature_created_at
+    ),
     invoiceNumber: row.invoice_number ?? undefined,
     billedToName: row.billed_to_name ?? undefined,
     issuedDate: row.issued_date ?? undefined,
@@ -107,9 +120,11 @@ function documentToRow(clientId: string, doc: ClientDocument) {
     testimonial_created_at: doc.testimonial?.createdAt ?? null,
     agency_signature_data: doc.agencySignature?.signatureData ?? null,
     agency_signature_author_name: doc.agencySignature?.authorName ?? null,
+    agency_signature_date_text: doc.agencySignature?.dateText ?? null,
     agency_signature_created_at: doc.agencySignature?.createdAt ?? null,
     client_signature_data: doc.clientSignature?.signatureData ?? null,
     client_signature_author_name: doc.clientSignature?.authorName ?? null,
+    client_signature_date_text: doc.clientSignature?.dateText ?? null,
     client_signature_created_at: doc.clientSignature?.createdAt ?? null,
     invoice_number: doc.invoiceNumber ?? null,
     billed_to_name: doc.billedToName ?? null,

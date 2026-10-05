@@ -65,16 +65,22 @@ export interface DocumentTestimonial {
 export interface DocumentSignature {
   authorName: string
   signatureData: string
+  // The date as typed by whoever signed — not derived from createdAt,
+  // since they're filling in the contract's own date field by hand.
+  dateText: string
   createdAt: string
 }
 
-// Where on the contract PDF a signature or date gets stamped — set once
-// by the agency (clicking the rendered page), in page-relative 0-1
-// coordinates (top-left origin) so it's independent of render resolution.
+// Where on the contract PDF a signature or date gets stamped — a box the
+// agency draws once (dragging over the rendered page), in page-relative
+// 0-1 coordinates (top-left origin) so it's independent of render
+// resolution. The stamp is fitted to this box, not drawn at a fixed size.
 export interface StampPosition {
   page: number
   x: number
   y: number
+  width: number
+  height: number
 }
 
 export interface ContractStampLayout {

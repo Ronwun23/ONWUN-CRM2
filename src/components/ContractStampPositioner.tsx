@@ -20,6 +20,8 @@ const FIELDS: { key: FieldKey; label: string; color: string }[] = [
   { key: 'clientDate', label: 'Client date', color: '#1a3fa0' },
 ]
 
+const MIN_BOX_FRACTION = 0.01
+
 export default function ContractStampPositioner({
   client,
   doc,
@@ -36,6 +38,8 @@ export default function ContractStampPositioner({
   const [pageIndex, setPageIndex] = useState(0)
   const [markers, setMarkers] = useState<Partial<Record<FieldKey, StampPosition>>>(doc.stampLayout ?? {})
   const [activeField, setActiveField] = useState<FieldKey | null>(null)
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
+  const [dragCurrent, setDragCurrent] = useState<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -72,15 +76,37 @@ export default function ContractStampPositioner({
     }
   }, [doc.url])
 
-  const handleCanvasClick = (e: MouseEvent<HTMLCanvasElement>) => {
-    if (!activeField) return
-    const canvas = canvasRef.current
-    if (!canvas) return
+  const pointFromEvent = (e: MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current!
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width
-    const y = (e.clientY - rect.top) / rect.height
-    setMarkers((prev) => ({ ...prev, [activeField]: { page: pageIndex, x, y } }))
+    return {
+      x: Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width)),
+      y: Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height)),
+    }
+  }
+
+  const handleMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
+    if (!activeField) return
+    const point = pointFromEvent(e)
+    setDragStart(point)
+    setDragCurrent(point)
+  }
+
+  const handleMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
+    if (!activeField || !dragStart) return
+    setDragCurrent(pointFromEvent(e))
+  }
+
+  const handleMouseUp = () => {
+    if (!activeField || !dragStart || !dragCurrent) return
+    const x = Math.min(dragStart.x, dragCurrent.x)
+    const y = Math.min(dragStart.y, dragCurrent.y)
+    const width = Math.max(Math.abs(dragCurrent.x - dragStart.x), MIN_BOX_FRACTION)
+    const height = Math.max(Math.abs(dragCurrent.y - dragStart.y), MIN_BOX_FRACTION)
+    setMarkers((prev) => ({ ...prev, [activeField]: { page: pageIndex, x, y, width, height } }))
     setActiveField(null)
+    setDragStart(null)
+    setDragCurrent(null)
   }
 
   const handleSave = () => {
@@ -89,12 +115,21 @@ export default function ContractStampPositioner({
   }
 
   const allSet = FIELDS.every((f) => markers[f.key])
+  const liveBox =
+    activeField && dragStart && dragCurrent
+      ? {
+          x: Math.min(dragStart.x, dragCurrent.x),
+          y: Math.min(dragStart.y, dragCurrent.y),
+          width: Math.abs(dragCurrent.x - dragStart.x),
+          height: Math.abs(dragCurrent.y - dragStart.y),
+        }
+      : null
 
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-ink-secondary">
-        Click a field below, then click where it belongs on the contract's last page — same as where the printed
-        line for it already sits.
+        Click a field below, then click and drag on the contract's last page to draw a box over where it belongs —
+        covering the same space as the printed line.
       </p>
       <div className="flex flex-wrap gap-2">
         {FIELDS.map((f) => (
@@ -125,7 +160,12 @@ export default function ContractStampPositioner({
         )}
         <canvas
           ref={canvasRef}
-          onClick={handleCanvasClick}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={() => {
+            if (dragStart) handleMouseUp()
+          }}
           className={clsx('block max-w-full', activeField && 'cursor-crosshair')}
         />
         {FIELDS.map((f) => {
@@ -134,18 +174,32 @@ export default function ContractStampPositioner({
           return (
             <div
               key={f.key}
-              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
+              className="pointer-events-none absolute border-2"
               style={{
                 left: `${pos.x * 100}%`,
                 top: `${pos.y * 100}%`,
-                width: 16,
-                height: 16,
-                backgroundColor: f.color,
+                width: `${pos.width * 100}%`,
+                height: `${pos.height * 100}%`,
+                borderColor: f.color,
+                backgroundColor: `${f.color}22`,
               }}
               title={f.label}
             />
           )
         })}
+        {liveBox && activeField && (
+          <div
+            className="pointer-events-none absolute border-2 border-dashed"
+            style={{
+              left: `${liveBox.x * 100}%`,
+              top: `${liveBox.y * 100}%`,
+              width: `${liveBox.width * 100}%`,
+              height: `${liveBox.height * 100}%`,
+              borderColor: FIELDS.find((f) => f.key === activeField)!.color,
+              backgroundColor: `${FIELDS.find((f) => f.key === activeField)!.color}22`,
+            }}
+          />
+        )}
       </div>
       <div className="flex items-center justify-end gap-2">
         <button
