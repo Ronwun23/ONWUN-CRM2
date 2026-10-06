@@ -23,11 +23,10 @@ day-to-day workflow — discovery through delivery — not a generic sales CRM.
 - **Brand hub** — the final delivered brand assets, once a project is signed
   off.
 
-The app ships with 6 mock clients at different stages of the process — including
-one (Bloom Ventures) fully completed end-to-end with a filled-in workshop,
-signed documents, and delivered brand assets — so it's immediately explorable.
-Data lives in the browser's `localStorage`, so any edits you make persist
-across reloads on the same device.
+Data is backed by Supabase (Postgres + Auth + Storage) — every client,
+document, task, and update lives there, scoped by row-level security so an
+agency account sees everything and a client account only ever sees its own
+project.
 
 ## Getting started
 
